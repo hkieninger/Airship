@@ -23,6 +23,8 @@ void printAllReg(Qmc5883l *qmc) {
 	}
 }
 
+//test close with signal catching
+
 int main(void) {
 	Qmc5883l qmc;
 	sleep(1);

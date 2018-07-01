@@ -5,6 +5,8 @@
 #include <stdlib.h>
 #include <unistd.h>
 
+//test close, with signal catching
+
 #define MPS 100
 
 int main(void) {

@@ -18,3 +18,12 @@ class I2CException: public GPIOException {
         explicit I2CException(const std::string& what_arg) : GPIOException(what_arg) {};
         explicit I2CException(const char* what_arg) : GPIOException(what_arg) {};
 };
+
+/*
+ * represents an exception related to the uart
+ */
+class UARTException: public GPIOException {
+    public:
+        explicit UARTException(const std::string& what_arg) : GPIOException(what_arg) {};
+        explicit UARTException(const char* what_arg) : GPIOException(what_arg) {};
+};
