@@ -1,7 +1,7 @@
 #ifndef MPU6050_H
 #define MPU6050_H 1
 
-#include "../i2c_dev.h"
+#include "../gpio/i2c_dev.h"
 
 /*
  * possible improvements:
@@ -38,11 +38,20 @@
 #define MPU6050_REG_PWR_MGMT1 0x6B
 #define MPU6050_REG_PWR_MGMT2 0x6C
 
+/* 
+ * constants to be passed to setCycleFreq()
+ */
+#define MPU6050_1_25_HZ 0 /* 1.25 Hz */
+#define MPU6050_5_HZ 1
+#define MPU6050_20_HZ 2
+#define MPU6050_40_HZ 3
+
 /*
  * represents a mpu6050
  * an ic controlled with i2c containing an accelerometer, a gyroscope, a temperature sensor (all 16bit resolution)
  * furthermore it has a fifo buffer, is able to generate interrupts and can controll other i2c devices
  * for datasheets look at https://www.invensense.com/products/motion-tracking/6-axis/mpu-6050/
+ * keep in mind that the mpuu6050 works in big endian
  */
 class Mpu6050 : public I2CDev {
 	/*
@@ -61,7 +70,7 @@ public:
 	 * intialises the mpu6050
 	 * opens the file descriptor
 	 * resets the device
-	 * sets sleeps mode to false
+	 * sets sleeps mode to false, freq is set to 1.25 Hz
 	 */
 	Mpu6050(int addr = MPU6050_I2C_ADDR0);
 	
@@ -96,11 +105,7 @@ public:
 	
 	/*
 	 * sets the frequency for the cycle mode
-	 * 4 different frequencies are available:
-	 * freq 0 is 1.25Hz
-	 * freq 1 is 5Hz
-	 * freq 2 is 20Hz
-	 * freq 3 is 40Hz
+	 * @freq: pass one of the constants defined above
 	 */
 	void setCycleFreq(int freq);
 	
@@ -109,6 +114,13 @@ public:
 	 * range from -40°C to 85°C
 	 */
 	float getTemperature();
+
+	/*
+	 * writes the values into the passed array
+	 * @array: must contain at least 3 elements (0 = x, 1 = y, 2 = z)
+	 * @return: array
+	 */
+	float *getGyro(float *array);
 	
 	/*
 	 * returns the angular velocity in °/s (degree per second) around the axis
@@ -117,6 +129,13 @@ public:
 	float getGyroX();
 	float getGyroY();
 	float getGyroZ();
+
+	/*
+	 * writes the values into the passed array
+	 * @array: must contain at least 3 elements (0 = x, 1 = y, 2 = z)
+	 * @return: array
+	 */
+	float *getAccel(float *array);
 	
 	/*
 	 * returns the acceleration in m/s^2 in direction of the axis

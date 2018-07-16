@@ -1,1 +1,15 @@
-Create for each sensor or actuator a own lib and a test programm
+Hans
+-ads1115
+-bmp280
+-datamanager
+-mpu6050
+-neo6m
+-qmc5883l
+-socket
+
+Keanu
+-csicamera
+-usbcamera
+-hcsr04
+-motor (esc + relais)
+-servo

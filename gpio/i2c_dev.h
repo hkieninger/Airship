@@ -3,7 +3,7 @@
 
 /*
  * represents a i2c device
- * functions throw GPIOException on errors
+ * functions throw I2CException on errors
  */
 class I2CDev {
 protected:
@@ -58,7 +58,8 @@ public:
 	 * sets the value of a 16bit register
 	 * @reg: the address of the register
 	 * @value: the value to set (16 bit)
-	 *         function takes care of endianess (pass value in little endian)
+	 *         keep in mind that the i2c device might work in big endian, while the rpi works with little endian
+	 *		   therefore you might want to use the functions from <byteswap.h>
 	 */
 	void writeReg16(int reg, int value);
 	
@@ -66,7 +67,8 @@ public:
 	 * gets the value of a 16bit register
 	 * @reg: the address of the register
 	 * @return: the value of the register (16 bit)
-	 * 			function takes care of endianess (value is little endian)
+	 * 			keep in mind that the i2c device might work in big endian, while the rpi works with little endian
+	 *		    therefore you might want to use the functions from <byteswap.h>
 	 */
 	int readReg16(int reg);
 };

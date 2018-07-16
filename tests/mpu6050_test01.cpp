@@ -1,5 +1,5 @@
-#include "mpu6050.h"
-#include "../gpio_exception.h"
+#include "../mpu6050.h"
+#include "../../gpio/gpio_exception.h"
 
 #include <stdio.h>
 #include <stdlib.h>

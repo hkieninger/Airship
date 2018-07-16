@@ -1,14 +1,13 @@
-#include "i2c_dev.h"
-#include "gpio_exception.h"
-
 #include <wiringPiI2C.h>
 #include <errno.h>
 #include <string.h>
-#include <byteswap.h>
 #include <unistd.h>
 
+#include "i2c_dev.h"
+#include "gpio_exception.h"
+
 /*
- * implements straight read and write (wrapper function of wiringPi)
+ * wrapper functions of wiringPi
  */
 
 I2CDev::I2CDev(int addr) {
@@ -45,7 +44,6 @@ int I2CDev::readReg8(int reg) {
 }
 
 void I2CDev::writeReg16(int reg, int value) {
-	value = bswap_16(value); //rpi works with little endian and i2c with big endian
 	if(wiringPiI2CWriteReg16(fd, reg, value) < 0)
 		throw I2CException("writing register 16bit of i2c device: " + std::string(strerror(errno)));
 }
@@ -54,7 +52,5 @@ int I2CDev::readReg16(int reg) {
 	int ret = wiringPiI2CReadReg16(fd, reg);
 	if(ret < 0)
 		throw I2CException("reading register 16bit of i2c device: " + std::string(strerror(errno)));
-	//printf("read register: %d\n", ret);
 	return ret;
-	//return bswap_16(ret); //rpi works with little endian and i2c with big endian
 }

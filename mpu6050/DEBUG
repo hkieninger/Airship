@@ -1,2 +1,0 @@
-if bug
- put 1000 microsseconds of sleep after reset instead of 500

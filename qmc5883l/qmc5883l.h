@@ -1,12 +1,12 @@
 #ifndef QMC5883L_H
-#define QMC5883L_H 1				/* remove bswap from i2cdev qmc works in little endian */
+#define QMC5883L_H 1
 
-#include "../i2c_dev.h"
+#include "../gpio/i2c_dev.h"
 
 /*
  * possible improvements:
- * -make use of continous mode
  * -take advantage of interrupts
+ * -some small features not implemented yet
  */
 
 /*
@@ -32,8 +32,23 @@
 #define QMC5883L_REG_STAT 0x06
 
 /*
+ * constants to be passed to setContinuous()
+ */
+#define QMC5883L_10_HZ 0
+#define QMC5883L_50_HZ 1
+#define QMC5883L_100_HZ 2
+#define QMC5883L_200_HZ 3
+
+/*
+ * constants to be passed to setRange()
+ */
+#define QMC5883L_2_GAUSS 0
+#define QMC5883L_8_GAUSS 1
+
+/*
  * represents a qmc5883l
  * an ic controlled with i2c with sensors for magnetic fields (12 bit resolution)
+ * the qmc5883l is little endian
  */
 class Qmc5883l : public I2CDev {
 	/*
@@ -42,14 +57,58 @@ class Qmc5883l : public I2CDev {
 	 */
 	float getMag(int reg);
 public:
+	/*
+	 * initialises the qmc5883l
+	 * reset it
+	 * sets it into conitnuous mode with a freq of 10 Hz
+	 */
 	Qmc5883l();
+
+	/*
+	 * sets the qmc5883l into standby mode
+	 * releases the other associated resources
+	 */
 	~Qmc5883l();
 	
+	/*
+	 * resets the qmc5883l, put the default value into all registers
+	 * after reset the qmc5883l is in standby mode
+	 */
 	void reset();
+
+	/*
+	 * sets the range of the magnetic field to be measured
+	 * @range: use the constants defined above
+	 */
+	void setRange(int range);
+
+	/*
+	 * @return: true if new data has been measured, false if data has already been read
+	 */
+	bool dataReady();
+
+	/*
+	 * puts the qmc5883l in standbymode to save power
+	 * no measurments are made
+	 */
+	void setStandby();
+
+	/*
+	 * puts the qmc5883l in continuous mode with the specified freq
+	 * @freq: use the constants defined above
+	 */
+	void setContinuous(int freq);
+
+	/*
+	 * writes the values into the passed array
+	 * throws std::range_error if the magnetic field exceeds min or max magnitude
+	 * @array: must contain at least 3 elements (0 = x, 1 = y, 2 = z)
+	 * @return: array
+	 */
+	float *getMag(float *array);
 	
 	/*
 	 * returns the magnitude of the magnetic field in the direction of the axis in gauss (1 gauss = 100 micro tesla)
-	 * min/max magnitude +-1.3 gauss (higher and lower ranges possible -> see datasheet)
 	 * throws std::range_error if the magnetic field exceeds min or max magnitude
 	 */
 	float getMagX();

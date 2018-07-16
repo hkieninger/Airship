@@ -1,8 +1,9 @@
-#include "mpu6050.h"
-#include "../i2c_dev.h"
-
 #include <unistd.h>
 #include <stdint.h>
+#include <byteswap.h>
+
+#include "mpu6050.h"
+#include "../gpio/i2c_dev.h"
 
 Mpu6050::Mpu6050(int addr) : I2CDev(addr) {
 	reset();
@@ -16,6 +17,7 @@ Mpu6050::~Mpu6050() {
 void Mpu6050::reset() {
 	writeReg8(MPU6050_REG_PWR_MGMT1, 0x80);
 	usleep(500); //let mpu6050 complete reset
+	//if bug, put 1000 microsseconds of sleep after reset instead of 500
 }
 
 void Mpu6050::setSleepMode(bool on) {
@@ -27,23 +29,34 @@ void Mpu6050::setCycleMode(bool on) {
 }
 
 void Mpu6050::setCycleFreq(int freq) {
-	writeBitReg8(MPU6050_REG_PWR_MGMT2, 7, freq & 0x02 >> 1);
+	writeBitReg8(MPU6050_REG_PWR_MGMT2, 7, freq & 0x02);
 	writeBitReg8(MPU6050_REG_PWR_MGMT2, 6, freq & 0x01);
 }
 
 float Mpu6050::getTemperature() {
 	int16_t val = 0xFFFF & readReg16(MPU6050_REG_TEMP);
+	val = bswap_16(val);
 	return val / 340.0f + 36.53f; //formula from datasheet
 }
 
 float Mpu6050::getAccel(int reg) {
 	int16_t val = 0xFFFF & readReg16(reg);
+	val = bswap_16(val);
 	return val / 16384.0f * 9.80665f; //formula from datasheet, only valid for AFS_SEL equal 0
 }
 
 float Mpu6050::getGyro(int reg) {
 	int16_t val = 0xFFFF & readReg16(reg);
+	val = bswap_16(val);
 	return val / 131.0f; //formula from datasheet, only valid for FS_SEL equal 0
+}
+
+float *Mpu6050::getAccel(float *array) {
+	//could be optimized by using automatic address incrementation by mpu6050
+	array[0] = getAccelX();
+	array[1] = getAccelY();
+	array[2] = getAccelZ();
+	return array;
 }
 
 float Mpu6050::getAccelX() {
@@ -56,6 +69,14 @@ float Mpu6050::getAccelY() {
 
 float Mpu6050::getAccelZ() {
 	return getAccel(MPU6050_REG_AC_Z);
+}
+
+float *Mpu6050::getGyro(float *array) {
+	//could be optimized by using automatic address incrementation by mpu6050
+	array[0] = getGyroX();
+	array[1] = getGyroY();
+	array[2] = getGyroZ();
+	return array;
 }
 
 float Mpu6050::getGyroX() {
