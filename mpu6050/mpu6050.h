@@ -1,6 +1,7 @@
 #ifndef MPU6050_H
 #define MPU6050_H 1
 
+#include "../interfaces/observable.h"
 #include "../gpio/i2c_dev.h"
 
 /*
@@ -33,6 +34,12 @@
 #define MPU6050_REG_TEMP 0x41
 
 /*
+ * registers related to the interrupts
+ */
+ #define MPU6050_REG_INT_ENABLE 0x38
+ #define MPU6050_REG_INT_STATUS 0x3A
+
+/*
  * registers for basic configuration
  */
 #define MPU6050_REG_PWR_MGMT1 0x6B
@@ -47,13 +54,21 @@
 #define MPU6050_40_HZ 3
 
 /*
+ * structure which gets delivered to the observers through the update method
+ */
+struct Mpu6050Data {
+	float accel[3]; // m/s^2
+	float gyro[3]; // °/s
+};
+
+/*
  * represents a mpu6050
  * an ic controlled with i2c containing an accelerometer, a gyroscope, a temperature sensor (all 16bit resolution)
  * furthermore it has a fifo buffer, is able to generate interrupts and can controll other i2c devices
  * for datasheets look at https://www.invensense.com/products/motion-tracking/6-axis/mpu-6050/
  * keep in mind that the mpuu6050 works in big endian
  */
-class Mpu6050 : public I2CDev {
+class Mpu6050 : public Observable, public I2CDev {
 	/*
 	 * returns the value of the accelerometer axis in m/s^2
 	 * reg is the register where the measured data of the accelerometer axis is stored
@@ -65,14 +80,29 @@ class Mpu6050 : public I2CDev {
 	 * reg is the register where the measured data of the gyroscope axis is stored
 	 */
 	float getGyro(int reg);
+
+	/*
+	 * handles the interrupts
+	 * notifys the observers and pass them the measured data
+	 */
+	void interruptHandler();
 public:
+	/*
+	 * structure gets updated with the latest data by the interruptHandler
+	 * interruptHandler passes the structure to the Observers
+	 * you shouldn't modify its content
+	 */
+	struct Mpu6050Data latestData;
+
 	/*
 	 * intialises the mpu6050
 	 * opens the file descriptor
 	 * resets the device
+	 * setup the interrupts with the obsever pattern (you must call a wiringPiSetup() function before)
 	 * sets sleeps mode to false, freq is set to 1.25 Hz
+	 * @interruptpin: if you don't use interrupts, interruptpin should be smaller than 0
 	 */
-	Mpu6050(int addr = MPU6050_I2C_ADDR0);
+	Mpu6050(int interruptpin = -1, int addr = MPU6050_I2C_ADDR0);
 	
 	/*
 	 * releases the resources associated with the mpu6050
@@ -84,9 +114,14 @@ public:
 	/*
 	 * resets the device
 	 * sets all the registers of the device to their default value
-	 * sleep mode will be set after it to true
+	 * sleep mode will be set after it to true and interrupts will be disabled
 	 */
 	void reset();
+
+	/*
+	 * enables and disables interrupts
+	 */
+	void setInterrupts(bool on);
 	
 	/*
 	 * sets the sleep mode (low power mode)
