@@ -5,22 +5,15 @@
 #include <string.h>
 #include <errno.h>
 #include <string>
-#include <functional>
-using namespace std::placeholders;
 
 #include "mpu6050.h"
-#include "../interfaces/observable.h"
 #include "../gpio/i2c_dev.h"
 #include "../gpio/gpio_exception.h"
 
-void assembleInterruptHandler(void (Mpu6050::*func)(), Mpu6050 &object) {
-	(object.*func())();
-}
-
-Mpu6050::Mpu6050(int interruptpin, int addr) : I2CDev(addr) {
+Mpu6050::Mpu6050(int interruptPin, void (*interruptRoutine)(void), int addr) : I2CDev(addr) {
 	reset();
-	if(interruptpin >= 0) {
-		if(wiringPiISR(interruptpin, INT_EDGE_RISING, assembleInterruptHandler(&Mpu6050::interruptHandler, this)) < 0)
+	if(interruptPin >= 0 && interruptRoutine) {
+		if(wiringPiISR(interruptPin, INT_EDGE_RISING, interruptRoutine) < 0)
 			throw GPIOException("setup interrupt handler: " + std::string(strerror(errno)));
 		setInterrupts(true);
 	}
@@ -39,6 +32,7 @@ void Mpu6050::reset() {
 }
 
 void Mpu6050::setInterrupts(bool on) {
+	writeBitReg8(MPU6050_REG_INT_PIN_CFG, 4, 1);
 	writeBitReg8(MPU6050_REG_INT_ENABLE, 0, on);
 }
 
@@ -111,13 +105,4 @@ float Mpu6050::getGyroY() {
 
 float Mpu6050::getGyroZ() {
 	return getGyro(MPU6050_REG_GY_Z);
-}
-
-void Mpu6050::interruptHandler() {
-	if(readBitReg8(MPU6050_REG_INT_STATUS, 0) == 1) {
-		getAccel(latestData.accel);
-		getGyro(latestData.gyro);
-		notifyObservers(&latestData); //update methods shouldn't wait, block or sleep, nor do too much processing
-	}
-	//else interrupt gets ignored
 }
