@@ -1,6 +1,9 @@
 #ifndef MPU6050_H
 #define MPU6050_H 1
 
+#include <stdint.h>
+#include <stddef.h>
+
 #include "../gpio/i2c_dev.h"
 
 /*
@@ -44,6 +47,8 @@
  */
 #define MPU6050_REG_PWR_MGMT1 0x6B
 #define MPU6050_REG_PWR_MGMT2 0x6C
+#define MPU6050_REG_SMPRT_DIV 0x19
+#define MPU6050_REG_CONFIG 0x1A
 
 /* 
  * constants to be passed to setCycleFreq()
@@ -52,6 +57,19 @@
 #define MPU6050_5_HZ 1
 #define MPU6050_20_HZ 2
 #define MPU6050_40_HZ 3
+
+/*
+ * constants to be passed to setLowPassFilter()
+ * the first number describes the bandwidth for the accelerometer and the second one the bandwidth for the gyroscope
+ */
+#define MPU6050_BANDWIDTH_260_256_HZ 0
+#define MPU6050_BANDWIDTH_184_188_HZ 1
+#define MPU6050_BANDWIDTH_94_98_HZ 2
+#define MPU6050_BANDWIDTH_44_42_HZ 3
+#define MPU6050_BANDWIDTH_21_20_HZ 4
+#define MPU6050_BANDWIDTH_10_10_HZ 5
+#define MPU6050_BANDWIDTH_5_5_HZ 6
+
 
 /*
  * represents a mpu6050
@@ -78,7 +96,7 @@ public:
 	 * opens the file descriptor
 	 * resets the device
 	 * setup the interrupts (you must call a wiringPiSetup() function before)
-	 * sets sleeps mode to false, freq is set to 1.25 Hz
+	 * sets sleeps mode to false, sample rate divider is set to 0 and digital low pass filter for accel and gyro to 5 Hz
 	 * @interruptpin: if you don't use interrupts, interruptpin should be smaller than 0
 	 */
 	Mpu6050(int interruptPin = -1, void (*interruptRoutine)(void) = NULL, int addr = MPU6050_I2C_ADDR0);
@@ -98,6 +116,12 @@ public:
 	void reset();
 
 	/*
+	 * sets the low pass filter
+	 * @bandwith: pass one of the constants defined above
+	 */
+	void setLowPassFilter(int bandwith);
+
+	/*
 	 * enables and disables interrupts
 	 */
 	void setInterrupts(bool on);
@@ -105,6 +129,7 @@ public:
 	/*
 	 * sets the sleep mode (low power mode)
 	 * that the mpu6050 measures the data, sleep mode must be set to false 
+	 * configuration must be transmitted when mpu6050 isn't in sleep mode (else it doesn't get stored depending on register)
 	 */
 	void setSleepMode(bool on);
 	
@@ -113,7 +138,9 @@ public:
 	 * when sleep mode is off,
 	 * cycle mode will wake up from sleep mode in a certain frequency - see setCycleFreq(),
 	 * measure the data and go back to sleep mode
-	 * else data will be measured with a higher sample rate (some kHz, see samplerate divider register 0x19)
+	 * only the data of the accelerometer will be measured
+	 * power consumption goes down from 3.9 mA to 0.5mA compared to normal mode
+	 * else data will be measured with a higher sample rate (some kHz, see setSampleRateDivider())
 	 */
 	void setCycleMode(bool on);
 	
@@ -122,6 +149,16 @@ public:
 	 * @freq: pass one of the constants defined above
 	 */
 	void setCycleFreq(int freq);
+
+	/*
+	 * sets the sample rate divider
+	 * the sample rate is calculated according to following formula:
+	 * Sample Rate = Gyroscope Output Rate / (1 + divider)
+	 * where Gyroscope Output Rate = 8kHz when the Digital Low Pass Filter is disabled (DLPF_CFG = 0 or 7), and 1kHz
+	 * when the DLPF is enabled (see Register 26).
+	 * @divider: value between 0 and 255
+	 */
+	void setSampleRateDivider(uint8_t divider);
 	
 	/*
 	 * returns the temperature in °C (degree celsius)

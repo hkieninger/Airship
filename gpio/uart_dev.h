@@ -22,8 +22,9 @@ public:
 	 * opens the file descriptor
      * the serial device is in raw mode and the timeout is set to 10 seconds
 	 * @serialport: path to the device file representing the uart
+     * @baudrate: of the uart
 	 */
-	UARTDev(const std::string &serialport);
+	UARTDev(const std::string &serialport, int baudrate);
 	
 	/*
 	 * closes the file descriptor

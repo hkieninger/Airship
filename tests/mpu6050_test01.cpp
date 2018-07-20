@@ -1,44 +1,32 @@
-#include "../mpu6050.h"
-#include "../../gpio/gpio_exception.h"
+/*
+ * tests temperature, gyro and accelerometer measurements of the Mpu6050 library
+ */
+
+#include "../mpu6050/mpu6050.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 
-//test close, with signal catching
-
-#define MPS 100
-
 int main(void) {
 	Mpu6050 mpu;
-	while(true) {
-		float temp = 0, gx = 0, gy = 0, gz = 0, ax = 0, ay = 0, az = 0;
-		for(int i = 0; i < MPS; i++) {
-			temp += mpu.getTemperature();
-			gx += mpu.getGyroX();
-			gy += mpu.getGyroY();
-			gz += mpu.getGyroZ();
-			ax += mpu.getAccelX();
-			ay += mpu.getAccelY();
-			az += mpu.getAccelZ();
-			usleep(1000 * 1000 / MPS);
-		}
-		temp /= MPS;
-		gx /= MPS;
-		gy /= MPS;
-		gz /= MPS;
-		ax /= MPS;
-		ay /= MPS;
-		az /= MPS;
-		printf("----------------------------------------------------\n");
-		printf("temperature:\t%+.2f%s", temp, "\t°C\n");
-		printf("gyro x:     \t%+.2f%s", gx, "\t°/s\n");
-		printf("gyro y:     \t%+.2f%s", gy, "\t°/s\n");
-		printf("gyro z:     \t%+.2f%s", gz, "\t°/s\n");
-		printf("accel x:    \t%+.2f%s", ax, "\tm/s^2\n");
-		printf("accel y:    \t%+.2f%s", ay, "\tm/s^2\n");
-		printf("accel z:    \t%+.2f%s", az, "\tm/s^2\n");
-		printf("----------------------------------------------------\n");
+	for(int i = 0; i < 10; i++) {
+		float temp = mpu.getTemperature();
+		float accel[3], gyro[3];
+		mpu.getAccel(accel);
+		mpu.getGyro(gyro);
+
+		printf("temperature %.2f °C\n", temp);
+
+		printf("accel x %.2f m/s^2\n", accel[0]);
+    	printf("accel y %.2f m/s^2\n", accel[1]);
+    	printf("accel z %.2f m/s^2\n\n", accel[2]);
+
+		printf("gyro x %.2f °/s\n", gyro[0]);
+    	printf("gyro y %.2f °/s\n", gyro[1]);
+    	printf("gyro z %.2f °/s\n\n", gyro[2]);
+
+		usleep(500 * 1000);
 	}
 	return EXIT_SUCCESS;
 }

@@ -12,14 +12,14 @@
 
 Mpu6050::Mpu6050(int interruptPin, void (*interruptRoutine)(void), int addr) : I2CDev(addr) {
 	reset();
+	setSleepMode(false);
+	setLowPassFilter(MPU6050_BANDWIDTH_5_5_HZ);
+	usleep(20 * 1000); //sleep some ms that mpu6050 can take first measurements
 	if(interruptPin >= 0 && interruptRoutine) {
 		if(wiringPiISR(interruptPin, INT_EDGE_RISING, interruptRoutine) < 0)
 			throw GPIOException("setup interrupt handler: " + std::string(strerror(errno)));
 		setInterrupts(true);
 	}
-	setCycleFreq(MPU6050_1_25_HZ);
-	setCycleMode(true);
-	setSleepMode(false);
 }
 
 Mpu6050::~Mpu6050() {
@@ -28,7 +28,11 @@ Mpu6050::~Mpu6050() {
 
 void Mpu6050::reset() {
 	writeReg8(MPU6050_REG_PWR_MGMT1, 0x80);
-	usleep(1000); //let mpu6050 complete reset
+	usleep(100 * 1000); //let mpu6050 complete reset
+}
+
+void Mpu6050::setLowPassFilter(int bandwith) {
+	writeReg8(MPU6050_REG_CONFIG, bandwith & 0x07);
 }
 
 void Mpu6050::setInterrupts(bool on) {
@@ -47,6 +51,10 @@ void Mpu6050::setCycleMode(bool on) {
 void Mpu6050::setCycleFreq(int freq) {
 	writeBitReg8(MPU6050_REG_PWR_MGMT2, 7, freq & 0x02);
 	writeBitReg8(MPU6050_REG_PWR_MGMT2, 6, freq & 0x01);
+}
+
+void Mpu6050::setSampleRateDivider(uint8_t divider) {
+	writeReg8(MPU6050_REG_SMPRT_DIV, divider);
 }
 
 float Mpu6050::getTemperature() {

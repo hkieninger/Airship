@@ -1,5 +1,8 @@
 #include <wiringSerial.h>
 #include <stddef.h>
+#include <string.h>
+#include <errno.h>
+#include <unistd.h>
 #include <string>
 
 #include "gpio_exception.h"
@@ -9,8 +12,8 @@
  * wrapper functions of wiringPi
  */
 
-UARTDev::UARTDev(const std::string &serialport) {
-    fd = serialOpen(serialport.c_str(), DEFAULT_BAUDRATE);
+UARTDev::UARTDev(const std::string &serialport, int baudrate) {
+    fd = serialOpen(serialport.c_str(), baudrate);
     if(fd < 0)
         throw UARTException("opening serial port: " + std::string(strerror(errno)));
 }
