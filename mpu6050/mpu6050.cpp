@@ -58,19 +58,19 @@ void Mpu6050::setSampleRateDivider(uint8_t divider) {
 }
 
 float Mpu6050::getTemperature() {
-	int16_t val = 0xFFFF & readReg16(MPU6050_REG_TEMP);
+	int16_t val = readReg16(MPU6050_REG_TEMP);
 	val = bswap_16(val);
 	return val / 340.0f + 36.53f; //formula from datasheet
 }
 
 float Mpu6050::getAccel(int reg) {
-	int16_t val = 0xFFFF & readReg16(reg);
+	int16_t val = readReg16(reg);
 	val = bswap_16(val);
 	return val / 16384.0f * 9.80665f; //formula from datasheet, only valid for AFS_SEL equal 0
 }
 
 float Mpu6050::getGyro(int reg) {
-	int16_t val = 0xFFFF & readReg16(reg);
+	int16_t val = readReg16(reg);
 	val = bswap_16(val);
 	return val / 131.0f; //formula from datasheet, only valid for FS_SEL equal 0
 }

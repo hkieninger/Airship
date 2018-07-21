@@ -47,8 +47,8 @@ float *Qmc5883l::getMag(float *array) {
 //max speed 200Hz -> 5ms pause
 float Qmc5883l::getMag(int reg) {
 	if(readBitReg8(QMC5883L_REG_STAT, 1)) //check for overflow flag
-		throw std::range_error("magnetic field exceeds range")
-	int16_t val = 0xFFFF & readReg16(reg);
+		throw std::range_error("magnetic field exceeds range");
+	int16_t val = readReg16(reg);
 	return val / 12000.0f;
 }
 

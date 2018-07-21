@@ -10,9 +10,7 @@
  * possible improvements:
  * -callibration
  * -use fifo buffer
- * -take advantage of interrupts
  * -controll other devices via auxiliary i2c
- * -set hardware high pass and low pass filter
  */
 
 /* 
@@ -102,9 +100,9 @@ public:
 	Mpu6050(int interruptPin = -1, void (*interruptRoutine)(void) = NULL, int addr = MPU6050_I2C_ADDR0);
 	
 	/*
-	 * releases the resources associated with the mpu6050
-	 * closes the file descriptor
 	 * sets device to sleep to save power
+	 * closes the file descriptor
+	 * releases the resources associated with the mpu6050
 	 */
 	~Mpu6050();
 	
