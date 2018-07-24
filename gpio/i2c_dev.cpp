@@ -71,3 +71,15 @@ uint16_t I2CDev::readReg16(int reg) {
 		throw I2CException("reading register 16bit of i2c device: " + std::string(strerror(errno)));
 	return ret;
 }
+
+size_t I2CDev::readI2C(void *buf, size_t count) {
+	if(read(fd, buf, count) < count)
+		throw I2CException("i2c read: " + std::string(strerror(errno)));
+	return count;
+}
+
+size_t I2CDev::writeI2C(const void *buf, size_t count) {
+    if(write(fd, buf, count) < count)
+		throw I2CException("i2c write: " + std::string(strerror(errno)));
+	return count;
+}

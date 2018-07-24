@@ -2,6 +2,7 @@
 #define I2C_DEV_H 1
 
 #include <stdint.h>
+#include <stddef.h>
 
 /*
  * represents a i2c device
@@ -90,6 +91,16 @@ public:
 	 *		    therefore you might want to use the functions from <byteswap.h>
 	 */
 	uint16_t readReg16(int reg);
+
+	/*
+     * wrapper for read from <unistd.h>
+     */
+    size_t readI2C(void *buf, size_t count);
+
+    /*
+     * wrapper for write from <unistd.h>
+     */
+    size_t writeI2C(const void *buf, size_t count);
 };
 
 #endif /* I2C_DEV_H */
