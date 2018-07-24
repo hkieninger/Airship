@@ -1,0 +1,17 @@
+#added to the default configuration file
+interface=wlan0
+#driver=nl80211 #see https://www.raspberrypi.org/forums/viewtopic.php?t=190178
+#enter here the name you want for your network
+ssid=rpi-zero-w
+hw_mode=g
+channel=7
+wmm_enabled=0
+macaddr_acl=0
+auth_algs=1
+ignore_broadcast_ssid=0
+wpa=2
+#enter here the passwort you want for your network
+wpa_passphrase=Roter_Zeppelin_18
+wpa_key_mgmt=WPA-PSK
+wpa_pairwise=TKIP
+rsn_pairwise=CCMP

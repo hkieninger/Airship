@@ -1,68 +1,15 @@
 #include <stdint.h>
 #include <unistd.h>
-#include <stddef.h>
 
-#include "../gpio/gpio_exception.h"
 #include "../gpio/i2c_dev.h"
-#include "bmp280_api/bmp280_defs.h"
-#include "bmp280_api/bmp280.h"
 #include "bmp280.h"
 
-Bmp280 *Bmp280::bmp0 = NULL;
-Bmp280 *Bmp280::bmp1 = NULL;
-
-int8_t Bmp280::i2cWrite(uint8_t dev_id, uint8_t reg_addr, uint8_t *data, uint16_t len) {
-    Bmp280 *bmp;
-    if(dev_id == BMP280_I2C_ADDR0)
-        bmp = Bmp280::bmp0;
-    else
-        bmp = Bmp280::bmp1;
-    try {
-        bmp->writeI2C(&reg_addr, 1);
-        bmp->writeI2C(data, len);
-    } catch(const I2CException& e) {
-        return -1;
-    }
-    return 0;
-}
-
-int8_t Bmp280::i2cRead(uint8_t dev_id, uint8_t reg_addr, uint8_t *data, uint16_t len) {
-    Bmp280 *bmp;
-    if(dev_id == BMP280_I2C_ADDR0)
-        bmp = Bmp280::bmp0;
-    else
-        bmp = Bmp280::bmp1;
-    try {
-        bmp->writeI2C(&reg_addr, 1);
-        bmp->readI2C(data, len);
-    } catch(const I2CException& e) {
-        return -1;
-    }
-    return 0;
-}
-
-void Bmp280::delayMs(uint32_t period) {
-    usleep(period * 1000);
-}
-
 Bmp280::Bmp280(int addr) : I2CDev(addr) {
-    if(addr == BMP280_I2C_ADDR0)
-        Bmp280::bmp0 = this;
-    else
-        Bmp280::bmp1 = this;
-
-    /* Sensor interface over I2C with primary slave address  */
-    bmp.dev_id = addr;
-    bmp.intf = BMP280_I2C_INTF;
-    bmp.read = &Bmp280::i2cRead;
-    bmp.write = &Bmp280::i2cWrite;
-    bmp.delay_ms = &Bmp280::delayMs;
-
-    int8_t rslt = bmp280_init(&bmp); //reset is inklusive
-    if (rslt != BMP280_OK)
-        throw I2CException("bmp280 initialisation failed");
-
-    configure(BMP280_OS_2X, BMP280_OS_16X, BMP280_ODR_0_5_MS, BMP280_FILTER_COEFF_4);
+    reset();
+    getCallibParam();
+    writeReg8(BMP280_REG_CONFIG, 0x10); //standby 0.5 ms, filter coefficient 16
+    writeReg8(BMP280_REG_CTRL_MEAS, 0x57); //oversample temperature 2x, oversample pressure 16x, normal mode
+    usleep(43200); //sleep 43.2 ms, maximum time for a measurement, to take a first measurement
 }
 
 Bmp280::~Bmp280() {
@@ -70,54 +17,94 @@ Bmp280::~Bmp280() {
 }
 
 void Bmp280::reset() {
-    if(bmp280_soft_reset(&bmp) != BMP280_OK)
-        throw I2CException("bmp280 reset failed");
+    writeReg8(BMP280_REG_RESET, 0xB6);
+    usleep(2000); //let complete reset
 }
 
 void Bmp280::setPowerMode(uint8_t mode) {
-    int8_t rslt = bmp280_set_power_mode(mode, &bmp);
-    if(rslt != BMP280_OK)
-        throw I2CException("bmp280 set power mode failed");
+    uint8_t reg = readReg8(BMP280_REG_CTRL_MEAS);
+    reg &= ~3; //clear bits
+    reg |= mode & 3; //set bits
+    writeReg8(BMP280_REG_CTRL_MEAS, reg);
 }
 
-void Bmp280::configure(uint8_t os_temp, uint8_t os_pres, uint8_t odr, uint8_t filter) {
-    uint8_t mode;
-    if(bmp280_get_power_mode(&mode, &bmp) != BMP280_OK)
-        throw I2CException("bmp280 get power mode failed");
-
-    struct bmp280_config conf;
-    /* Always read the current settings before writing, especially when
-    * all the configuration is not modified 
-    */
-    int8_t rslt = bmp280_get_config(&conf, &bmp);
-    if(rslt != BMP280_OK)
-        throw I2CException("bmp280 get configuration failed");
-
-    conf.filter = filter;
-    conf.os_pres = os_pres;
-    conf.os_temp = os_temp;
-    conf.odr = odr; //look at datasheet section 3.8.2 for resulting freqs
-
-    rslt = bmp280_set_config(&conf, &bmp);
-    if(rslt != BMP280_OK)
-        throw I2CException("bmp280 set configuration failed");
-
-    usleep(2 * 1000);
-    
-    /* Always set the power mode after setting the configuration */
-    setPowerMode(BMP280_NORMAL_MODE);
+void Bmp280::setTemperatureOversampling(uint8_t oversampling) {
+    uint8_t reg = readReg8(BMP280_REG_CTRL_MEAS);
+    reg &= ~(7 << 5); //clear bits
+    reg |= (oversampling & 7) << 5; //set bits
+    writeReg8(BMP280_REG_CTRL_MEAS, reg);
 }
 
-double *Bmp280::getMeasurement(double *data) {
-    struct bmp280_uncomp_data ucomp_data;
-    int8_t rslt = bmp280_get_uncomp_data(&ucomp_data, &bmp);
-    if(rslt != BMP280_OK)
-        throw I2CException("bmp280 get measurement failed");
-    data[0] = bmp280_comp_temp_double(ucomp_data.uncomp_temp, &bmp);
-    data[1] = bmp280_comp_pres_double(ucomp_data.uncomp_press, &bmp);
-    return data;
+void Bmp280::setPressureOversampling(uint8_t oversampling) {
+    uint8_t reg = readReg8(BMP280_REG_CTRL_MEAS);
+    reg &= ~(7 << 2); //clear bits
+    reg |= (oversampling & 7) << 2; //set bits
+    writeReg8(BMP280_REG_CTRL_MEAS, reg);
 }
 
-uint8_t Bmp280::calcMeasurementTime() {
-    return bmp280_compute_meas_time(&bmp);
+void Bmp280::setStandbyTime(uint8_t time) {
+    uint8_t reg = readReg8(BMP280_REG_CONFIG);
+    reg &= ~(7 << 5); //clear bits
+    reg |= (time & 7) << 5; //set bits
+    writeReg8(BMP280_REG_CONFIG, reg);
+}
+
+void Bmp280::setFilter(uint8_t coefficient) {
+    uint8_t reg = readReg8(BMP280_REG_CONFIG);
+    reg &= ~(7 << 2); //clear bits
+    reg |= (coefficient & 7) << 2; //set bits
+    writeReg8(BMP280_REG_CONFIG, reg);
+}
+
+double Bmp280::getTemperature() {
+    //normally should use burst read to avoid mixing up of bytes from different measurements
+    uint32_t msb = readReg8(BMP280_REG_TEMP_MSB);
+    uint32_t lsb = readReg8(BMP280_REG_TEMP_LSB);
+    uint32_t xlsb = readReg8(BMP280_REG_TEMP_XLSB);
+    uint32_t value = msb << 12 | lsb << 4 | xlsb >> 4;
+
+    double var1 = (value / 16384.0 - dig_t1 / 1024.0) * dig_t2;
+    double var2 = (value / 131072.0 - dig_t1 / 8192.0) * (value / 131072.0 - dig_t1 / 8192.0) * dig_t3;
+	t_fine = (int32_t) (var1 + var2);
+	return (var1 + var2) / 5120.0;
+}
+
+double Bmp280::getPressure() {
+    //normally should use burst read to avoid mixing up of bytes from different measurements
+    uint32_t msb = readReg8(BMP280_REG_PRES_MSB);
+    uint32_t lsb = readReg8(BMP280_REG_PRES_LSB);
+    uint32_t xlsb = readReg8(BMP280_REG_PRES_XLSB);
+    uint32_t value = msb << 12 | lsb << 4 | xlsb >> 4;
+
+    double var1 = t_fine / 2.0 - 64000.0;
+    double var2 = var1 * var1 * dig_p6 / 32768.0;
+    var2 = var2 + var1 * dig_p5 * 2.0;
+    var2 = var2 / 4.0 + dig_p4 * 65536.0;
+    var1 = (dig_p3 * var1 * var1 / 524288.0 + dig_p2 * var1) / 524288.0;
+    var1 = (1.0 + var1 / 32768.0) * dig_p1;
+    double pressure = 1048576.0 -  value;
+    if (var1 != 0) {
+        pressure = (pressure - var2 / 4096.0) * 6250.0 / var1;
+        var1 = dig_p9 * pressure * pressure / 2147483648.0;
+        var2 = pressure * dig_p8 / 32768.0;
+        pressure = pressure + (var1 + var2 + dig_p7) / 16.0;
+    } else {
+        pressure = 0;
+    }
+    return pressure;
+}
+
+void Bmp280::getCallibParam() {
+    dig_t1 = readReg8(BMP280_REG_T1_LSB) | readReg8(BMP280_REG_T1_MSB) << 8;
+	dig_t2 = readReg8(BMP280_REG_T2_LSB) | readReg8(BMP280_REG_T2_MSB) << 8;
+	dig_t3 = readReg8(BMP280_REG_T3_LSB) | readReg8(BMP280_REG_T3_MSB) << 8;
+	dig_p1 = readReg8(BMP280_REG_P1_LSB) | readReg8(BMP280_REG_P1_MSB) << 8;
+	dig_p2 = readReg8(BMP280_REG_P2_LSB) | readReg8(BMP280_REG_P2_MSB) << 8;
+	dig_p3 = readReg8(BMP280_REG_P3_LSB) | readReg8(BMP280_REG_P3_MSB) << 8;
+	dig_p4 = readReg8(BMP280_REG_P4_LSB) | readReg8(BMP280_REG_P4_MSB) << 8;
+	dig_p5 = readReg8(BMP280_REG_P5_LSB) | readReg8(BMP280_REG_P5_MSB) << 8;
+	dig_p6 = readReg8(BMP280_REG_P6_LSB) | readReg8(BMP280_REG_P6_MSB) << 8;
+	dig_p7 = readReg8(BMP280_REG_P7_LSB) | readReg8(BMP280_REG_P7_MSB) << 8;
+	dig_p8 = readReg8(BMP280_REG_P8_LSB) | readReg8(BMP280_REG_P8_MSB) << 8;
+	dig_p9 = readReg8(BMP280_REG_P9_LSB) | readReg8(BMP280_REG_P9_MSB) << 8;
 }

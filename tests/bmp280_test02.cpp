@@ -9,19 +9,11 @@
 
 int main() {
     Bmp280 bmp;
-    double data[2];
-    /*bmp.reset();
-    bmp.writeReg8(0xF4, 0x54);
-    bmp.writeReg8(0xF5, 0x1C);
-    usleep(2 * 1000);
-    printf("%x\n", bmp.readReg8(0xF4));
-    printf("%x\n", bmp.readReg8(0xF5));*/
-    //bmp.configure(BMP280_OS_4X, BMP280_OS_16X, BMP280_ODR_0_5_MS, BMP280_FILTER_COEFF_8);
-    //bmp.setPowerMode(BMP280_SLEEP_MODE);
-    for(int i = 0; i < 100; i++) {
-        bmp.getMeasurement(data);
-        //printf("Temperature is %.2f °C\n", data[0]);
-        printf("Pressure is %f Pa\n", data[1]);
+    printf("conf reg: %x\n", bmp.readReg8(BMP280_REG_CONFIG));
+    printf("ctrl meas reg: %x\n", bmp.readReg8(BMP280_REG_CTRL_MEAS));
+    for(int i = 0; i < 10; i++) {
+        printf("Temperature is %f °C\n", bmp.getTemperature());
+        printf("Pressure is %f Pa\n", bmp.getPressure());
         usleep(1000 * 1000);
     }
 }
