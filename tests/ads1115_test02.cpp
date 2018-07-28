@@ -1,6 +1,6 @@
 /*
  * test all the functions of ads1115 library
- * pin 0 should be left floating and to pin 2 should be attached a known voltage (e.g. voltage divider with some resistors)
+ * analog pin 0 should be left floating and to analog pin 2 should be attached a known voltage (e.g. voltage divider with some resistors)
  */
 
 #include <stdio.h>

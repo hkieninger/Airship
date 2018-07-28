@@ -1,3 +1,10 @@
+/*
+ * reads out the measured values from the register and prints them to the screen
+ * calculates in addition the azimuth/angle relative to the north
+ * from the qmc5883l we bought, none works properly, but the values outputed are constant (I assume a hardware error)
+ * therefore the problem could be solved with a table or polynomial with the correct values
+ */
+
 #include "../qmc5883l/qmc5883l.h"
 
 #include <stdio.h>
@@ -23,40 +30,34 @@ void printAllReg(Qmc5883l *qmc) {
 	}
 }
 
-//test close with signal catching
-
 int main(void) {
 	Qmc5883l qmc;
-	qmc.writeReg8(0x0B, 0x01);
-	qmc.writeBitReg8(0x0A, 6, true);
-	sleep(1);
-	printAllReg(&qmc);
+	//printAllReg(&qmc);
 	while(true) {
-		double x = qmc.getMagX();
-		double y = qmc.getMagY();
-		double z = qmc.getMagZ();
+		float mag[3];
+		qmc.getMag(mag);
 		printf("----------------------------------------------------\n");
-		printf("magnetic field x:\t%+.4f%s", x, "\tGs\n");
-		printf("magnetic field y:\t%+.4f%s", y, "\tGs\n");
-		printf("magnetic field z:\t%+.4f%s", z, "\tGs\n");
-		printf("absolute value is:\t%.4f%s", sqrt(x*x + y*y + z*z), "\tGs\n");
+		printf("magnetic field x:\t%+.4f%s", mag[0], "\tGs\n");
+		printf("magnetic field y:\t%+.4f%s", mag[1], "\tGs\n");
+		printf("magnetic field z:\t%+.4f%s", mag[2], "\tGs\n");
+		printf("absolute value is:\t%.4f%s", sqrt(mag[0]*mag[0] + mag[1]*mag[1] + mag[2]*mag[2]), "\tGs\n");
 		int angle;
-		if(x == 0) {
-			if(y > 0)
+		if(mag[0] == 0) {
+			if(mag[1] > 0)
 				angle = 90;
 			else
 				angle = 270;
 		} else {
-			if(x > 0)
-				angle = (int) (0.5 + atan(y/x) * 180 / M_PI);
+			if(mag[0] > 0)
+				angle = (int) (0.5 + atan(mag[1]/mag[0]) * 180 / M_PI);
 			else
-				angle = (int) (0.5 + atan(y/x) * 180 / M_PI) + 180;
+				angle = (int) (0.5 + atan(mag[1]/mag[0]) * 180 / M_PI) + 180;
 			angle += 360;
 			angle %= 360;
 		}
 		printf("angle: \t%d\n", angle);
 		printf("----------------------------------------------------\n");
-		sleep(1);
+		usleep(1000 * 1000);
 	}
 	return EXIT_SUCCESS;
 }

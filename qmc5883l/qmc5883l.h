@@ -7,6 +7,7 @@
  * possible improvements:
  * -take advantage of interrupts
  * -some small features not implemented yet
+ * -callibration
  */
 
 /*

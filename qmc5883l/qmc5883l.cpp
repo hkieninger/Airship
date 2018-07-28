@@ -8,7 +8,9 @@
 Qmc5883l::Qmc5883l() : I2CDev(QMC5883L_I2C_ADDR) {
 	reset();
 	writeReg8(QMC5883L_REG_CTRL1, 0x01); //runs with 10Hz (continuous mode), range 2 Gauss
+	writeReg8(0x0B, 0x01); //set/reset period, value according to recommendation of datasheet
 	range = QMC5883L_2_GAUSS;
+	usleep(100 * 1000);  //time for first measurement
 }
 
 Qmc5883l::~Qmc5883l() {
@@ -17,11 +19,12 @@ Qmc5883l::~Qmc5883l() {
 
 void Qmc5883l::reset() {
 	writeReg8(QMC5883L_REG_CTRL2, 0x80);
-	usleep(100 * 1000); //350 should be enough //debug
+	usleep(350);
 }
 
 void Qmc5883l::setRange(int range) {
 	writeBitReg8(QMC5883L_REG_CTRL1, 4, range);
+	this->range = range;
 }
 
 bool Qmc5883l::dataReady() {

@@ -149,7 +149,7 @@ public:
      * clears the configuration of the neo6m
      * turns off the NMEA protocol
      * sets the dynamic platform model to pedestrian
-     * sets message rate to 0
+     * sets message rate of ubx messages to 0
      */
     Neo6M(const std::string &serialport = DEFAULT_SERIALPORT);
 

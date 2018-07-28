@@ -2,9 +2,8 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <signal.h>
-#include <wiringSerial.h>
 
-#include "neo6m.h"
+#include "../neo6m/neo6m.h"
 #include "../gpio_exception.h"
 
 #define SERIAL_PORT "/dev/serial0"
@@ -19,19 +18,10 @@ void cleanup(int sig) {
     }
 }
 
-void readNMEA(int fd, int messages) {
-    int count = 0;
-    while(count < messages) {
-        char c = serialGetchar(fd);
-        if(c != -1)
-            printf("%c", c);
-        if(c == '\n')
-            count++;
-    }
-}
-
 int main(void) {
     signal(SIGINT, cleanup);
+
+    neo->setProtocol(NMEA_AND_UBX);
 
     neo = new Neo6M(SERIAL_PORT);
     neo->disableNMEAMessage("GSV");
@@ -39,13 +29,15 @@ int main(void) {
     neo->disableNMEAMessage("GLL");
     neo->disableNMEAMessage("VTG");
 
-    int fd = neo->getFd();
-    readNMEA(fd, 10);
+    for(int i = 0; i < 10; i++) {
+        printf("%s\n",neo->readNMEAMessage().c_str());
+    }
     neo->setPowerSaveMode(10 * 1000);
     usleep(10 * 1000 * 1000);
     neo->wakeUp();
-    usleep(500 * 1000);
-    readNMEA(fd, 40);
+    for(int i = 0; i < 10; i++) {
+        printf("%s\n",neo->readNMEAMessage().c_str());
+    }
     
     return EXIT_SUCCESS;
 }

@@ -141,8 +141,7 @@ void Neo6M::powerOff(uint32_t duration) {
 
 void Neo6M::powerOn() {
     uint8_t sequence = 0xFF;
-    if(writeAll(&sequence, 1) < 0)
-        throw UARTException("writing to UART: " + std::string(strerror(errno)));
+    writeAll(&sequence, 1)
     usleep(500 * 1000);
 }
 
@@ -319,6 +318,44 @@ void Neo6M::sendNMEAMessage(const std::string &msg) {
     if(snprintf(buffer, sizeof(buffer), "$%s*%.2X\r\n", msg.c_str(), checksum) != sizeof(buffer) - 1)
         throw std::runtime_error("creating NMEA message: " + std::string(strerror(errno)));
     writeAll(buffer, sizeof(buffer)-1);
+}
+
+int8_t ascii2hex(char ascii) {
+    if(ascii >= '0' && ascii <= '9')
+        return ascii - '0';
+    else if(ascii >= 'a' && ascii <= 'f')
+        return ascii - 'a' + 10;
+    else if(ascii >= 'A' && ascii <= 'F')
+        return ascii - 'A' + 10;
+    return -1;
+}
+
+std::string Neo6M::readNMEAMessage() {
+    //discard rubbish in the buffer and look for the beginning of a NMEA message
+    std::string str("$GP");
+    char lastlastC = getChar();
+    char lastC = getChar();
+    char c = getChar();
+    while(lastlastC != str[0] && lastC != str[1] && c != str[2]) {
+        lastlastC = lastC;
+        lastC = c;
+        c = getChar();
+    }
+    //read the NMEA message
+    do {
+        c = getChar();
+        str.push_back(c);
+    } while(c != '*');
+    //read and compare the checksum
+    str.push_back(getChar());
+    str.push_back(getChar());
+    int len = str.length();
+    uint8_t checksum = ascii2hex(str[len - 2]) << 4 | ascii2hex(str[len - 1]);
+    if(checksum != calcNMEAChecksum(str.substr(1, len - 3)))
+        throw Neo6MException("read NMEA message: checksum don't match")
+    str.push_back(getChar()); // \r
+    str.push_back(getChar()); // \n
+    return str;
 }
 
 uint8_t Neo6M::calcNMEAChecksum(const std::string &msg) {

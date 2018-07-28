@@ -3,7 +3,8 @@ CC = g++
 ELFS = \
 mpu6050_test01.elf mpu6050_test02.elf mpu6050_test03.elf \
 ads1115_test01.elf ads1115_test02.elf \
-bmp280_test01.elf bmp280_test02.elf
+bmp280_test01.elf bmp280_test02.elf \
+qmc5883l_test01.elf qmc5883l_test02.elf
 LIBS = -lwiringPi
 CFLAGS = -O3
 
@@ -42,9 +43,21 @@ bmp280_test%.o: bmp280_test%.cpp ../bmp280/bmp280.h ../gpio/i2c_dev.h
 	#compile the test programms
 	$(CC) -c $(CFLAGS) $<
 
+qmc5883l_test%.elf: qmc5883l_test%.o
+	#compile the libs
+	$(MAKE) -C ../gpio/ i2c_dev.o CFLAGS=$(CFLAGS)
+	$(MAKE) -C ../qmc5883l/ qmc5883l.o CFLAGS=$(CFLAGS)
+	#link the elf
+	$(CC) -o $@ $(CFLAGS) $< ../qmc5883l/qmc5883l.o ../gpio/i2c_dev.o $(LIBS)
+
+qmc5883l_test%.o: qmc5883l_test%.cpp ../qmc5883l/qmc5883l.h ../gpio/i2c_dev.h
+	#compile the test programms
+	$(CC) -c $(CFLAGS) $<
+
 clean:
 	$(MAKE) -C ../gpio/ clean
 	$(MAKE) -C ../mpu6050/ clean
 	$(MAKE) -C ../ads1115/ clean
 	$(MAKE) -C ../bmp280/ clean
+	$(MAKE) -C ../qmc5883l/ clean
 	rm *.elf
