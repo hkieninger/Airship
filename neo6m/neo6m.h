@@ -43,13 +43,14 @@
 #define NEO6M_CFG_MSG 0x01 /* message rate */
 #define NEO6M_CFG_RST 0x04  /* reset */
 #define NEO6M_CFG_PRT 0x00 /* port and protocols */
+#define NEO6M_CFG_RATE 0x08 /* measurement rate */
 
 #define NEO6M_NAV_POSECEF 0x01 /* position in coordinate system with earth mass center as (0, 0, 0) */
 #define NEO6M_NAV_POSLLH 0x02 /* position in system with longitude and latitude (geodetic) */
 #define NEO6M_NAV_VELECEF 0x11 /* velocity for the ecef solution */
 #define NEO6M_NAV_VELNED 0x12 /* velocity for the geodetic solution */
 #define NEO6M_NAV_STATUS 0x03 /* information about gps fix type (dead reckoning and dgps) */
-#define NEO6M_NAV_SVINFO 0x30 /* information about use satelites */
+#define NEO6M_NAV_SVINFO 0x30 /* information about used satelites */
 
 #define NEO6M_ACK_ACK 0x01 /* acknowledge */
 #define NEO6M_ACK_NAK 0x00 /* not acknowledge */
@@ -67,6 +68,12 @@
 #define NEO6M_FIX_TIME_ONLY_FIX 5
 
 /*
+ * constants for setProtocol()
+ */
+#define UBX_ONLY false
+#define UBX_AND_NMEA true
+
+/*
  * structure contains the elements of a message of the UBX protocol (NMEA messages are packed as strings)
  */
 struct UBXMsg {
@@ -80,9 +87,12 @@ struct UBXMsg {
  * structure contains information about the GPS fix
  */
 struct GPSFixStatus {
+    uint32_t time; //gps millisecond of week
     uint8_t gpsFix; //fix type see constants defined above
     uint8_t satellites; //amount of satellites used
     bool dgps; //sbas used
+    bool fixValid;
+    bool timeValid;
 };
 
 /*
@@ -129,6 +139,7 @@ struct __attribute__((__packed__)) GPSGeodeticVel { //avoid alignment reduces pe
  * NMEA and UBX protocol shouldn't be mixed for this library to work properly
  * so switch off NMEA if you use UBX methods or set the message rate of all UBX messages to 0 when using NMEA methods
  * NMEA based methods contain the word NMEA in their name
+ * if you want to poll messages or use CFG messages, set message rate to 0 and empty the buffer (flush or read)
  */
 class Neo6M: public UARTDev {
 public:
@@ -138,6 +149,7 @@ public:
      * clears the configuration of the neo6m
      * turns off the NMEA protocol
      * sets the dynamic platform model to pedestrian
+     * sets message rate to 0
      */
     Neo6M(const std::string &serialport = DEFAULT_SERIALPORT);
 
@@ -158,7 +170,7 @@ public:
 
     /*
      * reads a UBX message from the serial device
-     * @msg: structure to write the received message in
+     * @msg: structure to write the received message in, don't forget to allocate msg.playload
      * @return: msg
      */
     struct UBXMsg &receiveUBXMessage(struct UBXMsg &msg);
@@ -166,22 +178,26 @@ public:
     /*
      * polls a UBX message and reads the answer
      * takes care of the ack or nack for messages from the CFG class
-     * @UBXMsg: cls and id fields must be filled out, function completes the structure
+     * @UBXMsg: cls and id fields must be filled out, playload must be allocated, function completes the structure
      * @return: the completed UBXMsg structure
      */
     struct UBXMsg &pollUBXMessage(struct UBXMsg &msg);
 
     /*
-     * sends the UBXMsg structure
+     * sends a UBX message
      * takes care of the ack or nack for messages from the CFG class
-     * and length unequal to 0 (polling messages)
      */
     void sendUBXMessage(const struct UBXMsg &msg);
 
     /*
+     * sends the UBXMsg structure
+     */
+    void sendUBXStructure(const struct UBXMsg &msg);
+
+    /*
      * calculates the checksum of the passed UBXMsg
      */
-    uint16_t calcUBXChecksum(struct UBXMsg *msg);
+    uint16_t calcUBXChecksum(struct UBXMsg &msg);
     
     /*
      * performs a complete software reset followed by a hotstart
@@ -214,11 +230,11 @@ public:
      * methods fill out the passed structure by polling the neo6m
      * @return: the filled out structure
      */
-    struct GPSFixStatus *getGPSFixStatus(struct GPSFixStatus *status);
-    struct GPSEcefPos *getEcefPos(struct GPSEcefPos *pos);
-    struct GPSEcefVel *getEcefVel(struct GPSEcefVel *vel);
-    struct GPSGeodeticPos *getGeodeticPos(struct GPSGeodeticPos *pos);
-    struct GPSGeodeticVel *getGPSGeodeticVel(struct GPSGeodeticVel *vel);
+    struct GPSFixStatus &getGPSFixStatus(struct GPSFixStatus &status);
+    struct GPSEcefPos &getEcefPos(struct GPSEcefPos &pos);
+    struct GPSEcefVel &getEcefVel(struct GPSEcefVel &vel);
+    struct GPSGeodeticPos &getGeodeticPos(struct GPSGeodeticPos &pos);
+    struct GPSGeodeticVel &getGPSGeodeticVel(struct GPSGeodeticVel &vel);
 
     /*
      * enables or disables the use of SBAS, SBAS allows to increase the accuracy from ~10m to ~2m
@@ -242,6 +258,11 @@ public:
     void clearConfiguration();
     void saveConfiguration();
     void loadConfiguration();
+
+    /*
+     * @millis: measurements a taken every millis, max rate is ~10 Hz
+     */
+    void setMeasurementRate(uint16_t millis);
 
     /*
      * enables or disables the NMEA protocol

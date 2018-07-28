@@ -1,4 +1,4 @@
-#include "qmc5883l.h"
+#include "../qmc5883l/qmc5883l.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -27,12 +27,14 @@ void printAllReg(Qmc5883l *qmc) {
 
 int main(void) {
 	Qmc5883l qmc;
+	qmc.writeReg8(0x0B, 0x01);
+	qmc.writeBitReg8(0x0A, 6, true);
 	sleep(1);
 	printAllReg(&qmc);
 	while(true) {
-		float x = qmc.getMagX();
-		float y = qmc.getMagY();
-		float z = qmc.getMagZ();
+		double x = qmc.getMagX();
+		double y = qmc.getMagY();
+		double z = qmc.getMagZ();
 		printf("----------------------------------------------------\n");
 		printf("magnetic field x:\t%+.4f%s", x, "\tGs\n");
 		printf("magnetic field y:\t%+.4f%s", y, "\tGs\n");
@@ -52,7 +54,7 @@ int main(void) {
 			angle += 360;
 			angle %= 360;
 		}
-		printf("angle: \t%d", angle);
+		printf("angle: \t%d\n", angle);
 		printf("----------------------------------------------------\n");
 		sleep(1);
 	}

@@ -51,6 +51,7 @@
  * the qmc5883l is little endian
  */
 class Qmc5883l : public I2CDev {
+	int range;
 	/*
 	 * returns the value of the magnetic sensor axis in gauss
 	 * reg is the register where the measured data of the magnetic sensor axis is stored
