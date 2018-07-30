@@ -11,13 +11,16 @@
  * -make use of the different power modes
  * -allow to configure serial interface e.g baudrate
  * -several other features -> datasheet
+ * -make the class a thread, which continuously reads the data from the serial device
+ *  (with the current implementation polling a message needs 1 measurement cycle)
  */
 
 /*
  * default parameteres for the serial asynchronuous interface (uart)
+ * if the serial port doesn't exist on your rpi look at https://www.raspberrypi.org/documentation/configuration/uart.md
  */
 #define DEFAULT_BAUDRATE 9600
-#define DEFAULT_SERIALPORT "/dev/serial0"
+#define DEFAULT_SERIALPORT "/dev/ttyAMA0"
 
 /*
  * char sequence for synchronization of the ubx protocol
@@ -100,7 +103,7 @@ struct GPSFixStatus {
  */
 struct __attribute__((__packed__)) GPSEcefPos { //avoid alignment reduces performance, but allows easier implementation
     uint32_t time; //gps millisecond time of week
-    float x, y, z; //position in cm
+    int32_t x, y, z; //position in cm
     uint32_t accuracy; //estimated position accuracy in cm
 };
 
@@ -109,7 +112,7 @@ struct __attribute__((__packed__)) GPSEcefPos { //avoid alignment reduces perfor
  */
 struct __attribute__((__packed__)) GPSEcefVel { //avoid alignment reduces performance, but allows easier implementation
     uint32_t time; //gps millisecond time of week
-    float x, y, z; //velocity in cm/s
+    int32_t x, y, z; //velocity in cm/s
     uint32_t accuracy; //estimated velocity accuracy in cm/s
 };
 
@@ -118,8 +121,8 @@ struct __attribute__((__packed__)) GPSEcefVel { //avoid alignment reduces perfor
  */
 struct __attribute__((__packed__)) GPSGeodeticPos { //avoid alignment reduces performance, but allows easier implementation
     uint32_t time; //gps milliseconds of week
-    float lon, lat; //longitude, latitude in dergree
-    float hae, has; //height above ellipsoid, height above sea level in mm
+    int32_t lon, lat; //longitude, latitude in dergree, scaling factor 10^-7
+    int32_t hae, has; //height above ellipsoid, height above sea level in mm
     uint32_t haccuracy, vaccuracy; //estimated horizontal accuracy, estimated vertical accuracy in mm
 };
 
@@ -128,9 +131,9 @@ struct __attribute__((__packed__)) GPSGeodeticPos { //avoid alignment reduces pe
  */
 struct __attribute__((__packed__)) GPSGeodeticVel { //avoid alignment reduces performance, but allows easier implementation
     uint32_t time; //gps milliseconds of week
-    float north, east, down; //velocity in the specified directions in cm/s
+    int32_t north, east, down; //velocity in the specified directions in cm/s
     uint32_t speed, gspeed; //velocity 3d, velocity over ground (2d) in cm/s
-    float heading; //heading of motion in degree scaled with 10^-5
+    int32_t heading; //heading of motion in degree scaled with 10^-5
     uint32_t saccuracy, haccuracy; //speed accuracy estimate in cm/s, heading accuracy estimate in degree scaled with 10^-5
 };
 
@@ -151,7 +154,7 @@ public:
      * sets the dynamic platform model to pedestrian
      * sets message rate of ubx messages to 0
      */
-    Neo6M(const std::string &serialport = DEFAULT_SERIALPORT);
+    Neo6M(const std::string &serialport = DEFAULT_SERIALPORT, int baudrate = DEFAULT_BAUDRATE);
 
     /*
      * clears the configuration of the neo6m
@@ -197,7 +200,7 @@ public:
     /*
      * calculates the checksum of the passed UBXMsg
      */
-    uint16_t calcUBXChecksum(struct UBXMsg &msg);
+    uint16_t calcUBXChecksum(const struct UBXMsg &msg);
     
     /*
      * performs a complete software reset followed by a hotstart
@@ -224,17 +227,17 @@ public:
      * @id: the id of the message
      * @rate: the rate of the message per cycle (per default a cycle is 1 second could be configured with CFG-RATE)
      */
-    void setMessageRate(uint8_t cls, uint8_t id, uint8_t rate);
+    //void setMessageRate(uint8_t cls, uint8_t id, uint8_t rate); //implemented but not tested
 
     /*
      * methods fill out the passed structure by polling the neo6m
      * @return: the filled out structure
      */
-    struct GPSFixStatus &getGPSFixStatus(struct GPSFixStatus &status);
+    struct GPSFixStatus &getFixStatus(struct GPSFixStatus &status);
     struct GPSEcefPos &getEcefPos(struct GPSEcefPos &pos);
     struct GPSEcefVel &getEcefVel(struct GPSEcefVel &vel);
     struct GPSGeodeticPos &getGeodeticPos(struct GPSGeodeticPos &pos);
-    struct GPSGeodeticVel &getGPSGeodeticVel(struct GPSGeodeticVel &vel);
+    struct GPSGeodeticVel &getGeodeticVel(struct GPSGeodeticVel &vel);
 
     /*
      * enables or disables the use of SBAS, SBAS allows to increase the accuracy from ~10m to ~2m
@@ -260,7 +263,7 @@ public:
     void loadConfiguration();
 
     /*
-     * @millis: measurements a taken every millis, max rate is ~10 Hz
+     * @millis: measurements a taken every millis, max rate is ~5 Hz
      */
     void setMeasurementRate(uint16_t millis);
 

@@ -12,7 +12,7 @@
 #include "../gpio/uart_dev.h"
 #include "neo6m.h"
 
-Neo6M::Neo6M(const std::string &serialport) : UARTDev(serialport) {
+Neo6M::Neo6M(const std::string &serialport, int baudrate) : UARTDev(serialport, baudrate) {
     powerOn();
     clearConfiguration();
     loadConfiguration();
@@ -80,30 +80,30 @@ struct UBXMsg &Neo6M::pollUBXMessage(struct UBXMsg &msg) {
     return msg;
 }
 
-void Neo6M::sendUBXMessage(struct UBXMsg &msg) {
+void Neo6M::sendUBXMessage(const struct UBXMsg &msg) {
     sendUBXStructure(msg);
     if(msg.cls == NEO6M_CLS_CFG) {
         struct UBXMsg ack;
         uint8_t playload[2];
         ack.playload = playload;
         receiveUBXMessage(ack);
-        if((/*msg.cls == NEO6M_CLS_ACK && */ack.id != NEO6M_ACK_ACK)
+        if(/*msg.cls == NEO6M_CLS_ACK && */ack.id != NEO6M_ACK_ACK)
             throw Neo6MException("acknowledge message not received");
     }
 }
 
-void Neo6M::sendUBXStructure(struct UBXMsg &msg) {
+void Neo6M::sendUBXStructure(const struct UBXMsg &msg) {
     uint16_t sync = UBX_SYNC; //because of little endian the order it will be sent will be swapped
     uint16_t checksum = calcUBXChecksum(msg);
     writeAll(&sync, 2);
-    writeAll(&cls, 1);
-    writeAll(&id, 1);
-    writeAll(&length, 2);
-    writeAll(playload, length);
+    writeAll(&msg.cls, 1);
+    writeAll(&msg.id, 1);
+    writeAll(&msg.length, 2);
+    writeAll(msg.playload, msg.length);
     writeAll(&checksum, 2);
 }
 
-uint16_t Neo6M::calcUBXChecksum(struct UBXMsg &msg) {
+uint16_t Neo6M::calcUBXChecksum(const struct UBXMsg &msg) {
     uint8_t sumA = msg.cls, sumB = msg.cls;
     sumA += msg.id;
     sumB += sumA;
@@ -141,10 +141,11 @@ void Neo6M::powerOff(uint32_t duration) {
 
 void Neo6M::powerOn() {
     uint8_t sequence = 0xFF;
-    writeAll(&sequence, 1)
+    writeAll(&sequence, 1);
     usleep(500 * 1000);
 }
 
+/* not tested
 void Neo6M::setMessageRate(uint8_t cls, uint8_t id, uint8_t rate) {
     uint8_t playload[] = {cls, id, rate};
     struct UBXMsg msg;
@@ -153,9 +154,9 @@ void Neo6M::setMessageRate(uint8_t cls, uint8_t id, uint8_t rate) {
     msg.length = sizeof(playload);
     msg.playload = playload;
     sendUBXMessage(msg);
-}
+}*/
 
-struct GPSFixStatus &Neo6M::getGPSFixStatus(struct GPSFixStatus &status) {
+struct GPSFixStatus &Neo6M::getFixStatus(struct GPSFixStatus &status) {
     struct UBXMsg msg;
     msg.cls = NEO6M_CLS_NAV;
     uint8_t playload[8 + 12 * 56];
@@ -180,7 +181,7 @@ struct GPSEcefPos &Neo6M::getEcefPos(struct GPSEcefPos &pos) {
     struct UBXMsg msg;
     msg.cls = NEO6M_CLS_NAV;
     msg.id = NEO6M_NAV_POSECEF;
-    msg.playload = &pos;
+    msg.playload = (uint8_t *) &pos;
     pollUBXMessage(msg);
     return pos;
 }
@@ -189,7 +190,7 @@ struct GPSEcefVel &Neo6M::getEcefVel(struct GPSEcefVel &vel) {
     struct UBXMsg msg;
     msg.cls = NEO6M_CLS_NAV;
     msg.id = NEO6M_NAV_VELECEF;
-    msg.playload = &vel;
+    msg.playload = (uint8_t *) &vel;
     pollUBXMessage(msg);
     return vel;
 }
@@ -198,16 +199,16 @@ struct GPSGeodeticPos &Neo6M::getGeodeticPos(struct GPSGeodeticPos &pos) {
     struct UBXMsg msg;
     msg.cls = NEO6M_CLS_NAV;
     msg.id = NEO6M_NAV_POSLLH;
-    msg.playload = &pos;
+    msg.playload = (uint8_t *) &pos;
     pollUBXMessage(msg);
     return pos;
 }
 
-struct GPSGeodeticVel &Neo6M::getGPSGeodeticVel(struct GPSGeodeticVel &vel) {
+struct GPSGeodeticVel &Neo6M::getGeodeticVel(struct GPSGeodeticVel &vel) {
     struct UBXMsg msg;
     msg.cls = NEO6M_CLS_NAV;
     msg.id = NEO6M_NAV_VELNED;
-    msg.playload = &vel;
+    msg.playload = (uint8_t *) &vel;
     pollUBXMessage(msg);
     return vel;
 }
@@ -246,7 +247,7 @@ void Neo6M::clearConfiguration() {
     msg.cls = NEO6M_CLS_CFG;
     msg.id = NEO6M_CFG_CFG;
     msg.length = sizeof(playload);
-    msg.playload = playload;
+    msg.playload = (uint8_t *) playload;
     sendUBXMessage(msg);
 }
 
@@ -256,7 +257,7 @@ void Neo6M::saveConfiguration() {
     msg.cls = NEO6M_CLS_CFG;
     msg.id = NEO6M_CFG_CFG;
     msg.length = sizeof(playload);
-    msg.playload = playload;
+    msg.playload = (uint8_t *) playload;
     sendUBXMessage(msg);
 }
 
@@ -266,7 +267,7 @@ void Neo6M::loadConfiguration() {
     msg.cls = NEO6M_CLS_CFG;
     msg.id = NEO6M_CFG_CFG;
     msg.length = sizeof(playload);
-    msg.playload = playload;
+    msg.playload = (uint8_t *) playload;
     sendUBXMessage(msg);
 }
 
@@ -276,7 +277,7 @@ void Neo6M::setMeasurementRate(uint16_t millis) {
     msg.cls = NEO6M_CLS_CFG;
     msg.id = NEO6M_CFG_RATE;
     msg.length = sizeof(playload);
-    msg.playload = playload;
+    msg.playload = (uint8_t *) playload;
     sendUBXMessage(msg);
 }
 
@@ -336,7 +337,7 @@ std::string Neo6M::readNMEAMessage() {
     char lastlastC = getChar();
     char lastC = getChar();
     char c = getChar();
-    while(lastlastC != str[0] && lastC != str[1] && c != str[2]) {
+    while(lastlastC != str[0] || lastC != str[1] || c != str[2]) {
         lastlastC = lastC;
         lastC = c;
         c = getChar();
@@ -351,8 +352,8 @@ std::string Neo6M::readNMEAMessage() {
     str.push_back(getChar());
     int len = str.length();
     uint8_t checksum = ascii2hex(str[len - 2]) << 4 | ascii2hex(str[len - 1]);
-    if(checksum != calcNMEAChecksum(str.substr(1, len - 3)))
-        throw Neo6MException("read NMEA message: checksum don't match")
+    if(checksum != calcNMEAChecksum(str.substr(1, len - 4)))
+        throw Neo6MException("read NMEA message: checksum don't match");
     str.push_back(getChar()); // \r
     str.push_back(getChar()); // \n
     return str;

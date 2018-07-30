@@ -49,6 +49,7 @@ void *UARTDev::readAll(void *buf, size_t count) {
         int ret = read(fd, (uint8_t *) buf + readed, count - readed);
         if(ret < 0)
             throw UARTException("reading from UART: " + std::string(strerror(errno)));
+        readed += ret;
     }
     return buf;
 }
