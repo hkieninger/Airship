@@ -5,7 +5,8 @@ mpu6050_test01.elf mpu6050_test02.elf mpu6050_test03.elf \
 ads1115_test01.elf ads1115_test02.elf \
 bmp280_test01.elf bmp280_test02.elf \
 qmc5883l_test01.elf qmc5883l_test02.elf \
-neo6m_test01.elf neo6m_test02.elf neo6m_test03.elf
+neo6m_test01.elf neo6m_test02.elf neo6m_test03.elf \
+socket_test01.elf server_socket_test01.elf
 LIBS = -lwiringPi
 CFLAGS = -O3
 
@@ -66,6 +67,23 @@ neo6m_test%.o: neo6m_test%.cpp ../neo6m/neo6m.h ../gpio/uart_dev.h
 	#compile the test programms
 	$(CC) -c $(CFLAGS) $<
 
+socket_test01.elf: socket_test01.o
+	$(MAKE) -C ../socket/ socket.o CFLAGS=$(CFLAGS)
+	#the socket library is independent from wiringPi
+	$(CC) -o $@ $(CFLAGS) $< ../socket/socket.o
+
+socket_test01.o: socket_test01.cpp ../socket/socket.h
+	$(CC) -c $(CFLAGS) $<
+
+server_socket_test01.elf: server_socket_test01.o
+	$(MAKE) -C ../socket/ socket.o CFLAGS=$(CFLAGS)
+	$(MAKE) -C ../socket/ server_socket.o CFLAGS=$(CFLAGS)
+	#the socket library is independent from wiringPi
+	$(CC) -o $@ $(CFLAGS) $< ../socket/socket.o ../socket/server_socket.o
+
+server_socket_test01.o: server_socket_test01.cpp ../socket/socket.h ../socket/server_socket.h ../socket/socket_exception.h
+	$(CC) -c $(CFLAGS) $<
+
 clean:
 	$(MAKE) -C ../gpio/ clean
 	$(MAKE) -C ../mpu6050/ clean
@@ -73,4 +91,5 @@ clean:
 	$(MAKE) -C ../bmp280/ clean
 	$(MAKE) -C ../qmc5883l/ clean
 	$(MAKE) -C ../neo6m/ clean
+	$(MAKE) -C ../socket/ clean
 	rm *.elf

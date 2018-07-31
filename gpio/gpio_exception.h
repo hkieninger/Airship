@@ -1,3 +1,6 @@
+#ifndef GPIO_EXCEPTION_H
+#define GPIO_EXCEPTION_H 1
+
 #include <stdexcept>
 #include <string>
 
@@ -27,3 +30,5 @@ class UARTException: public GPIOException {
         explicit UARTException(const std::string& what_arg) : GPIOException(what_arg) {};
         explicit UARTException(const char* what_arg) : GPIOException(what_arg) {};
 };
+
+#endif /* GPIO_EXCEPTION_H */

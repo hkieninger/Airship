@@ -7,6 +7,8 @@ Hans
 -qmc5883l
 -socket
 
+-> proper destructor, shouldn't throw exceptions
+
 Keanu
 -csicamera
 -usbcamera
