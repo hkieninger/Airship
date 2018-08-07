@@ -2,7 +2,7 @@
  * tests powerOff, powerOn, measurement rate and clear, load, save configuration
  */
 
-#define SERIAL_PORT "/dev/ttyS0"
+#define SERIAL_PORT "/dev/ttyAMA0"
 
 #include <stdio.h>
 #include <unistd.h>

@@ -10,7 +10,7 @@
 
 #include "../neo6m/neo6m.h"
 
-#define SERIAL_PORT "/dev/ttyS0"
+#define SERIAL_PORT "/dev/ttyAMA0"
 
 Neo6M *neo = NULL;
 

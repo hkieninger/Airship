@@ -12,8 +12,9 @@ public class SocketTest01 {
 	final static int PORT = 0xCCCC;
 	final static String IP = "192.168.4.1";
 
-	public static void main(String[] args) throws UnknownHostException, IOException {
+	public static void main(String[] args) throws UnknownHostException, IOException, InterruptedException {
 		Socket socket = new Socket(InetAddress.getByName(IP), PORT);
+		Thread.sleep(30 * 1000);
 		InputStream in = socket.getInputStream();
 		OutputStream out = socket.getOutputStream();
 		int c = 1;

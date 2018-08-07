@@ -128,12 +128,14 @@ public class ActuatorPanel extends JPanel implements ActuatorController, ChangeL
 			listener.onTopRudderChanged(getRudderValue(sliderTopRudder.getValue()));
 		}
 	}
-
+	
 	@Override
 	public void setListener(ActuatorController.Listener l) {
 		listener = l;
 	}
 
+	//make them thread save
+	
 	@Override
 	public void setLeftMotor(int thrust) {
 		if(thrust > 0)

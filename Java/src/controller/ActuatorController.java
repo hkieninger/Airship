@@ -5,6 +5,7 @@ public interface ActuatorController {
 	public static final int THRUST_MAX = 100;
 	public static final int ANGLE_MAX = 90;
 	
+	//Setters
 	public void setListener(Listener l);
 	
 	public void setLeftMotor(int thrust);
@@ -14,6 +15,7 @@ public interface ActuatorController {
 	public void setRightRudder(int angle);
 	public void setTopRudder(int angle);
 	
+	//Getters
 	public int getLeftMotor();
 	public int getRightMotor();
 	
@@ -21,7 +23,8 @@ public interface ActuatorController {
 	public int getRightRudder();
 	public int getTopRudder();
 	
-	public interface Listener {
+	//Callbacks
+	public static interface Listener {
 		
 		public void onLeftMotorChanged(int thrust);
 		public void onRightMotorChanged(int thrust);

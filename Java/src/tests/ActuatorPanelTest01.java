@@ -16,7 +16,7 @@ public class ActuatorPanelTest01 {
 	public static void main(String[] args) throws IOException {
 		//create the panel, which contains the gui
 		ActuatorPanel actuatorPanel = new ActuatorPanel();
-		actuatorPanel.setListener(new ActuatorController.Listener() {
+		/*actuatorPanel.setListener(new ActuatorController.Listener() {
 			
 			@Override
 			public void onLeftMotorChanged(int thrust) {
@@ -43,7 +43,7 @@ public class ActuatorPanelTest01 {
 				System.out.println("top rudder angle is " + angle);
 			}
 			
-		});
+		});*/
 		
 		//process the keyboard shortcuts
 		KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(new KeyEventDispatcher() {
