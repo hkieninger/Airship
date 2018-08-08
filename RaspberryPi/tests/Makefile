@@ -7,8 +7,8 @@ bmp280_test01.elf bmp280_test02.elf \
 qmc5883l_test01.elf qmc5883l_test02.elf \
 neo6m_test01.elf neo6m_test02.elf neo6m_test03.elf \
 socket_test01.elf server_socket_test01.elf
-LIBS = -lwiringPi
-CFLAGS = -O3
+LIBS = -lpigpio -lpthread
+CFLAGS = -O3 -Wall
 
 all: $(ELFS)
 
@@ -53,6 +53,16 @@ qmc5883l_test%.elf: qmc5883l_test%.o
 	$(CC) -o $@ $(CFLAGS) $< ../qmc5883l/qmc5883l.o ../gpio/i2c_dev.o $(LIBS)
 
 qmc5883l_test%.o: qmc5883l_test%.cpp ../qmc5883l/qmc5883l.h ../gpio/i2c_dev.h
+	#compile the test programms
+	$(CC) -c $(CFLAGS) $<
+
+motor_test%.elf: motor_test%.o
+	#compile the libs
+	$(MAKE) -C ../motor/ motor.o CFLAGS=$(CFLAGS)
+	#link the elf
+	$(CC) -o $@ $(CFLAGS) $< ../motor/motor.o $(LIBS)
+
+motor_test%.o: motor_test%.cpp ../motor/motor.h
 	#compile the test programms
 	$(CC) -c $(CFLAGS) $<
 
