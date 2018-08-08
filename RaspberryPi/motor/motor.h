@@ -1,4 +1,4 @@
-ifndef MOTOR_H
+#ifndef MOTOR_H
 #define MOTOR_H 1
 
 #include <stdint.h>
@@ -8,7 +8,7 @@ ifndef MOTOR_H
 #include <iostream>
 
 
-class Motor{
+class Motor {
 
 public:
     /*

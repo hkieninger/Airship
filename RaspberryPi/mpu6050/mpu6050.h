@@ -11,6 +11,7 @@
  * -callibration
  * -use fifo buffer
  * -controll other devices via auxiliary i2c
+ * -make use of interrupts
  */
 
 /* 
@@ -97,7 +98,7 @@ public:
 	 * sets sleeps mode to false, sample rate divider is set to 0 and digital low pass filter for accel and gyro to 5 Hz
 	 * @interruptpin: if you don't use interrupts, interruptpin should be smaller than 0
 	 */
-	Mpu6050(int interruptPin = -1, void (*interruptRoutine)(void) = NULL, int addr = MPU6050_I2C_ADDR0);
+	Mpu6050(int addr = MPU6050_I2C_ADDR0);
 	
 	/*
 	 * sets device to sleep to save power

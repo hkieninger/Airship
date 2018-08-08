@@ -7,7 +7,7 @@
 #include "hcsr04.h"
 
 Hcsr04::Hcsr04(int trig, int echo){
-      wiringPiSetup();
+      wiringPiSetup(); 
       pinMode(trig, OUTPUT);
       pinMode(echo, INPUT);
 

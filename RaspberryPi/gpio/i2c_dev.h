@@ -19,8 +19,9 @@ public:
 	 * initialises an i2c device
 	 * opens the file descriptor
 	 * @addr: the i2c address of the device
+	 * @bus: the i2c bus
 	 */
-	I2CDev(int addr);
+	I2CDev(int addr, int bus = 1);
 	
 	/*
 	 * closes the file descriptor

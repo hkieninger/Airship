@@ -115,6 +115,17 @@ void handleRudder(Socket &sock, Rudder &rudder, uint8_t param) {
         fprintf(stderr, "D_LEFT_MOTOR invalide param: %d\n", param);
 }
 
+void syncSocket(Socket &sock) {
+    uint8_t lastByte, byte;
+    //go to the next sync mark
+    sock.recvAll(&lastByte, 1);
+    sock.recvAll(&byte, 1);
+    while((lastByte << 8 | byte) != SYNC) {
+        lastByte = byte;
+        sock.recvAll(&byte, 1);
+    }
+}
+
 
 int main() {
     //setup signal handling
@@ -130,17 +141,10 @@ int main() {
         Socket sock = server.acceptConnection();
         printf("client %s has connected\n", sock.getRemoteIPString().c_str());
         try {
-            uint8_t lastByte, byte;
-            uint8_t header[2];
             while(true) {
-                //go to the next sync mark
-                sock.recvAll(&lastByte, 1);
-                sock.recvAll(&byte, 1);
-                while((lastByte << 8 | byte) != SYNC) {
-                    lastByte = byte;
-                    sock.recvAll(&byte, 1);
-                }
+                syncSocket(sock);
                 //read the header
+                uint8_t header[2];
                 sock.recvAll(header, 2);
                 //read and handle the data
                 switch(header[0]) {

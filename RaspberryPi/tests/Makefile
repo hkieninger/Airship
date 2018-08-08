@@ -1,7 +1,7 @@
 #a not that professional make file, but it works on my rpi ;)
 CC = g++
 ELFS = \
-mpu6050_test01.elf mpu6050_test02.elf mpu6050_test03.elf \
+mpu6050_test01.elf mpu6050_test02.elf \
 ads1115_test01.elf ads1115_test02.elf \
 bmp280_test01.elf bmp280_test02.elf \
 qmc5883l_test01.elf qmc5883l_test02.elf \
