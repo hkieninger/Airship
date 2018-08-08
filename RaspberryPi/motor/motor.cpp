@@ -6,6 +6,8 @@
 
 Motor::Motor(int signalpin, int relaypin){
   //sets relaypin to output
+  this->relaypin = relaypin;
+  this->signalpin = signalpin;
   gpioSetMode(relaypin, PI_OUTPUT);
   gpioSetMode(signalpin, PI_OUTPUT);
   //sets signalpin to pwm
@@ -17,7 +19,7 @@ Motor::~Motor() {
 }
 
 
-void Motor::setStandby(int speed){
+void Motor::setSpeed(int speed){
   if (speed < 0){
     gpioWrite(relaypin, 1);
   }else{
@@ -27,6 +29,6 @@ void Motor::setStandby(int speed){
     speed = 100;
   }
   //are these variables in bounds?
-  gpioServo(0, 1000+(speed * 10));
+  gpioServo(signalpin, 1200+(speed * 10));
 
 }

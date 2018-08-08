@@ -1,9 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <wiringPi.h>
+#include <pigpio.h>
 #include <iostream>
-
-
 #include "hcsr04.h"
 
 Hcsr04::Hcsr04(int trig, int echo){

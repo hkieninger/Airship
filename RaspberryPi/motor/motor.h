@@ -1,4 +1,4 @@
-ifndef MOTOR_H
+#ifndef MOTOR_H
 #define MOTOR_H 1
 
 #include <stdint.h>
@@ -9,17 +9,21 @@ ifndef MOTOR_H
 
 
 class Motor{
-
+  int signalpin;
+  int relaypin;
 public:
+
     /*
      *
      */
-    Motor(int signal, int relay);
+    Motor(int signalpin, int relaypin);
 
     /*
      * destructor
      */
     ~Motor();
+
+    void setSpeed(int speed);
 
 
 
