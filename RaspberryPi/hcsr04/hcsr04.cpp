@@ -7,34 +7,33 @@
 #include "hcsr04.h"
 
 Hcsr04::Hcsr04(int trig, int echo){
-      wiringPiSetup();
-      pinMode(trig, OUTPUT);
-      pinMode(echo, INPUT);
+      gpioSetMode(trig, PI_OUTPUT);
+      gpioSetMode(echo, PI_INPUT);
 
       //trig pin must start LOW
-      digitalWrite(trig, LOW);
-      delay(30);
+      gpioWrite(trig, 0);
+      usleep(3000);
 }
 
 Hcsr04::~Hcsr04() {
-  digitalWrite(this.trig, LOW);
+  gpioWrite(this.trig, LOW);
 }
 
 double Hcsr04::getDistance(){
   //Send trig pulse
-  digitalWrite(trig, HIGH);
-  delayMicroseconds(20);
-  digitalWrite(trig, LOW);
+  gpioWrite(trig, 1);
+  usleep(20);
+  gpioWrite(trig, 0);
   //Wait for echo start
-  while(digitalRead(echo) == LOW);
+  while(gpioRead(echo) == 0);
   //Wait for echo end
   long startTime = micros();
-  while(digitalRead(echo) == HIGH);
+  while(gpioRead(echo) == 1);
   long travelTime = micros() - startTime;
   //Get distance in m
   double distance = travelTime / 5800;
   //Make sure that the next Trigger is at least 50us away
-  while(micros() - startTime< 70);
+  usleep(70);
 
   return distance;
 
