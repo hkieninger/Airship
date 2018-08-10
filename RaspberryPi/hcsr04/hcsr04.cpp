@@ -5,14 +5,8 @@
 #include "hcsr04.h"
 
 Hcsr04::Hcsr04(int trig, int echo){
-<<<<<<< HEAD
-      wiringPiSetup(); 
-      pinMode(trig, OUTPUT);
-      pinMode(echo, INPUT);
-=======
       gpioSetMode(trig, PI_OUTPUT);
       gpioSetMode(echo, PI_INPUT);
->>>>>>> 9b0ae79f8ff8a5e02d1ece2639a4a6b2898771cf
 
       //trig pin must start LOW
       gpioWrite(trig, 0);

@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <pigpio.h>
 
 #include "../mpu6050/mpu6050.h"
 
@@ -12,6 +13,9 @@ Mpu6050 *mpu;
 float accel[3], gyro[3];
 
 int main() {
+    atexit(gpioTerminate);
+    if(gpioInitialise() == PI_INIT_FAILED)
+        return 1;
     printf("test begins: \n\n");
     printf("measure in cycle mode with a freq of 1.25Hz for 10 seconds\n\n");
     mpu = new Mpu6050();

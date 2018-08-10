@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <signal.h>
+#include <pigpio.h>
 
 #include "../neo6m/neo6m.h"
 
@@ -22,6 +23,9 @@ void cleanup(int sig) {
 }
 
 int main(void) {
+    atexit(gpioTerminate);
+    if(gpioInitialise() == PI_INIT_FAILED)
+        return 1;
     signal(SIGINT, cleanup);
     neo = new Neo6M(SERIAL_PORT);
     neo->setProtocol(UBX_AND_NMEA);
@@ -45,6 +49,5 @@ int main(void) {
     }
 
     delete neo;
-
     return EXIT_SUCCESS;
 }

@@ -14,7 +14,9 @@
  */
 
 UARTDev::UARTDev(const std::string &serialport, int baudrate) {
-    fd = serOpen(serialport.c_str(), baudrate, 0);
+    char port[serialport.size() + 1]; // '\0'
+    memcpy(port, serialport.c_str(), sizeof(port));
+    fd = serOpen(port, baudrate, 0);
     if(fd < 0)
         throw UARTException("opening serial port: " + std::string(strerror(errno)));
 }

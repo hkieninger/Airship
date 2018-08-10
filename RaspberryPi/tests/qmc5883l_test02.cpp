@@ -10,8 +10,12 @@
 #include <unistd.h>
 #include <stdint.h>
 #include <sys/time.h>
+#include <pigpio.h>
 
 int main() {
+    atexit(gpioTerminate);
+    if(gpioInitialise() == PI_INIT_FAILED)
+        return 1;
     Qmc5883l qmc;
 
     //test dataReady() and setContinuous()
@@ -74,6 +78,5 @@ int main() {
         printf("mag x is %f\n", mag[0]);
         usleep(1000 * 1000);
     }
-
     return EXIT_SUCCESS;
 }

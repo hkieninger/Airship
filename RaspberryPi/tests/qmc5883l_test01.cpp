@@ -11,6 +11,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <math.h>
+#include <pigpio.h>
 
 #define BYTE_TO_BINARY_PATTERN "%c%c%c%c%c%c%c%c"
 #define BYTE_TO_BINARY(byte)  \
@@ -31,6 +32,9 @@ void printAllReg(Qmc5883l *qmc) {
 }
 
 int main(void) {
+	atexit(gpioTerminate);
+	if(gpioInitialise() == PI_INIT_FAILED)
+        return 1;
 	Qmc5883l qmc;
 	//printAllReg(&qmc);
 	while(true) {

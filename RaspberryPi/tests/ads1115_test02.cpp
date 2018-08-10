@@ -6,10 +6,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <pigpio.h>
 
 #include "../ads1115/ads1115.h"
 
 int main() {
+    atexit(gpioTerminate);
+    if(gpioInitialise() == PI_INIT_FAILED)
+        return 1;
     Ads1115 ads;
     printf("voltage on pin 0 is %.4f V\n", ads.getSingleShot());
     printf("voltage on pin 2 is %.4f V\n", ads.getSingleShot(2));

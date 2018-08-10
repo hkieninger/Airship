@@ -8,14 +8,9 @@
 #include <iostream>
 
 
-<<<<<<< HEAD
-class Motor {
-
-=======
 class Motor{
   int signalpin;
   int relaypin;
->>>>>>> 9b0ae79f8ff8a5e02d1ece2639a4a6b2898771cf
 public:
 
     /*

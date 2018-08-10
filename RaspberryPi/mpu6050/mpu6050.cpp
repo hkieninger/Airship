@@ -9,11 +9,16 @@
 #include "../gpio/i2c_dev.h"
 #include "../gpio/gpio_exception.h"
 
-Mpu6050::Mpu6050(int addr) : I2CDev(addr) {
+Mpu6050::Mpu6050(/*int interruptPin, void (*interruptRoutine)(void), */int addr) : I2CDev(addr) {
 	reset();
 	setSleepMode(false);
 	setLowPassFilter(MPU6050_BANDWIDTH_5_5_HZ);
 	usleep(20 * 1000); //sleep some ms that mpu6050 can take first measurements
+	/* if(interruptPin >= 0 && interruptRoutine) {
+		if(wiringPiISR(interruptPin, INT_EDGE_RISING, interruptRoutine) < 0)
+			throw GPIOException("setup interrupt handler: " + std::string(strerror(errno)));
+		setInterrupts(true);
+	} */
 }
 
 Mpu6050::~Mpu6050() {
@@ -28,6 +33,11 @@ void Mpu6050::reset() {
 void Mpu6050::setLowPassFilter(int bandwith) {
 	writeReg8(MPU6050_REG_CONFIG, bandwith & 0x07);
 }
+
+/* void Mpu6050::setInterrupts(bool on) {
+	writeBitReg8(MPU6050_REG_INT_PIN_CFG, 4, 1);
+	writeBitReg8(MPU6050_REG_INT_ENABLE, 0, on);
+} */
 
 void Mpu6050::setSleepMode(bool on) {
 	writeBitReg8(MPU6050_REG_PWR_MGMT1, 6, on);

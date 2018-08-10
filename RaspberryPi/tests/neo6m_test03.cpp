@@ -8,6 +8,7 @@
 #include <unistd.h>
 #include <math.h>
 #include <stdlib.h>
+#include <pigpio.h>
 
 #include "../neo6m/neo6m.h"
 
@@ -52,6 +53,9 @@ void printMeasurements(Neo6M &neo, int n, int sleepms) {
 }
 
 int main() {
+    atexit(gpioTerminate);
+    if(gpioInitialise() == PI_INIT_FAILED)
+        return 1;
     Neo6M neo(SERIAL_PORT);
     printf("measurement rate is 1 Hz, look at timestamp\n");
     printMeasurements(neo, 10, 100);

@@ -5,10 +5,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <pigpio.h>
 
 #include "../bmp280/bmp280.h"
 
 int main() {
+    atexit(gpioTerminate);
+    if(gpioInitialise() == PI_INIT_FAILED)
+        return 1;
     Bmp280 bmp;
 
     //test forced mode
@@ -69,6 +73,5 @@ int main() {
         printf("Pressure is %f Pa (should correlate with default settings)\n", bmp.getPressure());
         usleep(1000 * 1000);
     }
-
     return EXIT_SUCCESS;
 }
