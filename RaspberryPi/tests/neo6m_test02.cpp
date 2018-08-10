@@ -7,7 +7,6 @@
 #include <unistd.h>
 #include <signal.h>
 #include <math.h>
-#include <pigpio.h>
 
 #include "../neo6m/neo6m.h"
 
@@ -87,9 +86,6 @@ void printMeasurements(int n) {
 }
 
 int main(void) {
-    atexit(gpioTerminate);
-    if(gpioInitialise() == PI_INIT_FAILED)
-        return 1;
     //signal(SIGINT, cleanup);
     neo = new Neo6M(SERIAL_PORT);
     struct GPSFixStatus status;
@@ -120,5 +116,6 @@ int main(void) {
     }
 
     delete neo;
+
     return EXIT_SUCCESS;
 }

@@ -9,8 +9,8 @@ neo6m_test01.elf neo6m_test02.elf neo6m_test03.elf \
 socket_test01.elf server_socket_test01.elf \
 motor_test01.elf \
 i2cbus_test.cpp
-LIBS = -lpigpio -lpthread
-CFLAGS = -O3 -Wall
+LIBS = -lpigpio -lpthread -lwiringPi
+CFLAGS = -g -Wall
 
 all: $(ELFS)
 
@@ -117,4 +117,4 @@ clean:
 	$(MAKE) -C ../qmc5883l/ clean
 	$(MAKE) -C ../neo6m/ clean
 	$(MAKE) -C ../socket/ clean
-	rm *.elf
+	rm -f *.elf

@@ -1,9 +1,8 @@
-#include <pigpio.h>
+#include <wiringSerial.h>
 #include <stddef.h>
 #include <string.h>
 #include <errno.h>
 #include <unistd.h>
-#include <termios.h>
 #include <string>
 
 #include "gpio_exception.h"
@@ -14,35 +13,34 @@
  */
 
 UARTDev::UARTDev(const std::string &serialport, int baudrate) {
-    char port[serialport.size() + 1]; // '\0'
-    memcpy(port, serialport.c_str(), sizeof(port));
-    fd = serOpen(port, baudrate, 0);
+    fd = serialOpen(serialport.c_str(), baudrate);
     if(fd < 0)
         throw UARTException("opening serial port: " + std::string(strerror(errno)));
 }
 
 UARTDev::~UARTDev() {
-    serClose(fd);
+    serialClose(fd);
 }
 
 void UARTDev::flush() {
-    tcflush (fd, TCIOFLUSH) ;
+    serialFlush(fd);
 }
 
 int UARTDev::available() {
-    int ret = serDataAvailable(fd);
+    int ret = serialDataAvail(fd);
     if(ret < 0)
         throw UARTException("checking for available bytes from UART: " + std::string(strerror(errno)));
 }
 
 unsigned char UARTDev::getChar() {
-    unsigned char c;
-    readAll(&c, 1);
+    int c = serialGetchar(fd);
+    if(c < 0)
+         throw UARTException("reading from UART: " + std::string(strerror(errno)));
     return c;
 }
 
 void UARTDev::putChar(unsigned char c) {
-    writeAll(&c, 1);
+    serialPutchar(fd, c) ;
 }
 
 void *UARTDev::readAll(void *buf, size_t count) {
