@@ -10,12 +10,12 @@ Motor::Motor(int signalpin, int relaypin){
   this->relaypin = relaypin;
   this->signalpin = signalpin;
   gpioSetMode(relaypin, PI_OUTPUT);
-  gpioSetMode(signalpin, PI_OUTPUT);
   //sets signalpin to pwm
   gpioServo(signalpin, 0);
 }
 
 Motor::~Motor() {
+  gpioServo(signalpin, 0);
 
 }
 
