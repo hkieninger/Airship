@@ -7,8 +7,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <pigpio.h>
 
 int main(void) {
+	atexit(gpioTerminate);
+	if(gpioInitialise() == PI_INIT_FAILED)
+        return 1;
 	Mpu6050 mpu;
 	for(int i = 0; i < 10; i++) {
 		float temp = mpu.getTemperature();

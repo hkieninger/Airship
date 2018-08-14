@@ -84,7 +84,7 @@ public class ActuatorPanelTest01 {
 		});
 		
 		//create the controller instance, which communicates with the zeppelin
-		//Controller controller = new Controller(actuatorPanel);
+		Controller controller = new Controller(actuatorPanel);
 		
 		//display the actuator panel
 		JFrame frame = new JFrame();

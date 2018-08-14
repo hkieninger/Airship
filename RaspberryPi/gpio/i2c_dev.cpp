@@ -1,4 +1,4 @@
-#include <wiringPiI2C.h>
+#include <pigpio.h>
 #include <errno.h>
 #include <string.h>
 #include <unistd.h>
@@ -9,17 +9,18 @@
 #include "gpio_exception.h"
 
 /*
- * wrapper functions of wiringPi
+ * wrapper of i2c from pigpio
+ * you may want to extend it with the other i2c functions from pigpio
  */
 
-I2CDev::I2CDev(int addr) {
-	fd = wiringPiI2CSetup(addr);
+I2CDev::I2CDev(int addr, int bus) {
+	fd = i2cOpen(bus, addr, 0);
 	if(fd < 0)
 		throw I2CException("opening i2c device: " + std::string(strerror(errno)));
 }
 
 I2CDev::~I2CDev() {
-	close(fd);
+	i2cClose(fd);
 }
 
 void I2CDev::writeBitReg8(int reg, int bit, bool value) {
@@ -49,24 +50,24 @@ bool I2CDev::readBitReg16(int reg, int bit) {
 }
 
 void I2CDev::writeReg8(int reg, uint8_t value) {
-	if(wiringPiI2CWriteReg8(fd, reg, value) < 0)
+	if(i2cWriteByteData(fd, reg, value) < 0)
 		throw I2CException("writing register 8bit of i2c device: " + std::string(strerror(errno)));
 }
 
 uint8_t I2CDev::readReg8(int reg) {
-	int ret = wiringPiI2CReadReg8(fd, reg);
+	int ret = i2cReadByteData(fd, reg);
 	if(ret < 0)
 		throw I2CException("reading register 8bit of i2c device: " + std::string(strerror(errno)));
 	return ret;
 }
 
 void I2CDev::writeReg16(int reg, uint16_t value) {
-	if(wiringPiI2CWriteReg16(fd, reg, value) < 0)
+	if(i2cWriteWordData(fd, reg, value) < 0)
 		throw I2CException("writing register 16bit of i2c device: " + std::string(strerror(errno)));
 }
 
 uint16_t I2CDev::readReg16(int reg) {
-	int ret = wiringPiI2CReadReg16(fd, reg);
+	int ret = i2cReadWordData(fd, reg);
 	if(ret < 0)
 		throw I2CException("reading register 16bit of i2c device: " + std::string(strerror(errno)));
 	return ret;

@@ -1,12 +1,14 @@
 #a not that professional make file, but it works on my rpi ;)
 CC = g++
 ELFS = \
-mpu6050_test01.elf mpu6050_test02.elf mpu6050_test03.elf \
+mpu6050_test01.elf mpu6050_test02.elf \
 ads1115_test01.elf ads1115_test02.elf \
 bmp280_test01.elf bmp280_test02.elf \
 qmc5883l_test01.elf qmc5883l_test02.elf \
 neo6m_test01.elf neo6m_test02.elf neo6m_test03.elf \
-socket_test01.elf server_socket_test01.elf
+socket_test01.elf server_socket_test01.elf \
+motor_test01.elf \
+i2cbus_test.cpp
 LIBS = -lpigpio -lpthread
 CFLAGS = -O3 -Wall
 
@@ -56,16 +58,6 @@ qmc5883l_test%.o: qmc5883l_test%.cpp ../qmc5883l/qmc5883l.h ../gpio/i2c_dev.h
 	#compile the test programms
 	$(CC) -c $(CFLAGS) $<
 
-motor_test%.elf: motor_test%.o
-	#compile the libs
-	$(MAKE) -C ../motor/ motor.o CFLAGS=$(CFLAGS)
-	#link the elf
-	$(CC) -o $@ $(CFLAGS) $< ../motor/motor.o $(LIBS)
-
-motor_test%.o: motor_test%.cpp ../motor/motor.h
-	#compile the test programms
-	$(CC) -c $(CFLAGS) $<
-
 neo6m_test%.elf: neo6m_test%.o
 	#compile the libs
 	$(MAKE) -C ../gpio/ uart_dev.o CFLAGS=$(CFLAGS)
@@ -92,6 +84,29 @@ server_socket_test01.elf: server_socket_test01.o
 	$(CC) -o $@ $(CFLAGS) $< ../socket/socket.o ../socket/server_socket.o
 
 server_socket_test01.o: server_socket_test01.cpp ../socket/socket.h ../socket/server_socket.h ../socket/socket_exception.h
+	$(CC) -c $(CFLAGS) $<
+
+motor_test%.elf: motor_test%.o
+	#compile the libs
+	$(MAKE) -C ../motor/ motor.o CFLAGS=$(CFLAGS)
+	#link the elf
+	$(CC) -o $@ $(CFLAGS) $< ../motor/motor.o $(LIBS)
+
+motor_test%.o: motor_test%.cpp ../motor/motor.h
+	#compile the test programms
+	$(CC) -c $(CFLAGS) $<
+
+i2cbus_test.elf: i2cbus_test.o
+	#compile the libs
+	$(MAKE) -C ../gpio/ i2c_dev.o CFLAGS=$(CFLAGS)
+	$(MAKE) -C ../bmp280/ bmp280.o CFLAGS=$(CFLAGS)
+	$(MAKE) -C ../ads1115/ ads1115.o CFLAGS=$(CFLAGS)
+	$(MAKE) -C ../mpu6050/ mpu6050.o CFLAGS=$(CFLAGS)
+	#link the elf
+	$(CC) -o $@ $(CFLAGS) $< ../bmp280/bmp280.o ../ads1115/ads1115.o ../mpu6050/mpu6050.o ../gpio/i2c_dev.o $(LIBS)
+
+i2cbus_test.o: i2cbus_test.cpp ../bmp280/bmp280.h ../ads1115/ads1115.h ../mpu6050/mpu6050.h
+	#compile the test programms
 	$(CC) -c $(CFLAGS) $<
 
 clean:

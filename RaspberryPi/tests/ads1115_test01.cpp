@@ -5,11 +5,15 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <pigpio.h>
 
 #include "../gpio/i2c_dev.h"
 #include "../ads1115/ads1115.h"
 
 int main() {
+    atexit(gpioTerminate);
+    if(gpioInitialise() == PI_INIT_FAILED)
+        return 1;
     I2CDev dev(ADS1115_I2C_ADDR0);
     uint16_t reg = dev.readReg16(ADS1115_REG_CONF);
     printf("%x\n", reg);

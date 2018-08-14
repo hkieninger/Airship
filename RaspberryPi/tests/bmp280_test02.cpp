@@ -4,10 +4,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <pigpio.h>
 
 #include "../bmp280/bmp280.h"
 
 int main() {
+    atexit(gpioTerminate);
+    if(gpioInitialise() == PI_INIT_FAILED)
+        return 1;
     Bmp280 bmp;
     printf("conf reg: %x\n", bmp.readReg8(BMP280_REG_CONFIG));
     printf("ctrl meas reg: %x\n", bmp.readReg8(BMP280_REG_CTRL_MEAS));
