@@ -25,6 +25,8 @@ public:
 
     void setSpeed(int speed);
 
+    void arm();
+
 
 
 };

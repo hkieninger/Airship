@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <pigpio.h>
+#include <unistd.h>
 
 #include "motor.h"
 
@@ -29,6 +30,11 @@ void Motor::setSpeed(int speed){
     speed = 100;
   }
   //are these variables in bounds?
-  gpioServo(signalpin, 1200+(speed * 10));
+  gpioServo(signalpin, 1000 + (speed * 10));
 
+}
+
+void Motor::arm(){
+  gpioServo(signalpin, 0);
+  usleep(1000*500);
 }
