@@ -1,35 +1,29 @@
-#ifndef HCSR04_H
-#define HCSR04_H 1
-
-#include <stdint.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <wiringPi.h>
-#include <iostream>
+#ifndef Servo_H
+#define Servo_H 1
 
 
 
-class Hcsr04{
-
+class Servo{
+  int signalpin;
 public:
+
     /*
-     * Adds a hcsr04 Ultrasonic distance sensor
+     *
      */
-    Hcsr04(int trig, int echo);
+    Servo(int signalpin);
 
     /*
      * destructor
      */
-    ~Hcsr04();
+    ~Servo();
+    //Accepts  -90 to 90 as input
+    void setAngle(int angle);
 
-    /*
-     * get distance in Meters
-     */
-     double getDistance();
+    void poweroff();
 
-     double getSpeed();
+
 
 
 };
 
-#endif /* HCSR04_H */
+#endif /* Servo_H */

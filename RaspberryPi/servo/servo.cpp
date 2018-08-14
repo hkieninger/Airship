@@ -1,6 +1,6 @@
 #include <pigpio.h>
 
-#include "Servo.h"
+#include "servo.h"
 
 Servo::Servo(int signalpin){
   //sets relaypin to output
@@ -10,7 +10,7 @@ Servo::Servo(int signalpin){
 }
 
 Servo::~Servo() {
-
+  poweroff();
 }
 
 
