@@ -10,6 +10,7 @@
 
 
 class Hcsr04{
+  int trig;
 
 public:
     /*

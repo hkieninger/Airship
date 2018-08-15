@@ -4,6 +4,11 @@
 
 
 class Flightcontroller{
+  Motor *motorright,*leftmotor;
+  Servo *servotop,*servoleft,*servoright;
+
+  int motorleftspeed = 0;
+  int motorrightspeed = 0;
 public:
 
     /*
@@ -15,6 +20,13 @@ public:
      * destructor
      */
     ~Flightcontroller();
+
+    //fly at an certain speed
+    forward(int speed);
+
+    left(int levle);
+
+    right(int level);
 
 
 

@@ -1,40 +1,31 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <pigpio.h>
-#include <unistd.h>
+#include "Flighcontroller.h"
+#include "../servo/servo.h"
+#include "../motor/motor.h"
 
-#include "motor.h"
-
-Motor::Motor(int signalpin, int relaypin){
-  //sets relaypin to output
-  this->relaypin = relaypin;
-  this->signalpin = signalpin;
-  gpioSetMode(relaypin, PI_OUTPUT);
-  //sets signalpin to pwm
-  gpioServo(signalpin, 0);
-}
-
-Motor::~Motor() {
-  gpioServo(signalpin, 0);
+Flightcontroller::Flightcontroller(Motor& motorleft, Motor& motorright, Servo& servotop, Servo& servoleft, Servo& servoright){
+    this->motorleft = motorleft;
+    this->motorright = motorright;
+    this->servotop = servotop;
+    this->servoleft = servoleft;
+    this->servoright = servoright;
 
 }
 
-
-void Motor::setSpeed(int speed){
-  if (speed < 0){
-    gpioWrite(relaypin, 1);
-  }else{
-    gpioWrite(relaypin, 0);
-  }
-  if(abs(speed)>100){
-    speed = 100;
-  }
-  //are these variables in bounds?
-  gpioServo(signalpin, 1000 + (speed * 10));
+Flightcontroller::~Flightcontroller(){
 
 }
 
-void Motor::arm(){
-  gpioServo(signalpin, 0);
-  usleep(1000*500);
+Flightcontroller::forward(int speed){
+  motorleftspeed = speed;
+  motorrightspeed = speed;
+  motorleft.setSpeed(speed);
+  motorright.setSpeed(speed);
+}
+
+Flightcontroller::left(int level){
+
+}
+
+Flightcontroller::right(int level){
+
 }

@@ -26,15 +26,29 @@ void Motor::setSpeed(int speed){
   }else{
     gpioWrite(relaypin, 0);
   }
-  if(abs(speed)>100){
-    speed = 100;
+
+  if(running){
+    gpioServo(signalpin, 1000 + (speed * 10));
+  }else{
+    startop();
+    gpioServo(signalpin, 1000 + (speed * 10));
   }
-  //are these variables in bounds?
-  gpioServo(signalpin, 1000 + (speed * 10));
+
+  if(abs(speed) < 10){
+    running = 0;
+  }else{
+    running = 1;
+  }
+  //write the speed to the esc
 
 }
 
 void Motor::arm(){
   gpioServo(signalpin, 0);
   usleep(1000*500);
+}
+
+void startup(){
+  gpioServo(signalpin, 1600);
+  usleep(300*1000);
 }

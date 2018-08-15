@@ -7,14 +7,14 @@
 Hcsr04::Hcsr04(int trig, int echo){
       gpioSetMode(trig, PI_OUTPUT);
       gpioSetMode(echo, PI_INPUT);
-
+      this->trig = trig;
       //trig pin must start LOW
       gpioWrite(trig, 0);
       usleep(3000);
 }
 
 Hcsr04::~Hcsr04() {
-  gpioWrite(this.trig, LOW);
+  gpioWrite(trig, LOW);
 }
 
 double Hcsr04::getDistance(){
