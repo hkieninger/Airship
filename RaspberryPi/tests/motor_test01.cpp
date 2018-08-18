@@ -5,17 +5,15 @@
 #include "../motor/motor.h"
 
 int main(){
-    printf("%d\n",gpioInitialise());
-    Motor motor(18,21);
+    gpioInitialise();
+    Motor motor(20,18);
+    motor.arm();
+    motor.setSpeed(20);
+    usleep(5000*1000);
     motor.setSpeed(0);
-    usleep(5* 1000*1000);
-    while(1){
-      for(int i = 0; i<50; i++){
-          usleep(100*1000);
-          motor.setSpeed(i);
-          printf("Speed: %d\n", i);
-      }
+    usleep(5000*1000);
+    motor.setSpeed(-20);
+    usleep(5000*1000);
+
     }
-
-
 }

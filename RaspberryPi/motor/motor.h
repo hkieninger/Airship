@@ -11,6 +11,7 @@
 class Motor{
   int signalpin;
   int relaypin;
+  bool running = 0;
 public:
 
     /*
@@ -24,6 +25,10 @@ public:
     ~Motor();
 
     void setSpeed(int speed);
+
+    void arm();
+
+    void startup();
 
 
 
