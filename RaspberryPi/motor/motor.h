@@ -1,36 +1,44 @@
 #ifndef MOTOR_H
 #define MOTOR_H 1
 
-#include <stdint.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <wiringPi.h>
-#include <iostream>
-
+#define MAX_THRUST 100
 
 class Motor{
   int signalpin;
   int relaypin;
-  bool running = 0;
+  int lastThrust;
 public:
 
     /*
-     *
+     * setup the pins and arm the esc via powerOn()
      */
     Motor(int signalpin, int relaypin);
 
     /*
-     * destructor
+     * unarm the esc via powerOff()
      */
     ~Motor();
 
-    void setSpeed(int speed);
+    /*
+     * set the seed of the motor
+     * form MAX_THRUST to -MAX_THRUST
+     */
+    void setThrust(int thrust);
 
-    void arm();
+    /*
+     * arms the esc
+     */
+    void powerOn();
 
-    void startup();
+    /*
+     * unarm the esc
+     */
+    void powerOff();
 
-
+    /*
+     * returns the last thrust
+     */
+    int getThrust();
 
 };
 
