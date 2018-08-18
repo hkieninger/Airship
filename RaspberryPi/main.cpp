@@ -6,6 +6,8 @@
 #include "../socket/socket_exception.h"
 #include "../socket/server_socket.h"
 #include "../socket/socket.h"
+#include "../servo/servo.h"
+#include "../motor/motor.h"
 
 #define DEFAULT_PORT 0xCCCC
 
