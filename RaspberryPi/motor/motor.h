@@ -3,16 +3,29 @@
 
 #define MAX_THRUST 100
 
-class Motor{
-  int signalpin;
-  int relaypin;
-  int lastThrust;
+class Motor {
+    int pwmPin;
+    int relaisPin;
+    int lastThrust;
+
+    /*
+     * helper methods
+     */
+
+    //calculates the pulswidth from the thrust
+    int thrust2pw(int thrust);
+
+    //turns off the motor and wait that it stops
+    void setZero();
+
+    //sets the pulse witdth of the esc
+    void setESC(int pw);
 public:
 
     /*
      * setup the pins and arm the esc via powerOn()
      */
-    Motor(int signalpin, int relaypin);
+    Motor(int pwmPin, int relaisPin);
 
     /*
      * unarm the esc via powerOff()

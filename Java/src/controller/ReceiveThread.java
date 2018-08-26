@@ -3,8 +3,6 @@ package controller;
 import java.io.DataInputStream;
 import java.io.EOFException;
 import java.io.IOException;
-import java.util.Timer;
-import java.util.TimerTask;
 
 public class ReceiveThread extends Thread {
 	

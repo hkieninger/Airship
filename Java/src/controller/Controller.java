@@ -67,7 +67,7 @@ public class Controller implements ActuatorController.Listener {
 		socket = new Socket(host, port);
 		sendThread = new SendThread(this);
 		recvThread = new ReceiveThread(this);
-		actuatorController.setListener(this);
+		this.actuatorController.setListener(this);
 	}
 	
 	public void start() {

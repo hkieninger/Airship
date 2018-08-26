@@ -16,6 +16,10 @@ import controller.ActuatorController;
 
 public class ActuatorPanel extends JPanel implements ActuatorController, ChangeListener {
 	
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
 	private static final int SLIDER_ZERO_MARGIN_MOTOR = 20; //in percent
 	private static final int SLIDER_ZERO_MARGIN_RUDDER = 15; //in percent
 	private static final int SLIDER_SPACING = 20;
