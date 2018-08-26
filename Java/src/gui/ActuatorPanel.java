@@ -2,13 +2,16 @@ package gui;
 
 import java.awt.Dimension;
 import java.awt.Font;
+import java.awt.event.ActionEvent;
 import java.util.Hashtable;
 
+import javax.swing.AbstractAction;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSlider;
+import javax.swing.KeyStroke;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
@@ -86,6 +89,31 @@ public class ActuatorPanel extends JPanel implements ActuatorController, ChangeL
 		JLabel trLabel = new JLabel("Top Rudder (+O, -L)", JLabel.LEFT);
 		add(trLabel);
 		add(sliderTopRudder);
+		
+		//set keyboard shortcuts
+		setSliderKeyboardShortcut(sliderLeftMotor, 'q', 'a', ActuatorController.THRUST_MAX);
+		setSliderKeyboardShortcut(sliderRightMotor, 'w', 's', ActuatorController.THRUST_MAX);
+		setSliderKeyboardShortcut(sliderTopRudder, 'o', 'l', ActuatorController.ANGLE_MAX);
+		setSliderKeyboardShortcut(sliderLeftRudder, 'u', 'j', ActuatorController.ANGLE_MAX);
+		setSliderKeyboardShortcut(sliderRightRudder, 'i', 'k', ActuatorController.ANGLE_MAX);
+	}
+	
+	private void setSliderKeyboardShortcut(JSlider slider, char plus, char minus, int max) {
+		getInputMap().put(KeyStroke.getKeyStroke(plus), "+ " + plus);
+		getActionMap().put("+ " + plus, new AbstractAction() {
+			@Override
+			public void actionPerformed(ActionEvent arg0) {
+				slider.setValue(slider.getValue() + max / 10);
+			}
+		});
+		getInputMap().put(KeyStroke.getKeyStroke(minus), "- " + minus);
+		getActionMap().put("- " + minus, new AbstractAction() {
+			@Override
+			public void actionPerformed(ActionEvent arg0) {
+				slider.setValue(slider.getValue() - max / 10);
+			}
+		});
+		slider.setFocusable(false);
 	}
 	
 	private void setSliderLabelsAndListener(JSlider[] sliders, int max, int zero, String maxLabel, String minLabel, String zeroLabel) {

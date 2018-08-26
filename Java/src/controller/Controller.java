@@ -8,7 +8,9 @@ import java.net.Socket;
 
 import javax.swing.JOptionPane;
 
-public class Controller implements ActuatorController.Listener {
+import controller.Notificator.Level;
+
+public class Controller implements ActuatorController.Listener, SteeringController.Listener {
 	
 	public static final String DEFAULT_IP = "192.168.4.1";
 	public static final int DEFAULT_PORT = 0xCCCC;
@@ -27,6 +29,9 @@ public class Controller implements ActuatorController.Listener {
 	public static final byte D_LEFT_RUDDER = 4;
 	public static final byte D_RIGHT_RUDDER = 5;
 	public static final byte D_TOP_RUDDER = 6;
+	
+	//Software Actuators
+	public static final byte D_SOFTWARE_CONTROLL = 13;
 	
 	//Sensors
 	public static final byte D_BATTERY = 1;
@@ -50,29 +55,40 @@ public class Controller implements ActuatorController.Listener {
 	public static final byte P_THRUST = 0; //D_*_MOTOR
 	public static final byte P_ANGLE = 0; //D_*_RUDDER
 	
+	//Software Actuators
+	public static final byte P_VELOCITY = 0;
+	public static final byte P_YAW = 1;
+	public static final byte P_PITCH = 2;
+	public static final byte P_CALLIBRATION = 3;
+	
 	//Sensors
 	public static final byte P_PERCENT = 0; //D_BATTERY
 	
 	private Socket socket;
 	private ActuatorController actuatorController;
+	private SteeringController steeringController;
+	private Notificator notificator;
 	private SendThread sendThread;
 	private ReceiveThread recvThread;
 	
-	public Controller(ActuatorController actuatorController) throws IOException {
-		this(InetAddress.getByName(DEFAULT_IP), DEFAULT_PORT, actuatorController);
+	public Controller(Notificator notificator, ActuatorController actuatorController, SteeringController steeringController) throws IOException {
+		this(notificator, InetAddress.getByName(DEFAULT_IP), DEFAULT_PORT, actuatorController, steeringController);
 	}
 	
-	public Controller(InetAddress host, int port, ActuatorController actuatorController) throws IOException {
+	public Controller(Notificator notificator, InetAddress host, int port, ActuatorController actuatorController, SteeringController steeringController) throws IOException {
 		this.actuatorController = actuatorController;
+		this.steeringController = steeringController;
 		socket = new Socket(host, port);
 		sendThread = new SendThread(this);
 		recvThread = new ReceiveThread(this);
 		this.actuatorController.setListener(this);
+		this.steeringController.setListener(this);
 	}
 	
 	public void start() {
 		recvThread.start();
 		sendThread.start();
+		notificator.notificate("controller started", Level.CHATTERBOX);
 	}
 	
 	public void stop() throws IOException, InterruptedException {
@@ -81,6 +97,7 @@ public class Controller implements ActuatorController.Listener {
 		recvThread.join();
 		sendThread.join();
 		socket.close();
+		notificator.notificate("controller stopped", Level.CHATTERBOX);
 	}
 	
 	InputStream getInputStream() throws IOException {
@@ -99,16 +116,14 @@ public class Controller implements ActuatorController.Listener {
 		return recvThread;
 	}
 	
-	//do not use JOptionPane in this class!!!
-	
-	void onSendError(Exception e) { //add int to identify error ?
+	void onSendError(Exception e) {
 		e.printStackTrace();
-		JOptionPane.showMessageDialog(null, e.getMessage(), e.getClass().getSimpleName(), JOptionPane.ERROR_MESSAGE);
+		notificator.notificate(e.getMessage(), Level.ERROR);
 	}
 	
 	void onReceiveError(Exception e) {
 		e.printStackTrace();
-		JOptionPane.showMessageDialog(null, e.getMessage(), e.getClass().getSimpleName(), JOptionPane.ERROR_MESSAGE);
+		notificator.notificate(e.getMessage(), Level.ERROR);
 	}
 	
 	/*
@@ -116,9 +131,9 @@ public class Controller implements ActuatorController.Listener {
 	 */
 	void onConnectionLost(boolean closedByHost) {
 		if(closedByHost) {
-			JOptionPane.showMessageDialog(null, "Connection has been closed by host.", "Info", JOptionPane.INFORMATION_MESSAGE);
+			notificator.notificate("Connection has been closed by host.", Level.IMPORTANT);
 		} else {
-			JOptionPane.showMessageDialog(null, "Connection has been lost.", "Info", JOptionPane.INFORMATION_MESSAGE);
+			notificator.notificate("Connection has been lost.", Level.IMPORTANT);
 		}
 	}
 	
@@ -149,6 +164,30 @@ public class Controller implements ActuatorController.Listener {
 	@Override
 	public void onTopRudderChanged(int angle) {
 		sendThread.actuatorChanged(D_TOP_RUDDER, angle);
+	}
+
+	@Override
+	public void onVelocityChanged(int velocity) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void onYawChanged(int yaw) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void onPitchChanged(int pitch) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void onCallibrated(int yaw, int pitch) {
+		// TODO Auto-generated method stub
+		
 	}
 
 }

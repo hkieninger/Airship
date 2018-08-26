@@ -44,44 +44,6 @@ public class ActuatorPanelTest01 {
 			
 		});
 		
-		//process the keyboard shortcuts
-		KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(new KeyEventDispatcher() {
-			
-			private static final int KEY_CHANGE_PERCENT_MOTOR = 10;
-			private static final int KEY_CHANGE_PERCENT_RUDDER = 5;
-			
-			private static final int KEY_CHANGE_MOTOR = KEY_CHANGE_PERCENT_MOTOR * ActuatorController.THRUST_MAX / 100;
-			private static final int KEY_CHANGE_RUDDER = KEY_CHANGE_PERCENT_RUDDER * ActuatorController.ANGLE_MAX / 100;
-			
-			@Override
-			public boolean dispatchKeyEvent(KeyEvent e) {
-				if(e.getID() == KeyEvent.KEY_PRESSED) {
-					if(e.getKeyCode() == KeyEvent.VK_Q)
-						actuatorPanel.setLeftMotor(actuatorPanel.getLeftMotor() + KEY_CHANGE_MOTOR);
-					else if(e.getKeyCode() == KeyEvent.VK_A)
-						actuatorPanel.setLeftMotor(actuatorPanel.getLeftMotor() - KEY_CHANGE_MOTOR);
-					else if(e.getKeyCode() == KeyEvent.VK_W)
-						actuatorPanel.setRightMotor(actuatorPanel.getRightMotor() + KEY_CHANGE_MOTOR);
-					else if(e.getKeyCode() == KeyEvent.VK_S)
-						actuatorPanel.setRightMotor(actuatorPanel.getRightMotor() - KEY_CHANGE_MOTOR);
-					else if(e.getKeyCode() == KeyEvent.VK_U)
-						actuatorPanel.setLeftRudder(actuatorPanel.getLeftRudder() + KEY_CHANGE_RUDDER);
-					else if(e.getKeyCode() == KeyEvent.VK_J)
-						actuatorPanel.setLeftRudder(actuatorPanel.getLeftRudder() - KEY_CHANGE_RUDDER);
-					else if(e.getKeyCode() == KeyEvent.VK_I)
-						actuatorPanel.setRightRudder(actuatorPanel.getRightRudder() + KEY_CHANGE_RUDDER);
-					else if(e.getKeyCode() == KeyEvent.VK_K)
-						actuatorPanel.setRightRudder(actuatorPanel.getRightRudder() - KEY_CHANGE_RUDDER);
-					else if(e.getKeyCode() == KeyEvent.VK_O)
-						actuatorPanel.setTopRudder(actuatorPanel.getTopRudder() + KEY_CHANGE_RUDDER);
-					else if(e.getKeyCode() == KeyEvent.VK_L)
-						actuatorPanel.setTopRudder(actuatorPanel.getTopRudder() - KEY_CHANGE_RUDDER);
-				}
-				return false;
-			}
-			
-		});
-		
 		//create the controller instance, which communicates with the zeppelin
 		//Controller controller = new Controller(actuatorPanel);
 		

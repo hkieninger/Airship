@@ -2,27 +2,28 @@ package controller;
 
 public interface SteeringController {
 	
-	public static final double MAX_VELOCITY = 1.0;
-	public static final double MAX_ANGLE = 2 * Math.PI;
-	public static final double MAX_RADIUS = 1.0;
+	public static final int MAX_VELOCITY = 100;
+	public static final int MAX_YAW = 100;
+	public static final int MAX_PITCH = 100;
 	
 	//Setters
 	public void setListener(Listener l);
 	
-	public void setVelocity(double velocity);
-	public void setAngle(double angle);
-	public void setRadius(double radius);
+	public void setVelocity(int velocity);
+	public void setYaw(int yaw);
+	public void setPitch(int pitch);
 	
 	//Getters
-	public double getVelocity();
-	public double getAngle();
-	public double getRadius();
+	public int getVelocity();
+	public int getYaw();
+	public int getPitch();
 	
 	//Callbacks
 	public interface Listener {
-		public void onVelocityChanged(double velocity);
-		public void onAngleChanged(double angle);
-		public void onRadiusChanged(double radius);
+		public void onVelocityChanged(int velocity);
+		public void onYawChanged(int yaw);
+		public void onPitchChanged(int pitch);
+		public void onCallibrated(int yaw, int pitch);
 	}
 	
 }
