@@ -1,13 +1,15 @@
 #include <stdio.h>
-#include <stdio.h>
+#include <stdlib.h>
 #include <stdint.h>
 #include <byteswap.h>
+#include <signal.h>
+#include <pigpio.h>
 
-#include "../socket/socket_exception.h"
-#include "../socket/server_socket.h"
-#include "../socket/socket.h"
-#include "../servo/servo.h"
-#include "../motor/motor.h"
+#include "socket/socket_exception.h"
+#include "socket/server_socket.h"
+#include "socket/socket.h"
+#include "servo/servo.h"
+#include "motor/motor.h"
 
 #define DEFAULT_PORT 0xCCCC
 
@@ -52,14 +54,14 @@
 //Pins and port
 #define PORT 0xCCCC
 
-#define LEFT_MOTOR_ESC
-#define LEFT_MOTOR_RELAIS
-#define RIGHT_MOTOR_ESC
-#define RIGHT_MOTOR_RELAIS
+#define LEFT_MOTOR_ESC 18
+#define LEFT_MOTOR_RELAIS 27
+#define RIGHT_MOTOR_ESC 22
+#define RIGHT_MOTOR_RELAIS 17
 
-#define LEFT_RUDDER_SERVO
-#define RIGHT_RUDDER_SERVO
-#define TOP_RUDDER_SERVO
+#define LEFT_RUDDER_SERVO 10
+#define RIGHT_RUDDER_SERVO 9
+#define TOP_RUDDER_SERVO 11
 
 
 struct Paket {
@@ -103,15 +105,17 @@ void handleMotor(Socket &sock, Motor &motor, uint8_t param) {
     if(param == P_THRUST) {
         int32_t thrust;
         sock.recvAll(&thrust, 4);
+        thrust = bswap_32(thrust);
         motor.setThrust(thrust);
     } else
         fprintf(stderr, "D_LEFT_MOTOR invalide param: %d\n", param);
 }
 
-void handleRudder(Socket &sock, Rudder &rudder, uint8_t param) {
+void handleRudder(Socket &sock, Servo &rudder, uint8_t param) {
     if(param == P_ANGLE) {
         int32_t angle;
         sock.recvAll(&angle, 4);
+        angle = bswap_32(angle);
         rudder.setAngle(angle);
     } else
         fprintf(stderr, "D_LEFT_MOTOR invalide param: %d\n", param);
@@ -133,9 +137,15 @@ int main() {
     //setup signal handling
     signal(SIGINT, handleSignal);
     signal(SIGTERM, handleSignal);
+    //initialise pigpio
+    if(gpioInitialise() < 0)
+        return EXIT_FAILURE;
     //setup the hardware
-    Motor leftMotor(LEFT_MOTOR_ESC, LEFT_MOTOR_RELAIS), rightMotor(RIGHT_MOTOR_ESC, RIGHT_MOTOR_RELAIS);
-    Rudder leftRudder(LEFT_RUDDER_SERVO), rightRudder(RIGHT_RUDDER_SERVO), topRudder(TOP_RUDDER_SERVO);
+    Motor leftMotor(LEFT_MOTOR_ESC, LEFT_MOTOR_RELAIS);
+    Motor rightMotor(RIGHT_MOTOR_ESC, RIGHT_MOTOR_RELAIS);
+    Servo leftRudder(LEFT_RUDDER_SERVO);
+    Servo rightRudder(RIGHT_RUDDER_SERVO);
+    Servo topRudder(TOP_RUDDER_SERVO);
     //start listening on the port
     ServerSocket server(PORT);
     //accept incoming connections until programm gets a signal to stop, see handleSignal()
@@ -164,5 +174,7 @@ int main() {
             printf("connection has been closed by client\n");
         }
     }
+    //release the resources asociated with pigpio
+    gpioTerminate();
     return EXIT_SUCCESS;
 }

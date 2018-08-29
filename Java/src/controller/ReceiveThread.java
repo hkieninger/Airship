@@ -37,7 +37,7 @@ public class ReceiveThread extends Thread {
 				//read and process the data of the packet
 				switch(device) {
 					case Controller.D_RASPBERRY: receiveNetworkPaket(param); break;
-					default: controller.onReceiveError(null);
+					default: controller.onReceiveError(new Exception("received invalid device"));
 				}
 			} catch (EOFException e) {
 				controller.onConnectionLost(true);

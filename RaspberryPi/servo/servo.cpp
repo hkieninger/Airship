@@ -9,7 +9,7 @@ Servo::Servo(int signalpin){
 }
 
 Servo::~Servo() {
-  poweroff();
+  powerOff();
 }
 
 

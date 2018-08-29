@@ -117,4 +117,5 @@ clean:
 	$(MAKE) -C ../qmc5883l/ clean
 	$(MAKE) -C ../neo6m/ clean
 	$(MAKE) -C ../socket/ clean
+	$(MAKE) -C ../motor/ clean
 	rm -f *.elf

@@ -10,8 +10,8 @@
 #define ESC_RIGHT 22
 #define ESC_LEFT 18
 
-#define THRUST 30
-#define DURATION 15
+#define THRUST 50
+#define DURATION 10
 
 int main(){
     gpioInitialise();

@@ -16,8 +16,7 @@ public class Slider2DTest01 {
 	public static void main(String[] args) throws IOException {
 		JFrame frame = new JFrame();
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		BufferedImage img = ImageIO.read(new File("zeppelin_icon.png"));
-		Slider2D slider = new Slider2D(100, 100, img);
+		Slider2D slider = new Slider2D(100, 100);
 		slider.addChangeListener(new ChangeListener() {
 			@Override
 			public void stateChanged(ChangeEvent arg0) {

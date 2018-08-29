@@ -37,14 +37,14 @@ public:
     /*
      * sends len bytes from the buffer
      */
-    void sendAll(const void *buf, size_t len);
+    void sendAll(const void *buf, int len);
 
     /*
      * reads len bytes into the buffer
      * if the socket has been closed by the peer a SocketClosedException is thrown
      * @return: buf
      */
-    void *recvAll(void *buf, size_t len);
+    void *recvAll(void *buf, int len);
 
     /*
      * returns the remote IP address as string

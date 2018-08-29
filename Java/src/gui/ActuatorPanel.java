@@ -91,6 +91,7 @@ public class ActuatorPanel extends JPanel implements ActuatorController, ChangeL
 		add(sliderTopRudder);
 		
 		//set keyboard shortcuts
+		setFocusable(true);
 		setSliderKeyboardShortcut(sliderLeftMotor, 'q', 'a', ActuatorController.THRUST_MAX);
 		setSliderKeyboardShortcut(sliderRightMotor, 'w', 's', ActuatorController.THRUST_MAX);
 		setSliderKeyboardShortcut(sliderTopRudder, 'o', 'l', ActuatorController.ANGLE_MAX);

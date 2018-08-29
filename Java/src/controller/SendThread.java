@@ -21,7 +21,9 @@ public class SendThread extends Thread {
 	public SendThread(Controller controller) throws IOException {
 		this.controller = controller;
 		deviceChanged = new boolean[Controller.D_TOP_RUDDER + 1];
-		actuatorValues = new int[Controller.D_TOP_RUDDER - Controller.D_LEFT_MOTOR + 1];
+		for(int i = 0; i < deviceChanged.length; i++) //all default values will be sent at the beginning
+			deviceChanged[i] = true;
+		actuatorValues = new int[Controller.D_TOP_RUDDER - Controller.D_LEFT_MOTOR + 1]; //default values are all 0s
 		isRunning = true;
 		output = new DataOutputStream(controller.getOutputStream());
 	}

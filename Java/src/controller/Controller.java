@@ -6,13 +6,11 @@ import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.Socket;
 
-import javax.swing.JOptionPane;
-
-import controller.Notificator.Level;
+import controller.ControllerListener.Level;
 
 public class Controller implements ActuatorController.Listener, SteeringController.Listener {
 	
-	public static final String DEFAULT_IP = "192.168.4.1";
+	public static final String DEFAULT_IP = "172.17.72.204";//"192.168.4.1";
 	public static final int DEFAULT_PORT = 0xCCCC;
 	
 	public static final int SYNC = 0xABCD; //unsigned short, DataOutputStream sends it big endian
@@ -67,15 +65,16 @@ public class Controller implements ActuatorController.Listener, SteeringControll
 	private Socket socket;
 	private ActuatorController actuatorController;
 	private SteeringController steeringController;
-	private Notificator notificator;
+	private ControllerListener listener;
 	private SendThread sendThread;
 	private ReceiveThread recvThread;
 	
-	public Controller(Notificator notificator, ActuatorController actuatorController, SteeringController steeringController) throws IOException {
-		this(notificator, InetAddress.getByName(DEFAULT_IP), DEFAULT_PORT, actuatorController, steeringController);
+	public Controller(ControllerListener listener, ActuatorController actuatorController, SteeringController steeringController) throws IOException {
+		this(listener, InetAddress.getByName(DEFAULT_IP), DEFAULT_PORT, actuatorController, steeringController);
 	}
 	
-	public Controller(Notificator notificator, InetAddress host, int port, ActuatorController actuatorController, SteeringController steeringController) throws IOException {
+	public Controller(ControllerListener listener, InetAddress host, int port, ActuatorController actuatorController, SteeringController steeringController) throws IOException {
+		this.listener = listener;
 		this.actuatorController = actuatorController;
 		this.steeringController = steeringController;
 		socket = new Socket(host, port);
@@ -88,16 +87,25 @@ public class Controller implements ActuatorController.Listener, SteeringControll
 	public void start() {
 		recvThread.start();
 		sendThread.start();
-		notificator.notificate("controller started", Level.CHATTERBOX);
+		listener.onStarted();
+		listener.onInformation("controller started", Level.CHATTERBOX);
 	}
 	
 	public void stop() throws IOException, InterruptedException {
-		recvThread.stopRunning();
-		sendThread.stopRunning();
-		recvThread.join();
-		sendThread.join();
-		socket.close();
-		notificator.notificate("controller stopped", Level.CHATTERBOX);
+		//ensure that onStopped() method of listener is only called once
+		synchronized(socket) {
+			if(socket.isClosed())
+				return;
+			actuatorController.setListener(null);
+			steeringController.setListener(null);
+			sendThread.stopRunning();
+			recvThread.stopRunning();
+			sendThread.join();
+			recvThread.join();
+			socket.close();
+		}
+		listener.onStopped();
+		listener.onInformation("controller stopped", Level.CHATTERBOX);
 	}
 	
 	InputStream getInputStream() throws IOException {
@@ -118,22 +126,25 @@ public class Controller implements ActuatorController.Listener, SteeringControll
 	
 	void onSendError(Exception e) {
 		e.printStackTrace();
-		notificator.notificate(e.getMessage(), Level.ERROR);
+		listener.onError();
+		listener.onInformation(e.getMessage(), Level.ERROR);
 	}
 	
 	void onReceiveError(Exception e) {
 		e.printStackTrace();
-		notificator.notificate(e.getMessage(), Level.ERROR);
+		listener.onError();
+		listener.onInformation(e.getMessage(), Level.ERROR);
 	}
 	
 	/*
 	 * called when host closes the socket or the connection gets lost because signal is too weak
 	 */
 	void onConnectionLost(boolean closedByHost) {
+		listener.onConnectionLost(closedByHost);
 		if(closedByHost) {
-			notificator.notificate("Connection has been closed by host.", Level.IMPORTANT);
+			listener.onInformation("Connection has been closed by host.", Level.NORMAL);
 		} else {
-			notificator.notificate("Connection has been lost.", Level.IMPORTANT);
+			listener.onInformation("Connection has been lost.", Level.NORMAL);
 		}
 	}
 	

@@ -37,7 +37,7 @@ Socket::~Socket() {
     close(sockfd);
 }
 
-void Socket::sendAll(const void *buf, size_t len) {
+void Socket::sendAll(const void *buf, int len) {
     int sent = 0;
     while(sent < len) {
         int ret = send(sockfd, (uint8_t *) buf + sent, len - sent, 0);
@@ -47,7 +47,7 @@ void Socket::sendAll(const void *buf, size_t len) {
     }
 }
 
-void *Socket::recvAll(void *buf, size_t len) {
+void *Socket::recvAll(void *buf, int len) {
     int received = 0;
     while(received < len) {
         int ret = recv(sockfd, (uint8_t *) buf + received, len - received, 0);

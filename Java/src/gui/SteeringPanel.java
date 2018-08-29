@@ -39,14 +39,16 @@ public class SteeringPanel extends JPanel implements SteeringController {
 		//create the components
 		sliderVelocity = new JSlider(JSlider.HORIZONTAL, 0, SteeringController.MAX_VELOCITY, 0);
 		sliderVelocity.setFocusable(false);
-		BufferedImage img;
+		BufferedImage knob, background;
 		try {
-			img = ImageIO.read(new File("zeppelin_icon.png"));
+			knob = ImageIO.read(new File("res/zeppelin_knob.png"));
+			background = ImageIO.read(new File("res/himmel_background.jpg"));
 		} catch (IOException e) {
 			e.printStackTrace();
-			img = null;
+			knob = null;
+			background = null;
 		}
-		sliderDirection = new Slider2D(SteeringController.MAX_YAW, SteeringController.MAX_PITCH, img);
+		sliderDirection = new Slider2D(SteeringController.MAX_YAW, SteeringController.MAX_PITCH, knob, background);
 		sliderDirection.setFocusable(false);
 		zeroButton = new JButton("zero");
 		zeroButton.setFocusable(false);
@@ -54,6 +56,7 @@ public class SteeringPanel extends JPanel implements SteeringController {
 		callibrateButton.setFocusable(false);
 		
 		//set the listeners
+		setFocusable(true);
 		sliderVelocity.addChangeListener(e -> {
 			if(listener != null && !sliderVelocity.getValueIsAdjusting())
 				listener.onVelocityChanged(getVelocity());
