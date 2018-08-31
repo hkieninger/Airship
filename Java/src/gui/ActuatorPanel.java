@@ -15,7 +15,7 @@ import javax.swing.KeyStroke;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
-import controller.ActuatorController;
+import controller.view.ActuatorController;
 
 public class ActuatorPanel extends JPanel implements ActuatorController, ChangeListener {
 	

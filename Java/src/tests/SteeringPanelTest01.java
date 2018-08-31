@@ -2,7 +2,7 @@ package tests;
 
 import javax.swing.JFrame;
 
-import controller.SteeringController;
+import controller.view.SteeringController;
 import gui.SteeringPanel;
 
 public class SteeringPanelTest01 {

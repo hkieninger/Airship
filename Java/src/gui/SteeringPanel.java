@@ -17,7 +17,7 @@ import javax.swing.JPanel;
 import javax.swing.JSlider;
 import javax.swing.KeyStroke;
 
-import controller.SteeringController;
+import controller.view.SteeringController;
 import gui.component.Slider2D;
 
 public class SteeringPanel extends JPanel implements SteeringController {

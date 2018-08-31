@@ -7,6 +7,7 @@ import java.io.IOException;
 
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
+import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
 import javax.swing.SwingUtilities;
 
@@ -21,6 +22,9 @@ public class Frame extends JFrame implements WindowListener, ControllerListener 
 	private static final long serialVersionUID = 1L;
 	
 	private Controller controller;
+	private StatusPanel statusPanel;
+	private ActuatorPanel actuatorPanel;
+	private SteeringPanel steeringPanel;
 
 	public static void main(String[] args) {
 		SwingUtilities.invokeLater(new Runnable() {
@@ -33,8 +37,9 @@ public class Frame extends JFrame implements WindowListener, ControllerListener 
 	}
 	
 	public Frame() {
+		super("Control Tower");
 		//window settings
-		setExtendedState(JFrame.MAXIMIZED_BOTH); 
+		setExtendedState(JFrame.MAXIMIZED_BOTH);
 		setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
 		addWindowListener(this);
 		setLayout(new GridLayout(2, 2));
@@ -42,24 +47,35 @@ public class Frame extends JFrame implements WindowListener, ControllerListener 
 		//controll panels
 		JTabbedPane tabs = new JTabbedPane();
 		tabs.setFocusable(false);
-		ActuatorPanel actuatorPanel = new ActuatorPanel();
-		tabs.addTab("actuator", actuatorPanel);
-		SteeringPanel steeringPanel = new SteeringPanel();
+		actuatorPanel = new ActuatorPanel();
+		JScrollPane scrollPane = new JScrollPane(actuatorPanel);
+		tabs.addTab("actuator", scrollPane);
+		steeringPanel = new SteeringPanel();
 		tabs.addTab("steering", steeringPanel);
 		AutoPanel autoPanel = new AutoPanel();
 		tabs.addTab("autopilot", autoPanel);
 		add(tabs);
 		
-		//Sensor panels
-		SensorPanel sensorPanel = new SensorPanel();
-		add(sensorPanel);
+		//Status panels
+		StatusPanel statusPanel = new StatusPanel();
+		add(statusPanel);
 		
 		//Video panels
+		tabs = new JTabbedPane();
+		tabs.setFocusable(false);
 		VideoPanel bottomVideoPanel = new VideoPanel();
-		add(bottomVideoPanel);
-		
+		tabs.addTab("camera bottom", bottomVideoPanel);
 		VideoPanel frontVideoPanel = new VideoPanel();
-		add(frontVideoPanel);
+		tabs.addTab("camera front", frontVideoPanel);
+		add(tabs);
+		
+		//Sensor panels
+		tabs = new JTabbedPane();
+		SensorPanel sensorPanel = new SensorPanel();
+		tabs.addTab("sensor data", sensorPanel);
+		MapPanel mapPanel = new MapPanel();
+		tabs.addTab("map", mapPanel);
+		add(tabs);
 		
 		//create the controller
 		/*try {
@@ -78,17 +94,13 @@ public class Frame extends JFrame implements WindowListener, ControllerListener 
 	@Override
 	public void windowClosed(WindowEvent arg0) {
 		//cleanup code here
-		try {
-			controller.stop();
-		} catch (IOException | InterruptedException e) {
-			e.printStackTrace();
-		}
+		controller.launchStop();
 	}
 
 	@Override
 	public void windowClosing(WindowEvent arg0) {
 		Object[] options = { "OK", "CANCEL" };
-		int option = JOptionPane.showOptionDialog(this, "Do you really want to exit?", "", 
+		int option = JOptionPane.showOptionDialog(this, "Do you really want to exit?", "bye bye", 
 				JOptionPane.DEFAULT_OPTION, JOptionPane.WARNING_MESSAGE, null, options, options[0]);
 		if(option == 0) {
 			dispose();
@@ -104,51 +116,51 @@ public class Frame extends JFrame implements WindowListener, ControllerListener 
 	@Override
 	public void windowIconified(WindowEvent arg0) {}
 
-	private boolean optionPaneDisplayed = false;
-	private Object lock = new Object();
+	@Override
+	public void onError(Exception e) {
+		restartController("The following error has occured: " + e.getMessage());
+	}
+
+	@Override
+	public void onStarted() {
+		System.out.println("Controller has started.");
+	}
+
+	@Override
+	public void onStopped() {
+		System.out.println("Controller has stopped.");
+	}
+
+	@Override
+	public void onConnectionClosedByHost() {
+		restartController("The connection has been closed by the host.");
+	}
+
+	@Override
+	public void onConnectionLost() {
+		JOptionPane.showMessageDialog(this, "The connection is lost.", "Connection", JOptionPane.INFORMATION_MESSAGE);
+	}
+
+	@Override
+	public void onConnectionRestored() {
+		JOptionPane.showMessageDialog(this, "The connection is restored.", "Connection", JOptionPane.INFORMATION_MESSAGE);
+	}
 	
-	@Override
-	public void onInformation(String information, Level level) {
-		if(level == Level.CHATTERBOX) {
-			System.out.println("Controller: " + information);
-		} else {
-			//do not block the current thread
-			new Thread(() ->  {
-				boolean allowed = false;
-				synchronized(lock) {
-					if(!optionPaneDisplayed) {
-						optionPaneDisplayed = true;
-						allowed = true;
-					}
-				}
-				if(allowed) {
-					JOptionPane.showMessageDialog(this, information, level.toString(), JOptionPane.PLAIN_MESSAGE);
-					optionPaneDisplayed = false;
-				} else {
-					System.err.println("Controller: " + information);
-				}
-			}).start();
-		}
-	}
-
-	@Override
-	public void onError() {}
-
-	@Override
-	public void onConnectionLost(boolean closedByHost) {
-		if(closedByHost) {
+	private void restartController(String message) {
+		Object[] options = { "Restart Controller", "Exit Programm" };
+		int option = JOptionPane.showOptionDialog(this, message +" Which action do you want to perform?", 
+				"Restart", JOptionPane.DEFAULT_OPTION, JOptionPane.QUESTION_MESSAGE, null, options, options[0]);
+		if(option == 0) {
 			try {
-				controller.stop();
-			} catch (IOException | InterruptedException e) {
+				controller = new Controller(this, statusPanel, actuatorPanel, steeringPanel);
+			} catch (IOException e) {
 				e.printStackTrace();
+				JOptionPane.showMessageDialog(this, "Restart failed with following error: " + e.getMessage(), e.getClass().getSimpleName(), JOptionPane.ERROR_MESSAGE);
+				SwingUtilities.invokeLater(() -> dispose());
 			}
+		} else {
+			SwingUtilities.invokeLater(() -> dispose());
 		}
 	}
-
-	@Override
-	public void onStarted() {}
-
-	@Override
-	public void onStopped() {}
 
 }

@@ -1,4 +1,4 @@
-package controller;
+package controller.view;
 
 public interface ActuatorController {
 	

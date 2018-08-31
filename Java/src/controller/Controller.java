@@ -6,7 +6,9 @@ import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.Socket;
 
-import controller.ControllerListener.Level;
+import controller.view.ActuatorController;
+import controller.view.StatusView;
+import controller.view.SteeringController;
 
 public class Controller implements ActuatorController.Listener, SteeringController.Listener {
 	
@@ -65,16 +67,18 @@ public class Controller implements ActuatorController.Listener, SteeringControll
 	private Socket socket;
 	private ActuatorController actuatorController;
 	private SteeringController steeringController;
+	private StatusView statusView;
 	private ControllerListener listener;
 	private SendThread sendThread;
 	private ReceiveThread recvThread;
 	
-	public Controller(ControllerListener listener, ActuatorController actuatorController, SteeringController steeringController) throws IOException {
-		this(listener, InetAddress.getByName(DEFAULT_IP), DEFAULT_PORT, actuatorController, steeringController);
+	public Controller(ControllerListener listener, StatusView statusView, ActuatorController actuatorController, SteeringController steeringController) throws IOException {
+		this(listener, InetAddress.getByName(DEFAULT_IP), DEFAULT_PORT, statusView, actuatorController, steeringController);
 	}
 	
-	public Controller(ControllerListener listener, InetAddress host, int port, ActuatorController actuatorController, SteeringController steeringController) throws IOException {
+	public Controller(ControllerListener listener, InetAddress host, int port, StatusView statusView, ActuatorController actuatorController, SteeringController steeringController) throws IOException {
 		this.listener = listener;
+		this.statusView = statusView;
 		this.actuatorController = actuatorController;
 		this.steeringController = steeringController;
 		socket = new Socket(host, port);
@@ -87,25 +91,32 @@ public class Controller implements ActuatorController.Listener, SteeringControll
 	public void start() {
 		recvThread.start();
 		sendThread.start();
+		statusView.information("Controller has started.", StatusView.WHITE);
 		listener.onStarted();
-		listener.onInformation("controller started", Level.CHATTERBOX);
 	}
 	
-	public void stop() throws IOException, InterruptedException {
-		//ensure that onStopped() method of listener is only called once
-		synchronized(socket) {
-			if(socket.isClosed())
-				return;
-			actuatorController.setListener(null);
-			steeringController.setListener(null);
-			sendThread.stopRunning();
-			recvThread.stopRunning();
-			sendThread.join();
-			recvThread.join();
-			socket.close();
-		}
+	/*
+	 * triggers the threads to stop, but does not wait until they have stopped
+	 */
+	public void launchStop() {
+		actuatorController.setListener(null);
+		steeringController.setListener(null);
+		sendThread.stopRunning();
+		recvThread.stopRunning();
+	}
+	
+	public boolean hasStopped() {
+		return socket.isClosed();
+	}
+	
+	/*
+	 * getter and methods for the receive and send threads to access data structures of the controller
+	 */
+	
+	void terminateStop() throws IOException {
+		socket.close();
+		statusView.information("Controller has stopped.", StatusView.WHITE);
 		listener.onStopped();
-		listener.onInformation("controller stopped", Level.CHATTERBOX);
 	}
 	
 	InputStream getInputStream() throws IOException {
@@ -124,28 +135,12 @@ public class Controller implements ActuatorController.Listener, SteeringControll
 		return recvThread;
 	}
 	
-	void onSendError(Exception e) {
-		e.printStackTrace();
-		listener.onError();
-		listener.onInformation(e.getMessage(), Level.ERROR);
+	ControllerListener getListener() {
+		return listener;
 	}
 	
-	void onReceiveError(Exception e) {
-		e.printStackTrace();
-		listener.onError();
-		listener.onInformation(e.getMessage(), Level.ERROR);
-	}
-	
-	/*
-	 * called when host closes the socket or the connection gets lost because signal is too weak
-	 */
-	void onConnectionLost(boolean closedByHost) {
-		listener.onConnectionLost(closedByHost);
-		if(closedByHost) {
-			listener.onInformation("Connection has been closed by host.", Level.NORMAL);
-		} else {
-			listener.onInformation("Connection has been lost.", Level.NORMAL);
-		}
+	public StatusView getStatusView() {
+		return statusView;
 	}
 	
 	/*

@@ -22,8 +22,8 @@ public class ReceiveThread extends Thread {
 	
 	@Override
 	public void run() {
-		while(isRunning) {
-			try {
+		try {
+			while(isRunning) {
 				//get to the next SYNC-mark in the stream
 				int lastByte = input.readUnsignedByte();
 				int b = input.readUnsignedByte();
@@ -36,19 +36,33 @@ public class ReceiveThread extends Thread {
 				byte param = input.readByte();
 				//read and process the data of the packet
 				switch(device) {
-					case Controller.D_RASPBERRY: receiveNetworkPaket(param); break;
-					default: controller.onReceiveError(new Exception("received invalid device"));
+					case Controller.D_RASPBERRY: 
+						receiveNetworkPaket(param); 
+						break;
+					default: 
+						IOException e = new IOException("invalid device in packet header");
+						controller.getStatusView().information("The following error has occured: " + e.getMessage(), 0xFF0000);
+						controller.getListener().onError(e);
 				}
-			} catch (EOFException e) {
-				controller.onConnectionLost(true);
-			} catch (IOException e) {
-				controller.onReceiveError(e);
 			}
+		} catch (EOFException e) {
+			controller.launchStop();
+			controller.getStatusView().information("The connection has been closed by the remote host.", 0xFF8000);
+			controller.getStatusView().information("The controller will be stopped.", 0xFF8000);
+			controller.getListener().onConnectionClosedByHost();
+		} catch (IOException e) {
+			e.printStackTrace();
+			controller.launchStop();
+			controller.getStatusView().information("The following error has occured: " + e.getMessage(), 0xFF0000);
+			controller.getStatusView().information("The controller will be stopped.", 0xFF0000);
+			controller.getListener().onError(e);
 		}
+		//wait for the other thread to terminate to call terminateStop()
 		try {
-			input.close();
-		} catch(IOException e) {
-			controller.onReceiveError(e);
+			controller.getSendThread().join();
+			controller.terminateStop();
+		} catch (InterruptedException | IOException e) {
+			e.printStackTrace();
 		}
 	}
 
@@ -72,6 +86,7 @@ public class ReceiveThread extends Thread {
 			case Controller.P_ECHO_REPLY: 
 				lastEchoReply = System.currentTimeMillis();
 				echoTime = lastEchoReply - input.readLong();
+				controller.getStatusView().setNetworkPing(echoTime);
 				break;
 			default: throw new IllegalArgumentException("unknown parameter for network device");
 		}

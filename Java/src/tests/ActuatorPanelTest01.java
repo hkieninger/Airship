@@ -7,7 +7,7 @@ import java.io.IOException;
 
 import javax.swing.JFrame;
 
-import controller.ActuatorController;
+import controller.view.ActuatorController;
 import gui.ActuatorPanel;
 
 public class ActuatorPanelTest01 {

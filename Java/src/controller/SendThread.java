@@ -6,10 +6,11 @@ import java.io.IOException;
 public class SendThread extends Thread {
 	
 	static final int SEND_ECHO_DELAY = 1000; //in ms
-	private static final long CONNECTION_LOST_TIME = SEND_ECHO_DELAY * 10;
+	public static final long CONNECTION_LOST_TIME = SEND_ECHO_DELAY * 10;
 	private static final int THREAD_DELAY = 50; //in ms
 	
 	private boolean isRunning;
+	private boolean weakConnection;
 	private Controller controller;
 	private DataOutputStream output;
 	
@@ -30,8 +31,12 @@ public class SendThread extends Thread {
 
 	@Override
 	public void run() {
-		while(isRunning) {
-			try {
+		try {
+			while(isRunning) {
+				//sleep some ms
+				try {
+					Thread.sleep(THREAD_DELAY);
+				} catch (InterruptedException e) {}
 				//send the changes in configuration
 				sendChanges();
 				//ping the server periodically to check the network quality
@@ -40,25 +45,37 @@ public class SendThread extends Thread {
 						lastMillis = System.currentTimeMillis();
 				}
 				//check if the pings came back
-				if(System.currentTimeMillis() - controller.getReceiveThread().getLastEchoReply() > CONNECTION_LOST_TIME)
-					controller.onConnectionLost(false);
-			} catch (IOException e) {
-				controller.onSendError(e);
+				if(System.currentTimeMillis() - controller.getReceiveThread().getLastEchoReply() > CONNECTION_LOST_TIME) {
+					if(!weakConnection) {
+						controller.getStatusView().information(
+								"The connection has been lost (ping > " + CONNECTION_LOST_TIME / 1000 + " s).", 0xFF8000);
+						controller.getListener().onConnectionLost();
+						weakConnection = true;
+					}
+				} else {
+					if(weakConnection) {
+						controller.getStatusView().information(
+								"The connection has been restored (ping < " + CONNECTION_LOST_TIME / 1000 + " s).", 0x00FF80);
+						controller.getListener().onConnectionRestored();
+						weakConnection = false;
+					}
+				}
 			}
-			//sleep some ms
-			try {
-				Thread.sleep(THREAD_DELAY);
-			} catch (InterruptedException e) {}
-		}
-		try {
-			output.close();
-		} catch(IOException e) {
-			controller.onSendError(e);
+		} catch (IOException e) {
+			e.printStackTrace();
+			controller.launchStop();
+			controller.getStatusView().information("The following error has occured: " + e.getMessage(), 0xFF0000);
+			controller.getStatusView().information("The controller will be stopped.", 0xFF0000);
+			controller.getListener().onError(e);
 		}
 	}
 	
 	public void stopRunning() {
 		isRunning = false;
+	}
+	
+	public boolean weakConnection() {
+		return weakConnection;
 	}
 	
 	synchronized public void actuatorChanged(byte device, int value) {
