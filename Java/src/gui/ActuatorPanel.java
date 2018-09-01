@@ -8,6 +8,7 @@ import java.util.Hashtable;
 import javax.swing.AbstractAction;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
+import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSlider;
@@ -100,15 +101,19 @@ public class ActuatorPanel extends JPanel implements ActuatorController, ChangeL
 	}
 	
 	private void setSliderKeyboardShortcut(JSlider slider, char plus, char minus, int max) {
-		getInputMap().put(KeyStroke.getKeyStroke(plus), "+ " + plus);
+		getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(plus), "+ " + plus);
 		getActionMap().put("+ " + plus, new AbstractAction() {
+			private static final long serialVersionUID = 1L;
+
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
 				slider.setValue(slider.getValue() + max / 10);
 			}
 		});
-		getInputMap().put(KeyStroke.getKeyStroke(minus), "- " + minus);
+		getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(minus), "- " + minus);
 		getActionMap().put("- " + minus, new AbstractAction() {
+			private static final long serialVersionUID = 1L;
+
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
 				slider.setValue(slider.getValue() - max / 10);
@@ -150,68 +155,21 @@ public class ActuatorPanel extends JPanel implements ActuatorController, ChangeL
 		if(listener == null)
 			return;
 		if(e.getSource() == sliderLeftMotor && !sliderLeftMotor.getValueIsAdjusting()) {
-			listener.onLeftMotorChanged(getMotorValue(sliderLeftMotor.getValue()));
+			listener.onLeftMotorChanged(getLeftMotor());
 		} else if(e.getSource() == sliderRightMotor && !sliderRightMotor.getValueIsAdjusting()) {
-			listener.onRightMotorChanged(getMotorValue(sliderRightMotor.getValue()));
+			listener.onRightMotorChanged(getRightMotor());
 		} else if(e.getSource() == sliderLeftRudder && !sliderLeftRudder.getValueIsAdjusting()) {
-			listener.onLeftRudderChanged(getRudderValue(sliderLeftRudder.getValue()));
+			listener.onLeftRudderChanged(getLeftRudder());
 		} else if(e.getSource() == sliderRightRudder && !sliderRightRudder.getValueIsAdjusting()) {
-			listener.onRightRudderChanged(getRudderValue(sliderRightRudder.getValue()));
+			listener.onRightRudderChanged(getRightRudder());
 		} else if(e.getSource() == sliderTopRudder && !sliderTopRudder.getValueIsAdjusting()) {
-			listener.onTopRudderChanged(getRudderValue(sliderTopRudder.getValue()));
+			listener.onTopRudderChanged(getTopRudder());
 		}
 	}
 	
 	@Override
 	public void setListener(ActuatorController.Listener l) {
 		listener = l;
-	}
-
-	//make them thread save
-	
-	@Override
-	public void setLeftMotor(int thrust) {
-		if(thrust > 0)
-			thrust += MOTOR_ZERO;
-		else if(thrust < 0)
-			thrust -= MOTOR_ZERO;
-		sliderLeftMotor.setValue(thrust);
-	}
-
-	@Override
-	public void setRightMotor(int thrust) {
-		if(thrust > 0)
-			thrust += MOTOR_ZERO;
-		else if(thrust < 0)
-			thrust -= MOTOR_ZERO;
-		sliderRightMotor.setValue(thrust);
-	}
-
-	@Override
-	public void setLeftRudder(int angle) {
-		if(angle > 0)
-			angle += RUDDER_ZERO;
-		else if(angle < 0)
-			angle -= RUDDER_ZERO;
-		sliderLeftRudder.setValue(angle);
-	}
-
-	@Override
-	public void setRightRudder(int angle) {
-		if(angle > 0)
-			angle += RUDDER_ZERO;
-		else if(angle < 0)
-			angle -= RUDDER_ZERO;
-		sliderRightRudder.setValue(angle);
-	}
-
-	@Override
-	public void setTopRudder(int angle) {
-		if(angle > 0)
-			angle += RUDDER_ZERO;
-		else if(angle < 0)
-			angle -= RUDDER_ZERO;
-		sliderTopRudder.setValue(angle);
 	}
 	
 	private int getMotorValue(int sliderValue) {

@@ -9,10 +9,6 @@ public interface SteeringController {
 	//Setters
 	public void setListener(Listener l);
 	
-	public void setVelocity(int velocity);
-	public void setYaw(int yaw);
-	public void setPitch(int pitch);
-	
 	//Getters
 	public int getVelocity();
 	public int getYaw();

@@ -12,6 +12,7 @@ import javax.swing.AbstractAction;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
+import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSlider;
@@ -80,43 +81,49 @@ public class SteeringPanel extends JPanel implements SteeringController {
 		});
 		
 		//set key bindings
-		getInputMap().put(KeyStroke.getKeyStroke('+'), "plus");
+		getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke('+'), "plus");
 		getActionMap().put("plus", new AbstractAction() {
+			private static final long serialVersionUID = 1L;
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
 				setVelocity(getVelocity() + SteeringController.MAX_VELOCITY / 10);
 			}
 		});
-		getInputMap().put(KeyStroke.getKeyStroke('-'), "minus");
+		getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke('-'), "minus");
 		getActionMap().put("minus", new AbstractAction() {
+			private static final long serialVersionUID = 1L;
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
 				setVelocity(getVelocity() - SteeringController.MAX_VELOCITY / 10);
 			}
 		});
-		getInputMap().put(KeyStroke.getKeyStroke("DOWN"), "down");
+		getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke("DOWN"), "down");
 		getActionMap().put("down", new AbstractAction() {
+			private static final long serialVersionUID = 1L;
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
 				setPitch(getPitch() - SteeringController.MAX_PITCH / 10);
 			}
 		});
-		getInputMap().put(KeyStroke.getKeyStroke("UP"), "up");
+		getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke("UP"), "up");
 		getActionMap().put("up", new AbstractAction() {
+			private static final long serialVersionUID = 1L;
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
 				setPitch(getPitch() + SteeringController.MAX_PITCH / 10);
 			}
 		});
-		getInputMap().put(KeyStroke.getKeyStroke("LEFT"), "left");
+		getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke("LEFT"), "left");
 		getActionMap().put("left", new AbstractAction() {
+			private static final long serialVersionUID = 1L;
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
 				setYaw(getYaw() - SteeringController.MAX_YAW / 10);
 			}
 		});
-		getInputMap().put(KeyStroke.getKeyStroke("RIGHT"), "right");
+		getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke("RIGHT"), "right");
 		getActionMap().put("right", new AbstractAction() {
+			private static final long serialVersionUID = 1L;
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
 				setYaw(getYaw() + SteeringController.MAX_YAW / 10);
@@ -143,17 +150,14 @@ public class SteeringPanel extends JPanel implements SteeringController {
 		listener = l;
 	}
 
-	@Override
 	public void setVelocity(int velocity) {
 		sliderVelocity.setValue(velocity);
 	}
 
-	@Override
 	public void setYaw(int yaw) {
 		sliderDirection.setXSlider(yaw);
 	}
 
-	@Override
 	public void setPitch(int pitch) {
 		sliderDirection.setYSlider(pitch);
 	}

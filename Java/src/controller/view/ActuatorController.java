@@ -8,13 +8,6 @@ public interface ActuatorController {
 	//Setters
 	public void setListener(Listener l);
 	
-	public void setLeftMotor(int thrust);
-	public void setRightMotor(int thrust);
-	
-	public void setLeftRudder(int angle);
-	public void setRightRudder(int angle);
-	public void setTopRudder(int angle);
-	
 	//Getters
 	public int getLeftMotor();
 	public int getRightMotor();

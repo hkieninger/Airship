@@ -49,6 +49,7 @@ public class Slider2D extends JComponent {
 		this.maxY = maxY;
 		
 		addMouseListener(new MouseAdapter() {
+			
 			public void mousePressed(MouseEvent e) {
 				setXWithoutChangeEvent((e.getX() - width / 2) * 2 * maxX / width);
 				setYWithoutChangeEvent((height / 2 - e.getY()) * 2 * maxY / height);

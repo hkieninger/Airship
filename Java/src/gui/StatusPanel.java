@@ -30,11 +30,9 @@ public class StatusPanel extends JPanel implements StatusView {
 		textPane = new JTextPane();
 		textPane.setBackground(Color.BLACK);
 		textPane.setEditable(false);
+		textPane.setFocusable(false);
 		JScrollPane scrollPane = new JScrollPane(textPane);
 		add(scrollPane, BorderLayout.CENTER);
-		for(int i = 0; i < 100; i++) {
-			information("test", (int) (Math.random() * 0xFFFFFF));
-		}
 		
 		//add the status labels for the battery and the ping
 		JPanel panel = new JPanel();

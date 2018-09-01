@@ -20,10 +20,6 @@ public class VideoPanel extends JLabel implements VideoView {
 	private static final long serialVersionUID = 1L;
 	
 	private BufferedImage image;
-
-	public VideoPanel() {
-		
-	}
 	
 	@Override
 	public void paintComponent(Graphics g) {
