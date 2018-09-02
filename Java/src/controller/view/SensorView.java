@@ -28,12 +28,12 @@ public interface SensorView {
 	
 	/**
 	 * GPS measurements
-	 * @param latitude ° scaled with 10e-7
-	 * @param longitude ° scaled with 10e-7
+	 * @param latitude ° scaled with 1e-7
+	 * @param longitude ° scaled with 1e-7
 	 * @param altitude in mm
 	 * @param precision in mm
 	 * @param velocity cm/s
-	 * @param azimuth ° scaled with 10e-5
+	 * @param azimuth ° scaled with 1e-5
 	 */
 	void setGPS(int latitude, int longitude, int altitude, int precision, int velocity, int azimuth);
 	

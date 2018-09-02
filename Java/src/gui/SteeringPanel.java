@@ -1,5 +1,6 @@
 package gui;
 
+import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
@@ -132,10 +133,14 @@ public class SteeringPanel extends JPanel implements SteeringController {
 		
 		//add the components to the layout
 		setLayout(new BoxLayout(this, BoxLayout.PAGE_AXIS));
-		add(new JLabel("velocity (+, -)"));
+		JLabel label = new JLabel("velocity (+, -)");
+		label.setAlignmentX(Component.CENTER_ALIGNMENT);
+		add(label);
 		add(sliderVelocity);
 		add(Box.createRigidArea(new Dimension(0, 20)));
-		add(new JLabel("direction (arrows)"));
+		label = new JLabel("direction (arrows)");
+		label.setAlignmentX(Component.CENTER_ALIGNMENT);
+		add(label);
 		add(sliderDirection);
 		JPanel panel = new JPanel();
 		panel.setMaximumSize(new Dimension(Integer.MAX_VALUE, BUTTON_HEIGHT));
