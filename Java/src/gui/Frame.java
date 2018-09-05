@@ -22,9 +22,15 @@ public class Frame extends JFrame implements WindowListener, ControllerListener 
 	private static final long serialVersionUID = 1L;
 	
 	private Controller controller;
+	
 	private StatusPanel statusPanel;
+	private VideoPanel bottomVideoPanel;
+	private VideoPanel frontVideoPanel;
+	private SensorPanel sensorPanel;
+	
 	private ActuatorPanel actuatorPanel;
 	private SteeringPanel steeringPanel;
+	private AutoPanel autoPanel;
 
 	public static void main(String[] args) {
 		SwingUtilities.invokeLater(new Runnable() {
@@ -52,26 +58,29 @@ public class Frame extends JFrame implements WindowListener, ControllerListener 
 		tabs.addTab("actuator", scrollPane);
 		steeringPanel = new SteeringPanel();
 		tabs.addTab("steering", steeringPanel);
-		AutoPanel autoPanel = new AutoPanel();
+		autoPanel = new AutoPanel();
 		tabs.addTab("autopilot", autoPanel);
 		add(tabs);
 		
 		//Status panels
-		StatusPanel statusPanel = new StatusPanel();
+		statusPanel = new StatusPanel();
 		add(statusPanel);
 		
 		//Video panels
 		tabs = new JTabbedPane();
 		tabs.setFocusable(false);
-		VideoPanel bottomVideoPanel = new VideoPanel();
+		bottomVideoPanel = new VideoPanel();
 		tabs.addTab("camera bottom", bottomVideoPanel);
-		VideoPanel frontVideoPanel = new VideoPanel();
+		frontVideoPanel = new VideoPanel();
 		tabs.addTab("camera front", frontVideoPanel);
+		tabs.addChangeListener((event) -> {
+			System.out.println("Changed");
+		});
 		add(tabs);
 		
 		//Sensor panels
 		tabs = new JTabbedPane();
-		SensorPanel sensorPanel = new SensorPanel();
+		sensorPanel = new SensorPanel();
 		tabs.addTab("sensor data", sensorPanel);
 		MapPanel mapPanel = new MapPanel();
 		tabs.addTab("map", mapPanel);
@@ -79,7 +88,7 @@ public class Frame extends JFrame implements WindowListener, ControllerListener 
 		
 		//create the controller
 		/*try {
-			controller = new Controller(this, actuatorPanel, steeringPanel);
+			controller = new Controller(this, statusPanel, actuatorPanel);
 			controller.start();
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -152,7 +161,7 @@ public class Frame extends JFrame implements WindowListener, ControllerListener 
 				"Restart", JOptionPane.DEFAULT_OPTION, JOptionPane.QUESTION_MESSAGE, null, options, options[0]);
 		if(option == 0) {
 			try {
-				controller = new Controller(this, statusPanel, actuatorPanel, steeringPanel);
+				controller = new Controller(this, statusPanel, actuatorPanel);
 			} catch (IOException e) {
 				e.printStackTrace();
 				JOptionPane.showMessageDialog(this, "Restart failed with following error: " + e.getMessage(), e.getClass().getSimpleName(), JOptionPane.ERROR_MESSAGE);

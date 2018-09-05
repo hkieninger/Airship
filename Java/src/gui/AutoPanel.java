@@ -17,7 +17,7 @@ import org.jxmapviewer.input.ZoomMouseWheelListenerCursor;
 import org.jxmapviewer.viewer.DefaultTileFactory;
 import org.jxmapviewer.viewer.GeoPosition;
 
-import controller.view.AutoController;
+import controller.pool.AutoController;
 import gui.component.StaticTableModel;
 
 /**

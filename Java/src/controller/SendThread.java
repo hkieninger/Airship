@@ -3,70 +3,59 @@ package controller;
 import java.io.DataOutputStream;
 import java.io.IOException;
 
+import controller.CommandPool.Command;
+
 public class SendThread extends Thread {
 	
 	static final int SEND_ECHO_DELAY = 1000; //in ms
 	public static final long CONNECTION_LOST_TIME = SEND_ECHO_DELAY * 10;
-	private static final int THREAD_DELAY = 50; //in ms
 	
 	private boolean isRunning;
-	private boolean weakConnection;
-	private Controller controller;
+	private Connection connection;
 	private DataOutputStream output;
 	
-	private boolean[] deviceChanged; //flags which say if a setting has changed and need to be sent
-	private int[] actuatorValues; //settings of the actuators
+	private long lastEchoRequest;
 	
-	private long lastMillis;
-	
-	public SendThread(Controller controller) throws IOException {
-		this.controller = controller;
-		deviceChanged = new boolean[Controller.D_TOP_RUDDER + 1];
-		for(int i = 0; i < deviceChanged.length; i++) //all default values will be sent at the beginning
-			deviceChanged[i] = true;
-		actuatorValues = new int[Controller.D_TOP_RUDDER - Controller.D_LEFT_MOTOR + 1]; //default values are all 0s
+	public SendThread(Connection connection) throws IOException {
+		this.connection = connection;
 		isRunning = true;
-		output = new DataOutputStream(controller.getOutputStream());
+		output = new DataOutputStream(connection.getSocket().getOutputStream());
+		lastEchoRequest = 0;
 	}
 
 	@Override
 	public void run() {
 		try {
 			while(isRunning) {
-				//sleep some ms
 				try {
-					Thread.sleep(THREAD_DELAY);
-				} catch (InterruptedException e) {}
-				//send the changes in configuration
-				sendChanges();
-				//ping the server periodically to check the network quality
-				if(System.currentTimeMillis() - lastMillis > SEND_ECHO_DELAY) {
-						sendEchoRequest();
-						lastMillis = System.currentTimeMillis();
-				}
-				//check if the pings came back
-				if(System.currentTimeMillis() - controller.getReceiveThread().getLastEchoReply() > CONNECTION_LOST_TIME) {
-					if(!weakConnection) {
-						controller.getStatusView().information(
-								"The connection has been lost (ping > " + CONNECTION_LOST_TIME / 1000 + " s).", 0xFF8000);
-						controller.getListener().onConnectionLost();
-						weakConnection = true;
-					}
-				} else {
-					if(weakConnection) {
-						controller.getStatusView().information(
-								"The connection has been restored (ping < " + CONNECTION_LOST_TIME / 1000 + " s).", 0x00FF80);
-						controller.getListener().onConnectionRestored();
-						weakConnection = false;
-					}
+					//sleep a while
+					long delay = SEND_ECHO_DELAY - (System.currentTimeMillis() - lastEchoRequest);
+					if(delay > 0)
+						Thread.sleep(delay);
+					//send a roundtrip
+					sendEchoRequest();
+					//check if the connection is broken
+					if(System.currentTimeMillis() - connection.getRecvThead().getLastEchoReply() > CONNECTION_LOST_TIME)
+						throw new Connection.LostException();
+					//set the time of the last echo request
+					lastEchoRequest = System.currentTimeMillis();
+				} catch(InterruptedException e) {
+					sendCommands();
 				}
 			}
-		} catch (IOException e) {
-			e.printStackTrace();
-			controller.launchStop();
-			controller.getStatusView().information("The following error has occured: " + e.getMessage(), 0xFF0000);
-			controller.getStatusView().information("The controller will be stopped.", 0xFF0000);
-			controller.getListener().onError(e);
+		} catch(IOException | Connection.LostException e) {
+			connection.getRecvThead().setStopCause(e);
+		} finally {
+			//set the isRunning variable to false
+			stopRunning();
+			//stop the receive thread
+			connection.getRecvThead().stopRunning();
+			// close the socket: causes the receive thread to stop read call, because inputStream throws an IOException in the receive thread
+			try {
+				connection.getSocket().close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 		}
 	}
 	
@@ -74,70 +63,93 @@ public class SendThread extends Thread {
 		isRunning = false;
 	}
 	
-	public boolean weakConnection() {
-		return weakConnection;
-	}
-	
-	synchronized public void actuatorChanged(byte device, int value) {
-		deviceChanged[device] = true;
-		actuatorValues[device - Controller.D_LEFT_MOTOR] = value;
-	}
-	
 	/*
 	 * Helper methods
 	 */
 	
-	private void sendChanges() throws IOException {
-		for(byte device = 0; device < deviceChanged.length; device++) {
-			boolean changed = false;
-			int value = 0;
-			
-			synchronized (this) {
-				changed = deviceChanged[device];
-				deviceChanged[device] = false; //reset flag
-				if(device >= Controller.D_LEFT_MOTOR && device <= Controller.D_TOP_RUDDER)
-					value = actuatorValues[device - Controller.D_LEFT_MOTOR];
-			}
-			
-			if(changed) {
-				if(device >= Controller.D_LEFT_MOTOR && device <= Controller.D_TOP_RUDDER)
-					sendActuatorConfig(device, value);
-			}
+	private void sendCommands() throws IOException {
+		CommandPool pool = connection.getCommandPool();
+		boolean[] changed = pool.getChanged();
+		
+		if(changed[Command.DATA.ordinal()]) {
+			sendDataChanges(pool);
+		}
+		
+		if(changed[Command.ACTUATOR.ordinal()]) {
+			sendActuatorChanges(pool);
+		}
+		
+		if(changed[Command.STEERING.ordinal()]) {
+			sendSteeringChanges(pool);
+		}
+		
+		if(changed[Command.AUTO.ordinal()]) {
+			sendAutoChanges(pool);
 		}
 	}
 	
-	private void sendActuatorConfig(byte device, int value) throws IOException {
-		sendIntValue(device, (byte) 0, value);
+	private void sendAutoChanges(CommandPool pool) {
+		// TODO Auto-generated method stub
+		
 	}
-	
+
+	private void sendSteeringChanges(CommandPool pool) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	private void sendActuatorChanges(CommandPool pool) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	private void sendDataChanges(CommandPool pool) {
+		boolean[] changed = pool.getDataChanged();
+		for(int i = 0; i < changed.length; i++) {
+			if(changed[i])
+				
+		}
+	}
+
 	void sendEchoRequest() throws IOException {
-		sendLongValue(Controller.D_RASPBERRY, Controller.P_ECHO_REQUEST, System.currentTimeMillis());
+		sendLongValue(Device.RASPBERRY, P_Raspberry.ECHO_REQUEST, System.currentTimeMillis());
 	}
 	
 	void sendEchoReply(long timestamp) throws IOException {
-		sendLongValue(Controller.D_RASPBERRY, Controller.P_ECHO_REPLY, timestamp);
+		sendLongValue(Device.RASPBERRY, P_Raspberry.ECHO_REPLY, timestamp);
+	}
+	
+	private void sendHeader(Device device, Enum<?> param) throws IOException {
+		synchronized(output) {
+			output.writeShort(Connection.SYNC);
+			output.writeByte(device.ordinal());
+			output.writeByte(param.ordinal());
+		}
 	}
 	
 	/*
 	 * the long value is sent in big endian order
 	 */
-	private void sendLongValue(byte device, byte param, long value) throws IOException {
+	private void sendLongValue(Device device, Enum<?> param, long value) throws IOException {
 		synchronized(output) {
-			output.writeShort(Controller.SYNC);
-			output.writeByte(device);
-			output.writeByte(param);
+			sendHeader(device, param);
 			output.writeLong(value);
+		}
+	}
+	
+	private void sendBooleanValue(Device device, Enum<?> param, boolean value) throws IOException {
+		synchronized(output) {
+			sendHeader(device, param);
+			output.writeBoolean(value);
 		}
 	}
 	
 	/*
 	 * the int value is sent in big endian order
 	 */
-	private void sendIntValue(byte device, byte param, int value) throws IOException {
+	private void sendIntValue(Device device, Enum<?> param, int value) throws IOException {
 		synchronized(output) {
-			output.writeShort(Controller.SYNC);
-			output.writeByte(device);
-			output.writeByte(param);
+			sendHeader(device, param);
 			output.writeInt(value);
 		}
 	}

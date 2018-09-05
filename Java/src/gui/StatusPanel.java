@@ -14,9 +14,13 @@ import javax.swing.text.Style;
 import javax.swing.text.StyleConstants;
 import javax.swing.text.StyledDocument;
 
-import controller.view.StatusView;
+import controller.SendThread;
+import controller.pool.StatusView;
 
 public class StatusPanel extends JPanel implements StatusView {
+	
+	private static final int GREEN_PING = 50;
+	private static final long RED_PING = SendThread.CONNECTION_LOST_TIME;
 	
 	/**
 	 * 
@@ -83,15 +87,15 @@ public class StatusPanel extends JPanel implements StatusView {
 	public void setNetworkPing(final long ping) {
 		SwingUtilities.invokeLater(() -> {
 			int green, red;
-			if(ping < StatusView.GREEN_PING) {
+			if(ping < GREEN_PING) {
 				green = 255;
 				red = 0;
-			} else if(ping > StatusView.RED_PING) {
+			} else if(ping > RED_PING) {
 				green = 0;
 				red = 255;
 			} else {
-				int max = (int) (StatusView.RED_PING - StatusView.GREEN_PING);
-				int gradient = (int) (ping - StatusView.GREEN_PING);
+				int max = (int) (RED_PING - GREEN_PING);
+				int gradient = (int) (ping - GREEN_PING);
 				if(gradient < max / 2) {
 					green = 255;
 					red = (int) (255 * gradient / max * 2);

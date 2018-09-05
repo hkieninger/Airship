@@ -10,7 +10,7 @@ import javax.swing.ImageIcon;
 import javax.swing.JLabel;
 import javax.swing.SwingUtilities;
 
-import controller.view.VideoView;
+import controller.pool.VideoView;
 
 public class VideoPanel extends JLabel implements VideoView {
 	

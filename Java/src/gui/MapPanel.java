@@ -21,7 +21,7 @@ import org.jxmapviewer.viewer.TileFactory;
 import org.jxmapviewer.viewer.Waypoint;
 import org.jxmapviewer.viewer.WaypointPainter;
 
-import controller.view.MapView;
+import controller.pool.MapView;
 
 public class MapPanel extends JPanel implements MapView {
 

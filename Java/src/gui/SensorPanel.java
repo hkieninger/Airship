@@ -10,7 +10,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.SwingUtilities;
 
-import controller.view.SensorView;
+import controller.pool.SensorView;
 import gui.component.StaticTableModel;
 
 public class SensorPanel extends JPanel implements SensorView {
