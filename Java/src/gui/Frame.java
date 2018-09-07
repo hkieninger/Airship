@@ -4,6 +4,8 @@ import java.awt.GridLayout;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.io.IOException;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
@@ -13,6 +15,7 @@ import javax.swing.SwingUtilities;
 
 import controller.Controller;
 import controller.ControllerListener;
+import controller.data.parameter.MeasSensor;
 
 public class Frame extends JFrame implements WindowListener, ControllerListener {
 	
@@ -21,28 +24,28 @@ public class Frame extends JFrame implements WindowListener, ControllerListener 
 	 */
 	private static final long serialVersionUID = 1L;
 	
+	public static final String DEFAULT_IP = "172.17.72.204";//"192.168.4.1";
+	
 	private Controller controller;
-	
 	private StatusPanel statusPanel;
-	private VideoPanel bottomVideoPanel;
-	private VideoPanel frontVideoPanel;
-	private SensorPanel sensorPanel;
-	
-	private ActuatorPanel actuatorPanel;
-	private SteeringPanel steeringPanel;
-	private AutoPanel autoPanel;
 
 	public static void main(String[] args) {
 		SwingUtilities.invokeLater(new Runnable() {
 			@Override
 			public void run() {
-				Frame frame = new Frame();
+				Frame frame = null;
+				try {
+					frame = new Frame();
+				} catch (IOException e) {
+					e.printStackTrace();
+					System.exit(1);
+				}
 				frame.setVisible(true);
 			}
 		});
 	}
 	
-	public Frame() {
+	public Frame() throws UnknownHostException, IOException {
 		super("Control Tower");
 		//window settings
 		setExtendedState(JFrame.MAXIMIZED_BOTH);
@@ -50,28 +53,34 @@ public class Frame extends JFrame implements WindowListener, ControllerListener 
 		addWindowListener(this);
 		setLayout(new GridLayout(2, 2));
 		
+		controller = new Controller(InetAddress.getByName(DEFAULT_IP));
+		
 		//controll panels
 		JTabbedPane tabs = new JTabbedPane();
 		tabs.setFocusable(false);
-		actuatorPanel = new ActuatorPanel();
+		ActuatorPanel actuatorPanel = new ActuatorPanel(controller.getConfPool());
 		JScrollPane scrollPane = new JScrollPane(actuatorPanel);
 		tabs.addTab("actuator", scrollPane);
-		steeringPanel = new SteeringPanel();
+		SteeringPanel steeringPanel = new SteeringPanel(controller.getConfPool());
 		tabs.addTab("steering", steeringPanel);
-		autoPanel = new AutoPanel();
+		AutoPanel autoPanel = new AutoPanel();
 		tabs.addTab("autopilot", autoPanel);
 		add(tabs);
 		
 		//Status panels
-		statusPanel = new StatusPanel();
+		StatusPanel statusPanel = new StatusPanel();
+		controller.getMeasPool().addListener(statusPanel);
 		add(statusPanel);
+		statusPanel.setInformation("Connection established.", 0x00FF00);
 		
 		//Video panels
 		tabs = new JTabbedPane();
 		tabs.setFocusable(false);
-		bottomVideoPanel = new VideoPanel();
+		VideoPanel bottomVideoPanel = new VideoPanel(MeasSensor.CAM_BOTTOM);
+		controller.getMeasPool().addListener(bottomVideoPanel);
 		tabs.addTab("camera bottom", bottomVideoPanel);
-		frontVideoPanel = new VideoPanel();
+		VideoPanel frontVideoPanel = new VideoPanel(MeasSensor.CAM_FRONT);
+		controller.getMeasPool().addListener(frontVideoPanel);
 		tabs.addTab("camera front", frontVideoPanel);
 		tabs.addChangeListener((event) -> {
 			System.out.println("Changed");
@@ -80,21 +89,13 @@ public class Frame extends JFrame implements WindowListener, ControllerListener 
 		
 		//Sensor panels
 		tabs = new JTabbedPane();
-		sensorPanel = new SensorPanel();
+		SensorPanel sensorPanel = new SensorPanel();
+		controller.getMeasPool().addListener(sensorPanel);
 		tabs.addTab("sensor data", sensorPanel);
 		MapPanel mapPanel = new MapPanel();
+		controller.getMeasPool().addListener(mapPanel);
 		tabs.addTab("map", mapPanel);
 		add(tabs);
-		
-		//create the controller
-		/*try {
-			controller = new Controller(this, statusPanel, actuatorPanel);
-			controller.start();
-		} catch (IOException e) {
-			e.printStackTrace();
-			JOptionPane.showMessageDialog(null, e.getMessage(), e.getClass().getSimpleName(), JOptionPane.ERROR_MESSAGE);
-			System.exit(1);
-		}*/
 	}
 
 	@Override
@@ -103,7 +104,7 @@ public class Frame extends JFrame implements WindowListener, ControllerListener 
 	@Override
 	public void windowClosed(WindowEvent arg0) {
 		//cleanup code here
-		controller.launchStop();
+		controller.close();
 	}
 
 	@Override
@@ -127,22 +128,12 @@ public class Frame extends JFrame implements WindowListener, ControllerListener 
 
 	@Override
 	public void onError(Exception e) {
-		restartController("The following error has occured: " + e.getMessage());
-	}
-
-	@Override
-	public void onStarted() {
-		System.out.println("Controller has started.");
-	}
-
-	@Override
-	public void onStopped() {
-		System.out.println("Controller has stopped.");
+		restoreOptionDialog("The following error has occured: " + e.getMessage());
 	}
 
 	@Override
 	public void onConnectionClosedByHost() {
-		restartController("The connection has been closed by the host.");
+		restoreOptionDialog("The connection has been closed by the host.");
 	}
 
 	@Override
@@ -155,16 +146,16 @@ public class Frame extends JFrame implements WindowListener, ControllerListener 
 		JOptionPane.showMessageDialog(this, "The connection is restored.", "Connection", JOptionPane.INFORMATION_MESSAGE);
 	}
 	
-	private void restartController(String message) {
+	private void restoreOptionDialog(String message) {
 		Object[] options = { "Restart Controller", "Exit Programm" };
 		int option = JOptionPane.showOptionDialog(this, message +" Which action do you want to perform?", 
 				"Restart", JOptionPane.DEFAULT_OPTION, JOptionPane.QUESTION_MESSAGE, null, options, options[0]);
 		if(option == 0) {
 			try {
-				controller = new Controller(this, statusPanel, actuatorPanel);
+				controller.restore();
 			} catch (IOException e) {
 				e.printStackTrace();
-				JOptionPane.showMessageDialog(this, "Restart failed with following error: " + e.getMessage(), e.getClass().getSimpleName(), JOptionPane.ERROR_MESSAGE);
+				JOptionPane.showMessageDialog(this, "Restore failed with following error: " + e.getMessage(), e.getClass().getSimpleName(), JOptionPane.ERROR_MESSAGE);
 				SwingUtilities.invokeLater(() -> dispose());
 			}
 		} else {

@@ -7,8 +7,8 @@ import java.net.SocketTimeoutException;
 import java.util.ArrayList;
 import java.util.List;
 
-import controller.objects.ConfDevice;
-import controller.objects.MeasDevice;
+import controller.data.ConfDevice;
+import controller.data.MeasDevice;
 
 public class Connection {
 	

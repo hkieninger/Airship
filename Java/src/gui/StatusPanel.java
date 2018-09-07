@@ -14,10 +14,16 @@ import javax.swing.text.Style;
 import javax.swing.text.StyleConstants;
 import javax.swing.text.StyledDocument;
 
+import controller.ControllerListener;
+import controller.Pool;
 import controller.SendThread;
-import controller.pool.StatusView;
+import controller.data.MeasDevice;
+import controller.data.object.ConnectionData;
+import controller.data.parameter.MeasRPI;
+import controller.data.parameter.MeasSensor;
+import controller.data.parameter.Parameter;
 
-public class StatusPanel extends JPanel implements StatusView {
+public class StatusPanel extends JPanel implements Pool.Listener<MeasDevice>, ControllerListener {
 	
 	private static final int GREEN_PING = 50;
 	private static final long RED_PING = SendThread.CONNECTION_LOST_TIME;
@@ -67,7 +73,6 @@ public class StatusPanel extends JPanel implements StatusView {
         } catch (BadLocationException e){}
 	}
 
-	@Override
 	public void setBatteryPercentage(final int percentage) {
 		SwingUtilities.invokeLater(() -> {
 			int green, red;
@@ -83,7 +88,6 @@ public class StatusPanel extends JPanel implements StatusView {
 		});
 	}
 
-	@Override
 	public void setNetworkPing(final long ping) {
 		SwingUtilities.invokeLater(() -> {
 			int green, red;
@@ -109,10 +113,45 @@ public class StatusPanel extends JPanel implements StatusView {
 		});
 	}
 
+	public void setInformation(String info, int color) {
+		SwingUtilities.invokeLater(() -> appendLine("$ " + info, new Color(color)));
+	}
+
 	@Override
-	//may need to make it thread safe or run it in a gui thread
-	public void information(String info, int color) {
-		SwingUtilities.invokeLater(() -> appendLine(info, new Color(color)));
+	public void onChanged(Pool<MeasDevice> pool, MeasDevice device, Enum<? extends Parameter> parameter) {
+		if(device == MeasDevice.RPI) {
+			if(parameter == MeasRPI.ECHO_REPLY) {
+				setNetworkPing(((ConnectionData.Long) pool.getValue(device, parameter)).val);
+				pool.resetChanged(device, parameter);
+			} else if(parameter == MeasRPI.INFO) {
+				setInformation("Information from remote host: " + 
+						((ConnectionData.String) pool.getValue(device, parameter)).val, 0xFFFFFF);
+				pool.resetChanged(device, parameter);
+			}
+		} else if(device == MeasDevice.SENSOR && parameter == MeasSensor.BATTERY) {
+			setBatteryPercentage(((ConnectionData.UByte) pool.getValue(device, parameter)).val);
+			pool.resetChanged(device, parameter);
+		}
+	}
+
+	@Override
+	public void onError(Exception e) {
+		setInformation("The following error has occured: " + e.getMessage() + ".", 0xFF0000);
+	}
+
+	@Override
+	public void onConnectionClosedByHost() {
+		setInformation("The connection has been closed by the remote host.", 0xFF8000);
+	}
+
+	@Override
+	public void onConnectionLost() {
+		setInformation("The connection has been lost. Restoring ...", 0xFFFF00);
+	}
+
+	@Override
+	public void onConnectionRestored() {
+		setInformation("The connection has been restored.", 0x00FF00);
 	}
 
 }

@@ -19,10 +19,14 @@ import javax.swing.JPanel;
 import javax.swing.JSlider;
 import javax.swing.KeyStroke;
 
-import controller.pool.SteeringController;
+import controller.Pool;
+import controller.data.ConfDevice;
+import controller.data.object.ConnectionData;
+import controller.data.object.UByteVector;
+import controller.data.parameter.ConfSteering;
 import gui.component.Slider2D;
 
-public class SteeringPanel extends JPanel implements SteeringController {
+public class SteeringPanel extends JPanel {
 
 	/**
 	 * 
@@ -34,12 +38,10 @@ public class SteeringPanel extends JPanel implements SteeringController {
 	private JSlider sliderVelocity;
 	private Slider2D sliderDirection;
 	private JButton zeroButton, callibrateButton;
-	
-	private SteeringController.Listener listener;
 
-	public SteeringPanel() {
+	public SteeringPanel(Pool<ConfDevice> pool) {
 		//create the components
-		sliderVelocity = new JSlider(JSlider.HORIZONTAL, 0, SteeringController.MAX_VELOCITY, 0);
+		sliderVelocity = new JSlider(JSlider.HORIZONTAL, 0, ConfSteering.MAX, 0);
 		sliderVelocity.setFocusable(false);
 		BufferedImage knob, background;
 		try {
@@ -50,7 +52,7 @@ public class SteeringPanel extends JPanel implements SteeringController {
 			knob = null;
 			background = null;
 		}
-		sliderDirection = new Slider2D(SteeringController.MAX_YAW, SteeringController.MAX_PITCH, knob, background);
+		sliderDirection = new Slider2D(ConfSteering.MAX, ConfSteering.MAX, knob, background);
 		sliderDirection.setFocusable(false);
 		zeroButton = new JButton("zero");
 		zeroButton.setFocusable(false);
@@ -60,25 +62,31 @@ public class SteeringPanel extends JPanel implements SteeringController {
 		//set the listeners
 		setFocusable(true);
 		sliderVelocity.addChangeListener(e -> {
-			if(listener != null && !sliderVelocity.getValueIsAdjusting())
-				listener.onVelocityChanged(getVelocity());
+			if(!sliderVelocity.getValueIsAdjusting()) {
+				ConnectionData.UByte data = new ConnectionData.UByte();
+				data.val = getVelocity();
+				pool.setValue(ConfDevice.STEERING, ConfSteering.VELOCITY, data);
+			}
 		});
 		sliderDirection.addChangeListener(e -> {
-			if(listener != null) {
-				listener.onYawChanged(getYaw());
-				listener.onPitchChanged(getPitch());
-			}
+			ConnectionData.UByte yaw = new ConnectionData.UByte();
+			yaw.val = getYaw();
+			pool.setValue(ConfDevice.STEERING, ConfSteering.YAW, yaw);
+			ConnectionData.UByte pitch = new ConnectionData.UByte();
+			pitch.val = getPitch();
+			pool.setValue(ConfDevice.STEERING, ConfSteering.PITCH, pitch);
 		});
 		zeroButton.addActionListener(e -> {
 			setYaw(0);
 			setPitch(0);
 		});
 		callibrateButton.addActionListener(e -> {
-			if(listener != null) {
-				setYaw(0);
-				setPitch(0);
-				listener.onCallibrated(getYaw(), getPitch());
-			}
+			UByteVector data = new UByteVector(2);
+			data.val[0] = getYaw();
+			data.val[1] = getPitch();
+			pool.setValue(ConfDevice.STEERING, ConfSteering.CALLIBRATION, data);
+			setYaw(0);
+			setPitch(0);
 		});
 		
 		//set key bindings
@@ -87,7 +95,7 @@ public class SteeringPanel extends JPanel implements SteeringController {
 			private static final long serialVersionUID = 1L;
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
-				setVelocity(getVelocity() + SteeringController.MAX_VELOCITY / 10);
+				setVelocity(getVelocity() + ConfSteering.MAX / 10);
 			}
 		});
 		getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke('-'), "minus");
@@ -95,7 +103,7 @@ public class SteeringPanel extends JPanel implements SteeringController {
 			private static final long serialVersionUID = 1L;
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
-				setVelocity(getVelocity() - SteeringController.MAX_VELOCITY / 10);
+				setVelocity(getVelocity() - ConfSteering.MAX / 10);
 			}
 		});
 		getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke("DOWN"), "down");
@@ -103,7 +111,7 @@ public class SteeringPanel extends JPanel implements SteeringController {
 			private static final long serialVersionUID = 1L;
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
-				setPitch(getPitch() - SteeringController.MAX_PITCH / 10);
+				setPitch(getPitch() - ConfSteering.MAX / 10);
 			}
 		});
 		getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke("UP"), "up");
@@ -111,7 +119,7 @@ public class SteeringPanel extends JPanel implements SteeringController {
 			private static final long serialVersionUID = 1L;
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
-				setPitch(getPitch() + SteeringController.MAX_PITCH / 10);
+				setPitch(getPitch() + ConfSteering.MAX / 10);
 			}
 		});
 		getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke("LEFT"), "left");
@@ -119,7 +127,7 @@ public class SteeringPanel extends JPanel implements SteeringController {
 			private static final long serialVersionUID = 1L;
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
-				setYaw(getYaw() - SteeringController.MAX_YAW / 10);
+				setYaw(getYaw() - ConfSteering.MAX / 10);
 			}
 		});
 		getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke("RIGHT"), "right");
@@ -127,7 +135,7 @@ public class SteeringPanel extends JPanel implements SteeringController {
 			private static final long serialVersionUID = 1L;
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
-				setYaw(getYaw() + SteeringController.MAX_YAW / 10);
+				setYaw(getYaw() + ConfSteering.MAX / 10);
 			}
 		});
 		
@@ -150,11 +158,6 @@ public class SteeringPanel extends JPanel implements SteeringController {
 		add(panel);
 	}
 
-	@Override
-	public void setListener(Listener l) {
-		listener = l;
-	}
-
 	public void setVelocity(int velocity) {
 		sliderVelocity.setValue(velocity);
 	}
@@ -167,17 +170,14 @@ public class SteeringPanel extends JPanel implements SteeringController {
 		sliderDirection.setYSlider(pitch);
 	}
 
-	@Override
 	public int getVelocity() {
 		return sliderVelocity.getValue();
 	}
 
-	@Override
 	public int getYaw() {
 		return sliderDirection.getXSlider();
 	}
 
-	@Override
 	public int getPitch() {
 		return sliderDirection.getYSlider();
 	}

@@ -7,6 +7,7 @@ import java.util.Set;
 
 import javax.swing.JComboBox;
 import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
 import javax.swing.event.MouseInputListener;
 
 import org.jxmapviewer.JXMapViewer;
@@ -21,9 +22,13 @@ import org.jxmapviewer.viewer.TileFactory;
 import org.jxmapviewer.viewer.Waypoint;
 import org.jxmapviewer.viewer.WaypointPainter;
 
-import controller.pool.MapView;
+import controller.Pool;
+import controller.data.MeasDevice;
+import controller.data.object.GPSData;
+import controller.data.parameter.MeasSensor;
+import controller.data.parameter.Parameter;
 
-public class MapPanel extends JPanel implements MapView {
+public class MapPanel extends JPanel implements Pool.Listener<MeasDevice> {
 
 	/**
 	 * 
@@ -78,10 +83,18 @@ public class MapPanel extends JPanel implements MapView {
 	}
 
 	@Override
-	public void setPosition(int latitude, int longitude) {
-		GeoPosition pos = new GeoPosition(latitude * 1e-7, longitude * 1e-7);
-		waypoint.setPosition(pos);
-		mapViewer.setAddressLocation(pos);
+	public void onChanged(Pool<MeasDevice> pool, MeasDevice device, Enum<? extends Parameter> parameter) {
+		if(device == MeasDevice.SENSOR && parameter == MeasSensor.GPS) {
+			GPSData data = (GPSData) pool.getValue(device, parameter);
+			double[] p = data.getGpsPosition();
+			GeoPosition pos = new GeoPosition(p[0], p[1]);
+			SwingUtilities.invokeLater(() -> {
+				waypoint.setPosition(pos);
+				mapViewer.setAddressLocation(pos);
+			});
+			pool.resetChanged(device, parameter);
+		}
+		
 	}
 
 }

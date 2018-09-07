@@ -10,9 +10,13 @@ import javax.swing.ImageIcon;
 import javax.swing.JLabel;
 import javax.swing.SwingUtilities;
 
-import controller.pool.VideoView;
+import controller.*;
+import controller.data.*;
+import controller.data.object.Picture;
+import controller.data.parameter.MeasSensor;
+import controller.data.parameter.Parameter;
 
-public class VideoPanel extends JLabel implements VideoView {
+public class VideoPanel extends JLabel implements Pool.Listener<MeasDevice> {
 	
 	/**
 	 * 
@@ -20,6 +24,13 @@ public class VideoPanel extends JLabel implements VideoView {
 	private static final long serialVersionUID = 1L;
 	
 	private BufferedImage image;
+	private MeasSensor camera;
+	
+	public VideoPanel(MeasSensor camera) {
+		if(camera != MeasSensor.CAM_BOTTOM && camera != MeasSensor.CAM_FRONT)
+			throw new IllegalArgumentException();
+		this.camera = camera;
+	}
 	
 	@Override
 	public void paintComponent(Graphics g) {
@@ -36,17 +47,25 @@ public class VideoPanel extends JLabel implements VideoView {
 		}
 	}
 
-	@Override
-	public void setImage(byte[] data, Format format) {
+	public void setImage(byte[] data, int length) {
 		SwingUtilities.invokeLater(() -> {
-			ByteArrayInputStream stream = new ByteArrayInputStream(data);
+			ByteArrayInputStream stream = new ByteArrayInputStream(data, 0, length);
 			try {
 				image = ImageIO.read(stream);
+				stream.close();
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
 			setIcon(new ImageIcon(image));
 		});
+	}
+
+	@Override
+	public void onChanged(Pool<MeasDevice> pool, MeasDevice device, Enum<? extends Parameter> parameter) {
+		if(device == MeasDevice.SENSOR && parameter == camera) {
+			Picture pic = (Picture) pool.getValue(device, parameter);
+			setImage(pic.getData(), pic.getSize());
+		}
 	}
 	
 	

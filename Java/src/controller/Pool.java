@@ -3,24 +3,30 @@ package controller;
 import java.util.ArrayList;
 import java.util.List;
 
-import controller.objects.Device;
-import controller.objects.Parameter;
+import controller.data.Device;
+import controller.data.object.ConnectionData;
+import controller.data.parameter.Parameter;
+
+
+/*
+ * add structure that registers changes instead of changed array
+ */
 
 public class Pool<D extends Enum<?> & Device> {
 	
 	private boolean[][] changed;
-	private Object[][] values;
+	private ConnectionData[][] values;
 	private List<Listener<D>> listeners;
 	
 	public Pool(Class<D> deviceClass) {
 		listeners = new ArrayList<>();
 		D[] devices = deviceClass.getEnumConstants();
 		changed = new boolean[devices.length][];
-		values = new Object[devices.length][];
+		values = new ConnectionData[devices.length][];
 		for(int i = 0; i < devices.length; i++) {
-			int parameters = devices[i].getParameter().getEnumConstants().length;
+			int parameters = devices[i].getParameters().length;
 			changed[i] = new boolean[parameters];
-			values[i] = new Object[parameters];
+			values[i] = new ConnectionData[parameters];
 		}
 	}
 	
@@ -36,11 +42,6 @@ public class Pool<D extends Enum<?> & Device> {
 		for(Listener<D> l : listeners) {
 			l.onChanged(this, device, parameter);
 		}
-		for(int i = 0; i < changed.length; i++) {
-			for(int j = 0; j < changed[i].length; j++) {
-				changed[i][j] = false;
-			}
-		}
 	}
 	
 	synchronized public boolean hasChanged(D device, Enum<? extends Parameter> parameter) {
@@ -51,19 +52,14 @@ public class Pool<D extends Enum<?> & Device> {
 		changed[device.ordinal()][parameter.ordinal()] = false;
 	}
 	
-	@SuppressWarnings("unchecked")
-	synchronized public <T> T getValue(D device, Enum<? extends Parameter> parameter, Class<T> dataType) {
-		if(((Parameter) parameter).getDataType() == dataType)
-			return (T) values[device.ordinal()][parameter.ordinal()];
-		throw new IllegalArgumentException();
+	synchronized public ConnectionData getValue(D device, Enum<? extends Parameter> parameter) {
+		return values[device.ordinal()][parameter.ordinal()];
 	}
 	
-	synchronized public <T> void setValue(D device, Enum<? extends Parameter> parameter, T value) {
-		if(((Parameter) parameter).getDataType() == value.getClass()) {
-			changed[device.ordinal()][parameter.ordinal()] = true;
-			values[device.ordinal()][parameter.ordinal()] = value;
-		} else
-			throw new IllegalArgumentException();
+	synchronized public void setValue(D device, Enum<? extends Parameter> parameter, ConnectionData value) {
+		changed[device.ordinal()][parameter.ordinal()] = true;
+		values[device.ordinal()][parameter.ordinal()] = value;
+		notifyListeners(device, parameter);
 	}
 	
 	public interface Listener<D extends Enum<?> & Device> {

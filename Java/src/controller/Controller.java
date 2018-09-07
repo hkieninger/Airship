@@ -5,14 +5,13 @@ import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.List;
 
-import controller.objects.ConfDevice;
-import controller.objects.MeasDevice;
+import controller.data.ConfDevice;
+import controller.data.MeasDevice;
 
 public class Controller implements Connection.Listener {
-	
+
 	private static final long CLOSE_TIMEOUT = 1 * 1000;
 	
-	//public static final String DEFAULT_IP = "172.17.72.204";//"192.168.4.1";
 	public static final int PORT = 0xCCCC;
 	
 	private boolean stop;
@@ -24,12 +23,20 @@ public class Controller implements Connection.Listener {
 	private Pool<ConfDevice> confPool;
 	private Pool<MeasDevice> measPool;
 	
-	public Controller(InetAddress host, Pool<ConfDevice> confPool, Pool<MeasDevice> measPool) throws IOException {
+	public Controller(InetAddress host) throws IOException {
 		this.listeners = new ArrayList<>();
 		this.host = host;
-		this.confPool = confPool;
-		this.measPool = measPool;
-		reboot();
+		this.confPool = new Pool<>(ConfDevice.class);
+		this.measPool = new Pool<>(MeasDevice.class);
+		restore();
+	}
+	
+	public Pool<ConfDevice> getConfPool() {
+		return confPool;
+	}
+
+	public Pool<MeasDevice> getMeasPool() {
+		return measPool;
 	}
 	
 	public void addListener(ControllerListener l) {
@@ -40,7 +47,7 @@ public class Controller implements Connection.Listener {
 		listeners.remove(l);
 	}
 	
-	public void reboot() throws IOException {
+	public void restore() throws IOException {
 		connection = new Connection(host, PORT, measPool, confPool);
 		connection.addListener(this);
 		connection.start();
@@ -74,7 +81,7 @@ public class Controller implements Connection.Listener {
 			try {
 				for(ControllerListener l : listeners)
 					l.onConnectionLost();
-				reboot();
+				restore();
 				for(ControllerListener l : listeners)
 					l.onConnectionRestored();
 			} catch (IOException ioe) {

@@ -4,10 +4,10 @@ import java.io.DataInputStream;
 import java.io.EOFException;
 import java.io.IOException;
 
-import controller.objects.ConnectionData;
-import controller.objects.MeasDevice;
-import controller.objects.MeasRPI;
-import controller.objects.Parameter;
+import controller.data.MeasDevice;
+import controller.data.object.ConnectionData;
+import controller.data.parameter.MeasRPI;
+import controller.data.parameter.Parameter;
 
 public class ReceiveThread extends Thread {
 	
@@ -83,7 +83,7 @@ public class ReceiveThread extends Thread {
 		Enum<? extends Parameter> param;
 		try {
 			device = MeasDevice.values()[input.readUnsignedByte()];
-			param = device.getParameter().getEnumConstants()[input.readUnsignedByte()];
+			param = device.getParameters()[input.readUnsignedByte()];
 		} catch(ArrayIndexOutOfBoundsException e) {
 			throw new IOException("packet error: invalid header");
 		}
@@ -96,24 +96,12 @@ public class ReceiveThread extends Thread {
 		if(device == MeasDevice.RPI && param == MeasRPI.ECHO_REPLY) {
 			lastEchoReply = System.currentTimeMillis();
 			echoTime = (int) (lastEchoReply - input.readLong());
-			pool.setValue(device, param, echoTime);
-		} else {Class<?> dataType = ((Parameter) param).getDataType();
-			//check if primitive datatype or string, add further primitive datatypes if needed
-			if(dataType == String.class) {
-				pool.setValue(device, param, input.readUTF());
-			} else if(dataType == Double.class) {
-				pool.setValue(device, param, input.readDouble());
-			} else if(dataType.isAssignableFrom(ConnectionData.class)) {
-				//if complex datatype receive with method from interface
-				ConnectionData cObj = ((Parameter) param).getInstance();
-				cObj.receive(input);
-				pool.setValue(device, param, cObj);
-			} else {
-				 //should never be reached
-				throw new IllegalArgumentException();
-			}
+			pool.setValue(device, param, new ConnectionData.Long(echoTime));
+		} else {
+			ConnectionData data = ((Parameter) param).getDataInstance();
+			data.receive(input);
+			pool.setValue(device, param, data);
 		}
-		pool.notifyListeners(device, param);
 	}
 
 }

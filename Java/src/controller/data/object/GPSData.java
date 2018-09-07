@@ -1,8 +1,11 @@
-package controller.objects;
+package controller.data.object;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 
+/*
+ * make thread safe!
+ */
 public class GPSData implements ConnectionData {
 	
 	//gps data: 0 = latitude [°], 1 = longitude [°], 2 = altitude [m over sea]
@@ -16,6 +19,12 @@ public class GPSData implements ConnectionData {
 	private double[] gpsVelPrecision;
 	//number of satelites
 	private int sattelites;
+	
+	private static GPSData defautInstance = new GPSData();
+	
+	public static GPSData getDefaultInstance() {
+		return defautInstance;
+	}
 	
 	public GPSData() {
 		this.gpsPosition = new double[3];
@@ -43,6 +52,10 @@ public class GPSData implements ConnectionData {
 	 */
 	public double[] getGpsVelocity() {
 		return gpsVelocity;
+	}
+	
+	public double getVelocityOverGround() {
+		return Math.sqrt(gpsVelocity[0] * gpsVelocity[0] + gpsVelocity[1] * gpsVelocity[1]);
 	}
 
 	/**
@@ -74,7 +87,7 @@ public class GPSData implements ConnectionData {
 	
 	@Override
 	public void receive(DataInputStream in) {
-		
+		throw new UnsupportedOperationException("Not implemented yet.");
 	}
 
 }

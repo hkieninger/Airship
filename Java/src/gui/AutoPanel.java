@@ -2,7 +2,6 @@ package gui;
 
 import java.awt.BorderLayout;
 import java.awt.GridLayout;
-import java.util.List;
 
 import javax.swing.JButton;
 import javax.swing.JPanel;
@@ -17,7 +16,6 @@ import org.jxmapviewer.input.ZoomMouseWheelListenerCursor;
 import org.jxmapviewer.viewer.DefaultTileFactory;
 import org.jxmapviewer.viewer.GeoPosition;
 
-import controller.pool.AutoController;
 import gui.component.StaticTableModel;
 
 /**
@@ -27,16 +25,13 @@ import gui.component.StaticTableModel;
  * only shows the rough traits how to class should look like
  *
  */
-public class AutoPanel extends JPanel implements AutoController {
+public class AutoPanel extends JPanel {
 
 	/**
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
 	
-	private AutoController.Listener listener;
-	
-	private List<Location> route;
 	private JTable table;
 	private JXMapViewer mapViewer;
 	
@@ -71,16 +66,6 @@ public class AutoPanel extends JPanel implements AutoController {
 		panel.add(sendButton, BorderLayout.SOUTH);
 		add(panel);
 		
-	}
-
-	@Override
-	public void setListener(Listener l) {
-		listener = l;
-	}
-
-	@Override
-	public List<Location> getRoute() {
-		return null;
 	}
 
 }

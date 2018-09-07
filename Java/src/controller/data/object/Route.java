@@ -1,4 +1,4 @@
-package controller.objects;
+package controller.data.object;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
