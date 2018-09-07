@@ -4,7 +4,10 @@ import java.io.DataInputStream;
 import java.io.EOFException;
 import java.io.IOException;
 
-import controller.DataPool.Data;
+import controller.objects.ConnectionData;
+import controller.objects.MeasDevice;
+import controller.objects.MeasRPI;
+import controller.objects.Parameter;
 
 public class ReceiveThread extends Thread {
 	
@@ -28,7 +31,7 @@ public class ReceiveThread extends Thread {
 	public void run() {
 		try {
 			while(isRunning)
-				receiveData();
+				receiveMeas();
 		} catch(EOFException e) {
 			setStopCause(new Connection.ClosedByHostException());
 		} catch(IOException | UnsupportedOperationException e) {
@@ -67,7 +70,7 @@ public class ReceiveThread extends Thread {
 		return lastEchoReply;
 	}
 	
-	public void receiveData() throws IOException, EOFException {
+	public void receiveMeas() throws IOException, EOFException {
 		//get to the next SYNC-mark in the stream
 		int lastByte = input.readUnsignedByte();
 		int b = input.readUnsignedByte();
@@ -76,62 +79,41 @@ public class ReceiveThread extends Thread {
 			b = input.readUnsignedByte();
 		}
 		//get the device and param of the next packet
-		Device device;
+		MeasDevice device;
+		Enum<? extends Parameter> param;
 		try {
-			device = Device.values()[input.readUnsignedByte()];
+			device = MeasDevice.values()[input.readUnsignedByte()];
+			param = device.getParameter().getEnumConstants()[input.readUnsignedByte()];
 		} catch(ArrayIndexOutOfBoundsException e) {
-			throw new IOException("packet error: invalid device");
+			throw new IOException("packet error: invalid header");
 		}
-		int param = input.readUnsignedByte();
-		//read and process the data of the packet
-		try {
-			switch(device) {
-				case RASPBERRY: handleRaspberry(P_Raspberry.values()[param]); break;
-				case BATTERY: handleBattery(P_Battery.values()[param]); break;
-				case ACTUATOR: handleActuator(P_Actuator.values()[param]); break;
-				case STEERING: handleSteering(P_Steering.values()[param]); break;
-				case SENSOR: handleSensor(P_Sensor.values()[param]); break;
-				default: throwUnsupportedOperationException(device);
+		receiveValues(device, param);
+	}
+	
+	private void receiveValues(MeasDevice device, Enum<? extends Parameter> param) throws IOException {
+		Pool<MeasDevice> pool = connection.getReceivePool();
+		//check if echo reply, then special
+		if(device == MeasDevice.RPI && param == MeasRPI.ECHO_REPLY) {
+			lastEchoReply = System.currentTimeMillis();
+			echoTime = (int) (lastEchoReply - input.readLong());
+			pool.setValue(device, param, echoTime);
+		} else {Class<?> dataType = ((Parameter) param).getDataType();
+			//check if primitive datatype or string, add further primitive datatypes if needed
+			if(dataType == String.class) {
+				pool.setValue(device, param, input.readUTF());
+			} else if(dataType == Double.class) {
+				pool.setValue(device, param, input.readDouble());
+			} else if(dataType.isAssignableFrom(ConnectionData.class)) {
+				//if complex datatype receive with method from interface
+				ConnectionData cObj = ((Parameter) param).getInstance();
+				cObj.receive(input);
+				pool.setValue(device, param, cObj);
+			} else {
+				 //should never be reached
+				throw new IllegalArgumentException();
 			}
-		} catch (ArrayIndexOutOfBoundsException e) {
-			throw new IOException("packet error: device " + device.getClass().getSimpleName() + ": invalid parameter");
 		}
-	}
-	
-	private void handleSensor(P_Sensor param) {
-		throwUnsupportedOperationException(param);
-	}
-
-	private void handleSteering(P_Steering param) {
-		throwUnsupportedOperationException(param);
-	}
-
-	private void handleBattery(P_Battery param) {
-		throwUnsupportedOperationException(param);
-	}
-
-	private void handleActuator(P_Actuator param) {
-		throwUnsupportedOperationException(param);
-	}
-
-	private void handleRaspberry(P_Raspberry param) throws IOException {
-		switch(param) {
-			case ECHO_REPLY: 
-				lastEchoReply = System.currentTimeMillis();
-				echoTime = (int) (lastEchoReply - input.readLong());
-				connection.getDataPool().setPing(echoTime);
-				connection.getDataPool().notifyListeners(Data.NETWORK);
-				break;
-			case ECHO_REQUEST: 
-				connection.getSendThread().sendEchoReply(input.readLong());
-				break;
-			default: 
-				throwUnsupportedOperationException(param);
-		}
-	}
-	
-	private void throwUnsupportedOperationException(Enum<?> opperation) {
-		throw new UnsupportedOperationException("handling of \"" + opperation.getClass().getSimpleName() + "\" is not implemented yet.");
+		pool.notifyListeners(device, param);
 	}
 
 }

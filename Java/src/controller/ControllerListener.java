@@ -31,14 +31,4 @@ public interface ControllerListener {
 	 */
 	public void onConnectionRestored();
 	
-	/**
-	 * this event is triggered when the controller starts
-	 */
-	public void onStarted();
-	
-	/**
-	 * this event is triggered when the controller stops
-	 */
-	public void onStopped();
-	
 }

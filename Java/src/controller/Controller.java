@@ -1,111 +1,92 @@
 package controller;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.net.InetAddress;
-import java.net.Socket;
+import java.util.ArrayList;
 import java.util.List;
 
-public class Controller {
-	
-	
-	//Socket for the communication with the airship
-	private Socket socket;
-	//Listener for asynchronous communication with local objects
-	private ControllerListener listener;
-	
+import controller.objects.ConfDevice;
+import controller.objects.MeasDevice;
 
+public class Controller implements Connection.Listener {
 	
-	//the threads sending and receiving the data via the socket
-	private SendThread sendThread;
-	private ReceiveThread recvThread;
+	private static final long CLOSE_TIMEOUT = 1 * 1000;
 	
-	/**
-	 * creates a controller connected to the airship with the default ip on the default port
-	 * @param listener
-	 * @param statusView
-	 * @param actuatorController
-	 * @throws IOException
-	 */
-	public Controller(ControllerListener listener, StatusView statusView,ActuatorController actuatorController) throws IOException {
-		this(listener, InetAddress.getByName(DEFAULT_IP), DEFAULT_PORT, statusView, actuatorController);
+	//public static final String DEFAULT_IP = "172.17.72.204";//"192.168.4.1";
+	public static final int PORT = 0xCCCC;
+	
+	private boolean stop;
+	
+	private InetAddress host;
+	private Connection connection;
+	private List<ControllerListener> listeners; //listener for asynchronous communication with local objects
+	
+	private Pool<ConfDevice> confPool;
+	private Pool<MeasDevice> measPool;
+	
+	public Controller(InetAddress host, Pool<ConfDevice> confPool, Pool<MeasDevice> measPool) throws IOException {
+		this.listeners = new ArrayList<>();
+		this.host = host;
+		this.confPool = confPool;
+		this.measPool = measPool;
+		reboot();
 	}
 	
-	/**
-	 * creates a controller connected to the airship
-	 * @param listener
-	 * @param host
-	 * @param port
-	 * @param statusView
-	 * @param actuatorController
-	 * @throws IOException
-	 */
-	public Controller(ControllerListener listener, InetAddress host, int port, StatusView statusView, ActuatorController actuatorController) throws IOException {
-		this.listener = listener;
-		this.statusView = statusView;
-		this.actuatorController = actuatorController;
-		socket = new Socket(host, port);
-		sendThread = new SendThread(this);
-		recvThread = new ReceiveThread(this);
-		actuatorController.setListener(this);
+	public void addListener(ControllerListener l) {
+		listeners.add(l);
 	}
 	
-	/**
-	 * starts the controller (send and receive thread)
-	 */
-	public void start() {
-		recvThread.start();
-		sendThread.start();
-		statusView.information("Controller has started.", StatusView.WHITE);
-		listener.onStarted();
+	public void removeListener(ControllerListener l) {
+		listeners.remove(l);
 	}
 	
-	/**
-	 * triggers the threads to stop, but does not wait until they have stopped
-	 */
-	public void launchStop() {
-		actuatorController.setListener(null);
-		steeringController.setListener(null);
-		sendThread.stopRunning();
-		recvThread.stopRunning();
+	public void reboot() throws IOException {
+		connection = new Connection(host, PORT, measPool, confPool);
+		connection.addListener(this);
+		connection.start();
 	}
 	
-	/**
-	 * @return true if the controller has stopped
-	 */
-	public boolean hasStopped() {
-		return socket.isClosed();
+	public void close() {
+		synchronized(host) {
+			stop = true;
+			connection.stop();
+			try {
+				host.wait(CLOSE_TIMEOUT);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+		}
 	}
-	
-	/*
-	 * getter and methods for the receive and send threads to access data structures of the controller
-	 */
 
-	void terminateStop() throws IOException {
-		socket.close();
-		statusView.information("Controller has stopped.", StatusView.WHITE);
-		listener.onStopped();
-	}
-	
-	InputStream getInputStream() throws IOException {
-		return socket.getInputStream();
-	}
-	
-	OutputStream getOutputStream() throws IOException {
-		return socket.getOutputStream();
-	}
-	
-	SendThread getSendThread() {
-		return sendThread;
-	}
-	
-	ReceiveThread getReceiveThread() {
-		return recvThread;
-	}
-	
-	ControllerListener getListener() {
-		return listener;
+	@Override
+	public void onStopped(Exception cause) {
+		synchronized(host) {
+			if(stop) {
+				host.notify();
+				return;
+			}
+		}
+		
+		try {
+			if(cause != null)
+				throw cause;
+		} catch(Connection.LostException e) {
+			try {
+				for(ControllerListener l : listeners)
+					l.onConnectionLost();
+				reboot();
+				for(ControllerListener l : listeners)
+					l.onConnectionRestored();
+			} catch (IOException ioe) {
+				ioe.printStackTrace();
+			}
+		} catch(Connection.ClosedByHostException e) {
+			for(ControllerListener l : listeners)
+				l.onConnectionClosedByHost();
+		} catch (Exception e) {
+			for(ControllerListener l : listeners)
+				l.onError(e);
+		}
 	}
 
 }

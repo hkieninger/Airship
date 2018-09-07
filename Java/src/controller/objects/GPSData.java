@@ -1,6 +1,9 @@
 package controller.objects;
 
-public class GPSData {
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+
+public class GPSData implements ConnectionData {
 	
 	//gps data: 0 = latitude [°], 1 = longitude [°], 2 = altitude [m over sea]
 	private double[] gpsPosition;
@@ -14,17 +17,11 @@ public class GPSData {
 	//number of satelites
 	private int sattelites;
 	
-	public GPSData() {}
-	
-	public GPSData(double[] gpsPosition, double[] gpsPosPrecision, 
-			double[] gpsVelocity, double gpsHeading,
-			double[] gpsVelPrecision, int sattelites) {
-		this.gpsPosition = gpsPosition;
-		this.gpsPosPrecision = gpsPosPrecision;
-		this.gpsVelocity = gpsVelocity;
-		this.gpsHeading = gpsHeading;
-		this.gpsVelPrecision = gpsVelPrecision;
-		this.sattelites = sattelites;
+	public GPSData() {
+		this.gpsPosition = new double[3];
+		this.gpsPosPrecision = new double[2];
+		this.gpsVelocity = new double[3];
+		this.gpsVelPrecision = new double[2];
 	}
 
 	/**
@@ -35,24 +32,10 @@ public class GPSData {
 	}
 
 	/**
-	 * @param gpsPosition the gpsPosition to set
-	 */
-	public void setGpsPosition(double[] gpsPosition) {
-		this.gpsPosition = gpsPosition;
-	}
-
-	/**
 	 * @return the gpsPosPrecision
 	 */
 	public double[] getGpsPosPrecision() {
 		return gpsPosPrecision;
-	}
-
-	/**
-	 * @param gpsPosPrecision the gpsPosPrecision to set
-	 */
-	public void setGpsPosPrecision(double[] gpsPosPrecision) {
-		this.gpsPosPrecision = gpsPosPrecision;
 	}
 
 	/**
@@ -63,24 +46,10 @@ public class GPSData {
 	}
 
 	/**
-	 * @param gpsVelocity the gpsVelocity to set
-	 */
-	public void setGpsVelocity(double[] gpsVelocity) {
-		this.gpsVelocity = gpsVelocity;
-	}
-
-	/**
 	 * @return the gpsHeading
 	 */
 	public double getGpsHeading() {
 		return gpsHeading;
-	}
-
-	/**
-	 * @param gpsHeading the gpsHeading to set
-	 */
-	public void setGpsHeading(double gpsHeading) {
-		this.gpsHeading = gpsHeading;
 	}
 
 	/**
@@ -91,24 +60,21 @@ public class GPSData {
 	}
 
 	/**
-	 * @param gpsVelPrecision the gpsVelPrecision to set
-	 */
-	public void setGpsVelPrecision(double[] gpsVelPrecision) {
-		this.gpsVelPrecision = gpsVelPrecision;
-	}
-
-	/**
 	 * @return the sattelites
 	 */
 	public int getSattelites() {
 		return sattelites;
 	}
 
-	/**
-	 * @param sattelites the sattelites to set
-	 */
-	public void setSattelites(int sattelites) {
-		this.sattelites = sattelites;
+	@Override
+	public void send(DataOutputStream out) {
+		//not needed yet
+		throw new UnsupportedOperationException("Not implemented yet.");
+	}
+	
+	@Override
+	public void receive(DataInputStream in) {
+		
 	}
 
 }

@@ -3,9 +3,12 @@ package controller;
 import java.io.DataOutputStream;
 import java.io.IOException;
 
-import controller.CommandPool.Command;
+import controller.objects.ConfDevice;
+import controller.objects.ConfRPI;
+import controller.objects.ConnectionData;
+import controller.objects.Parameter;
 
-public class SendThread extends Thread {
+public class SendThread extends Thread implements Pool.Listener<ConfDevice>{
 	
 	static final int SEND_ECHO_DELAY = 1000; //in ms
 	public static final long CONNECTION_LOST_TIME = SEND_ECHO_DELAY * 10;
@@ -16,8 +19,12 @@ public class SendThread extends Thread {
 	
 	private long lastEchoRequest;
 	
+	private ConfDevice device;
+	private Enum<? extends Parameter> param;
+	
 	public SendThread(Connection connection) throws IOException {
 		this.connection = connection;
+		connection.getSendPool().addListener(this);
 		isRunning = true;
 		output = new DataOutputStream(connection.getSocket().getOutputStream());
 		lastEchoRequest = 0;
@@ -40,12 +47,14 @@ public class SendThread extends Thread {
 					//set the time of the last echo request
 					lastEchoRequest = System.currentTimeMillis();
 				} catch(InterruptedException e) {
-					sendCommands();
+					if(isRunning)
+						sendConf();
 				}
 			}
 		} catch(IOException | Connection.LostException e) {
 			connection.getRecvThead().setStopCause(e);
 		} finally {
+			connection.getSendPool().removeListener(this);
 			//set the isRunning variable to false
 			stopRunning();
 			//stop the receive thread
@@ -67,59 +76,56 @@ public class SendThread extends Thread {
 	 * Helper methods
 	 */
 	
-	private void sendCommands() throws IOException {
-		CommandPool pool = connection.getCommandPool();
-		boolean[] changed = pool.getChanged();
-		
-		if(changed[Command.DATA.ordinal()]) {
-			sendDataChanges(pool);
-		}
-		
-		if(changed[Command.ACTUATOR.ordinal()]) {
-			sendActuatorChanges(pool);
-		}
-		
-		if(changed[Command.STEERING.ordinal()]) {
-			sendSteeringChanges(pool);
-		}
-		
-		if(changed[Command.AUTO.ordinal()]) {
-			sendAutoChanges(pool);
+	synchronized private void sendConf() throws IOException {
+		if(device == null || param == null) {
+			//loop over all configuration parameters
+			for(ConfDevice dev : ConfDevice.values()) {
+				for(Enum<? extends Parameter> param : dev.getParameter().getEnumConstants()) {
+					sendSingleConf(dev, param);
+				}
+			}
+		} else {
+			sendSingleConf(device, param);
+			device = null;
+			param = null;
 		}
 	}
 	
-	private void sendAutoChanges(CommandPool pool) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	private void sendSteeringChanges(CommandPool pool) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	private void sendActuatorChanges(CommandPool pool) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	private void sendDataChanges(CommandPool pool) {
-		boolean[] changed = pool.getDataChanged();
-		for(int i = 0; i < changed.length; i++) {
-			if(changed[i])
-				
+	private void sendSingleConf(ConfDevice dev, Enum<? extends Parameter> param) throws IOException {
+		Pool<ConfDevice> pool = connection.getSendPool();
+		//check if parameter has changed
+		if(pool.hasChanged(dev, param)) {
+			pool.resetChanged(dev, param);
+			Class<?> dataType = ((Parameter) param).getDataType();
+			//check if primitive datatype, if case send with local method, add further primitve datatypes if needed
+			if(dataType == Boolean.class) {
+				boolean value = pool.getValue(dev, param, Boolean.class);
+				sendBooleanValue(dev, param, value);
+			} else if(dataType == Byte.class) {
+				byte value = pool.getValue(dev, param, Byte.class);
+				sendByteValue(dev, param, value);
+			} else if(dataType == Long.class) {
+				long value = pool.getValue(dev, param, Long.class);
+				sendLongValue(dev, param, value);
+			} else if(dataType.isAssignableFrom(ConnectionData.class)) {
+				//if complex datatype, send with method from interface
+				ConnectionData cObj = pool.getValue(dev, param, ConnectionData.class);
+				synchronized(output) {
+					sendHeader(dev, param);
+					cObj.send(output);
+				}
+			} else {
+				//should never be reached
+				throw new IllegalArgumentException();
+			}
 		}
 	}
 
-	void sendEchoRequest() throws IOException {
-		sendLongValue(Device.RASPBERRY, P_Raspberry.ECHO_REQUEST, System.currentTimeMillis());
+	private void sendEchoRequest() throws IOException {
+		sendLongValue(ConfDevice.RPI, ConfRPI.ECHO_REQUEST, System.currentTimeMillis());
 	}
 	
-	void sendEchoReply(long timestamp) throws IOException {
-		sendLongValue(Device.RASPBERRY, P_Raspberry.ECHO_REPLY, timestamp);
-	}
-	
-	private void sendHeader(Device device, Enum<?> param) throws IOException {
+	private void sendHeader(ConfDevice device, Enum<? extends Parameter> param) throws IOException {
 		synchronized(output) {
 			output.writeShort(Connection.SYNC);
 			output.writeByte(device.ordinal());
@@ -127,31 +133,35 @@ public class SendThread extends Thread {
 		}
 	}
 	
+	private void sendBooleanValue(ConfDevice device, Enum<? extends Parameter> param, boolean value) throws IOException {
+		synchronized(output) {
+			sendHeader(device, param);
+			output.writeByte(value ? 1 : 0);
+		}
+	}
+	
+	private void sendByteValue(ConfDevice device, Enum<? extends Parameter> param, byte value) throws IOException {
+		synchronized(output) {
+			sendHeader(device, param);
+			output.writeByte(value);
+		}
+	}
+	
 	/*
 	 * the long value is sent in big endian order
 	 */
-	private void sendLongValue(Device device, Enum<?> param, long value) throws IOException {
+	private void sendLongValue(ConfDevice device, Enum<? extends Parameter> param, long value) throws IOException {
 		synchronized(output) {
 			sendHeader(device, param);
 			output.writeLong(value);
 		}
 	}
-	
-	private void sendBooleanValue(Device device, Enum<?> param, boolean value) throws IOException {
-		synchronized(output) {
-			sendHeader(device, param);
-			output.writeBoolean(value);
-		}
-	}
-	
-	/*
-	 * the int value is sent in big endian order
-	 */
-	private void sendIntValue(Device device, Enum<?> param, int value) throws IOException {
-		synchronized(output) {
-			sendHeader(device, param);
-			output.writeInt(value);
-		}
+
+	@Override
+	synchronized public void onChanged(Pool<ConfDevice> pool, ConfDevice device, Enum<? extends Parameter> parameter) {
+		this.device = device;
+		this.param = parameter;
+		interrupt();
 	}
 	
 }

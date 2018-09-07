@@ -7,10 +7,10 @@ import java.net.SocketTimeoutException;
 import java.util.ArrayList;
 import java.util.List;
 
+import controller.objects.ConfDevice;
+import controller.objects.MeasDevice;
+
 public class Connection {
-	
-	public static final String DEFAULT_IP = "172.17.72.204";//"192.168.4.1";
-	public static final int DEFAULT_PORT = 0xCCCC;
 	
 	public static final int SYNC = 0xABCD; //unsigned short, DataOutputStream sends it big endian
 
@@ -19,16 +19,12 @@ public class Connection {
 	private SendThread sendThread;
 	private ReceiveThread recvThread;
 	
-	private DataPool dataPool;
-	private CommandPool commandPool;
+	private Pool<MeasDevice> receivePool;
+	private Pool<ConfDevice> sendPool;
 	
 	private List<Listener> listeners;
 	
-	public Connection(DataPool dataPool, CommandPool commandPool) throws IOException {
-		this(InetAddress.getByName(DEFAULT_IP), DEFAULT_PORT, dataPool, commandPool);
-	}
-	
-	public Connection(InetAddress host, int port, DataPool dataPool, CommandPool commandPool) throws IOException {
+	public Connection(InetAddress host, int port, Pool<MeasDevice> receivePool, Pool<ConfDevice> sendPool) throws IOException {
 		while(socket == null) {
 			try {
 				socket = new Socket(host, port);
@@ -39,8 +35,8 @@ public class Connection {
 		sendThread = new SendThread(this);
 		recvThread = new ReceiveThread(this);
 		
-		this.commandPool = commandPool;
-		this.dataPool = dataPool;
+		this.sendPool = sendPool;
+		this.receivePool = receivePool;
 		
 		listeners = new ArrayList<>();
 	}
@@ -90,12 +86,12 @@ public class Connection {
 		return recvThread;
 	}
 	
-	DataPool getDataPool() {
-		return dataPool;
+	Pool<MeasDevice> getReceivePool() {
+		return receivePool;
 	}
 	
-	CommandPool getCommandPool() {
-		return commandPool;
+	Pool<ConfDevice> getSendPool() {
+		return sendPool;
 	}
 	
 	/*
