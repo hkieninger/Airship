@@ -2,6 +2,7 @@ package controller;
 
 import java.io.IOException;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
 import java.util.ArrayList;
@@ -12,8 +13,9 @@ import controller.data.MeasDevice;
 
 public class Connection {
 	
+	private static final int CONNECT_TIMEOUT = 3000;
+	
 	public static final int SYNC = 0xABCD; //unsigned short, DataOutputStream sends it big endian
-
 	
 	private Socket socket;
 	private SendThread sendThread;
@@ -25,20 +27,20 @@ public class Connection {
 	private List<Listener> listeners;
 	
 	public Connection(InetAddress host, int port, Pool<MeasDevice> receivePool, Pool<ConfDevice> sendPool) throws IOException {
+		this.sendPool = sendPool;
+		this.receivePool = receivePool;
+		listeners = new ArrayList<>();
 		while(socket == null) {
+			socket = new Socket();
 			try {
-				socket = new Socket(host, port);
+				socket.connect(new InetSocketAddress(host, port), CONNECT_TIMEOUT);
 			} catch (SocketTimeoutException e) {
-				System.err.println("Socket: connect to " + host.getHostName() + " at port " + port + "timed out. Retrying ..."  );
+				socket = null;
+				//System.err.println("Socket: connect to " + host.getHostName() + " at port " + port + "timed out. Retrying ..."  );
 			}
 		}
 		sendThread = new SendThread(this);
 		recvThread = new ReceiveThread(this);
-		
-		this.sendPool = sendPool;
-		this.receivePool = receivePool;
-		
-		listeners = new ArrayList<>();
 	}
 	
 	/*

@@ -1,4 +1,4 @@
-package gui;
+package gui.panel;
 
 import java.awt.Graphics;
 import java.awt.image.BufferedImage;

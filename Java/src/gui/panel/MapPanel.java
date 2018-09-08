@@ -1,4 +1,4 @@
-package gui;
+package gui.panel;
 
 import java.awt.BorderLayout;
 import java.awt.event.ItemEvent;
@@ -71,6 +71,7 @@ public class MapPanel extends JPanel implements Pool.Listener<MeasDevice> {
         comboBox.addItemListener((ItemEvent e) -> {
         	mapViewer.setTileFactory(factories[comboBox.getSelectedIndex()]);
         });
+        comboBox.setFocusable(false);
         add(comboBox, BorderLayout.NORTH);
         
         //way point to display location of airship
@@ -92,7 +93,6 @@ public class MapPanel extends JPanel implements Pool.Listener<MeasDevice> {
 				waypoint.setPosition(pos);
 				mapViewer.setAddressLocation(pos);
 			});
-			pool.resetChanged(device, parameter);
 		}
 		
 	}

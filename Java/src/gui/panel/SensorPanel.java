@@ -1,4 +1,4 @@
-package gui;
+package gui.panel;
 
 import java.awt.Color;
 import java.awt.Component;
@@ -189,7 +189,6 @@ public class SensorPanel extends JPanel implements Pool.Listener<MeasDevice> {
 				setDistanceBottom(((ConnectionData.Float) pool.getValue(device, parameter)).val);
 			} else
 				return;
-			pool.resetChanged(device, parameter);	
 		}
 	}
 

@@ -11,8 +11,6 @@
 #include "servo/servo.h"
 #include "motor/motor.h"
 
-#define DEFAULT_PORT 0xCCCC
-
 #define SYNC 0xABCD
 
 /*

@@ -21,6 +21,7 @@ public class ReceiveThread extends Thread {
 	private volatile long lastEchoReply; //in ms, timestamp when last echo reply arrived
 	
 	public ReceiveThread(Connection connection) throws IOException {
+		setName("Recieve Thread");
 		this.connection = connection;
 		isRunning = true;
 		input = new DataInputStream(connection.getSocket().getInputStream());
@@ -87,10 +88,10 @@ public class ReceiveThread extends Thread {
 		} catch(ArrayIndexOutOfBoundsException e) {
 			throw new IOException("packet error: invalid header");
 		}
-		receiveValues(device, param);
+		receiveValue(device, param);
 	}
 	
-	private void receiveValues(MeasDevice device, Enum<? extends Parameter> param) throws IOException {
+	private void receiveValue(MeasDevice device, Enum<? extends Parameter> param) throws IOException {
 		Pool<MeasDevice> pool = connection.getReceivePool();
 		//check if echo reply, then special
 		if(device == MeasDevice.RPI && param == MeasRPI.ECHO_REPLY) {

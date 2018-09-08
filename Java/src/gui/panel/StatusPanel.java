@@ -1,8 +1,10 @@
-package gui;
+package gui.panel;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.GridLayout;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -114,7 +116,10 @@ public class StatusPanel extends JPanel implements Pool.Listener<MeasDevice>, Co
 	}
 
 	public void setInformation(String info, int color) {
-		SwingUtilities.invokeLater(() -> appendLine("$ " + info, new Color(color)));
+		SwingUtilities.invokeLater(() -> {	
+			String date = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date());
+			appendLine(date + "$ " + info, new Color(color));
+		});
 	}
 
 	@Override
@@ -122,15 +127,12 @@ public class StatusPanel extends JPanel implements Pool.Listener<MeasDevice>, Co
 		if(device == MeasDevice.RPI) {
 			if(parameter == MeasRPI.ECHO_REPLY) {
 				setNetworkPing(((ConnectionData.Long) pool.getValue(device, parameter)).val);
-				pool.resetChanged(device, parameter);
 			} else if(parameter == MeasRPI.INFO) {
 				setInformation("Information from remote host: " + 
 						((ConnectionData.String) pool.getValue(device, parameter)).val, 0xFFFFFF);
-				pool.resetChanged(device, parameter);
 			}
 		} else if(device == MeasDevice.SENSOR && parameter == MeasSensor.BATTERY) {
 			setBatteryPercentage(((ConnectionData.UByte) pool.getValue(device, parameter)).val);
-			pool.resetChanged(device, parameter);
 		}
 	}
 
