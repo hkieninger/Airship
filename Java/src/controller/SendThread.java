@@ -3,55 +3,68 @@ package controller;
 import java.io.DataOutputStream;
 import java.io.IOException;
 
-public class SendThread extends Thread {
+import controller.data.ConfDevice;
+import controller.data.object.ConnectionData;
+import controller.data.parameter.ConfRPI;
+import controller.data.parameter.Parameter;
+
+public class SendThread extends Thread implements Pool.Listener<ConfDevice> {
 	
 	static final int SEND_ECHO_DELAY = 1000; //in ms
-	private static final long CONNECTION_LOST_TIME = SEND_ECHO_DELAY * 10;
-	private static final int THREAD_DELAY = 50; //in ms
+	public static final long CONNECTION_LOST_TIME = SEND_ECHO_DELAY * 10;
 	
 	private boolean isRunning;
-	private Controller controller;
+	private Connection connection;
 	private DataOutputStream output;
 	
-	private boolean[] deviceChanged; //flags which say if a setting has changed and need to be sent
-	private int[] actuatorValues; //settings of the actuators
+	private long lastEchoRequest;
 	
-	private long lastMillis;
+	private ConfDevice device;
+	private Enum<? extends Parameter> param;
 	
-	public SendThread(Controller controller) throws IOException {
-		this.controller = controller;
-		deviceChanged = new boolean[Controller.D_TOP_RUDDER + 1];
-		actuatorValues = new int[Controller.D_TOP_RUDDER - Controller.D_LEFT_MOTOR + 1];
+	public SendThread(Connection connection) throws IOException {
+		this.connection = connection;
+		connection.getSendPool().addListener(this);
 		isRunning = true;
-		output = new DataOutputStream(controller.getOutputStream());
+		output = new DataOutputStream(connection.getSocket().getOutputStream());
+		lastEchoRequest = 0;
 	}
 
 	@Override
 	public void run() {
-		while(isRunning) {
-			try {
-				//send the changes in configuration
-				sendChanges();
-				//ping the server periodically to check the network quality
-				if(System.currentTimeMillis() - lastMillis > SEND_ECHO_DELAY) {
-						sendEchoRequest();
-						lastMillis = System.currentTimeMillis();
-				}
-				//check if the pings came back
-				if(System.currentTimeMillis() - controller.getReceiveThread().getLastEchoReply() > CONNECTION_LOST_TIME)
-					controller.onConnectionLost(false);
-			} catch (IOException e) {
-				controller.onSendError(e);
-			}
-			//sleep some ms
-			try {
-				Thread.sleep(THREAD_DELAY);
-			} catch (InterruptedException e) {}
-		}
 		try {
-			output.close();
-		} catch(IOException e) {
-			controller.onSendError(e);
+			while(isRunning) {
+				try {
+					//sleep a while
+					long delay = SEND_ECHO_DELAY - (System.currentTimeMillis() - lastEchoRequest);
+					if(delay > 0)
+						Thread.sleep(delay);
+					//send a roundtrip
+					sendEchoRequest();
+					//check if the connection is broken
+					if(System.currentTimeMillis() - connection.getRecvThead().getLastEchoReply() > CONNECTION_LOST_TIME)
+						throw new Connection.LostException();
+					//set the time of the last echo request
+					lastEchoRequest = System.currentTimeMillis();
+				} catch(InterruptedException e) {
+					if(isRunning)
+						sendConf();
+				}
+			}
+		} catch(IOException | Connection.LostException e) {
+			connection.getRecvThead().setStopCause(e);
+		} finally {
+			connection.getSendPool().removeListener(this);
+			//set the isRunning variable to false
+			stopRunning();
+			//stop the receive thread
+			connection.getRecvThead().stopRunning();
+			// close the socket: causes the receive thread to stop read call, because inputStream throws an IOException in the receive thread
+			try {
+				connection.getSocket().close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 		}
 	}
 	
@@ -59,68 +72,59 @@ public class SendThread extends Thread {
 		isRunning = false;
 	}
 	
-	synchronized public void actuatorChanged(byte device, int value) {
-		deviceChanged[device] = true;
-		actuatorValues[device - Controller.D_LEFT_MOTOR] = value;
-	}
-	
 	/*
 	 * Helper methods
 	 */
 	
-	private void sendChanges() throws IOException {
-		for(byte device = 0; device < deviceChanged.length; device++) {
-			boolean changed = false;
-			int value = 0;
-			
-			synchronized (this) {
-				changed = deviceChanged[device];
-				deviceChanged[device] = false; //reset flag
-				if(device >= Controller.D_LEFT_MOTOR && device <= Controller.D_TOP_RUDDER)
-					value = actuatorValues[device - Controller.D_LEFT_MOTOR];
+	synchronized private void sendConf() throws IOException {
+		if(device == null || param == null) {
+			//loop over all configuration parameters
+			for(ConfDevice dev : ConfDevice.values()) {
+				for(Enum<? extends Parameter> param : dev.getParameters()) {
+					//check if parameter has changed
+					if(connection.getSendPool().hasChanged(dev, param))
+						sendSingleConf(dev, param);
+				}
 			}
-			
-			if(changed) {
-				if(device >= Controller.D_LEFT_MOTOR && device <= Controller.D_TOP_RUDDER)
-					sendActuatorConfig(device, value);
-			}
+		} else {
+			sendSingleConf(device, param);
+			device = null;
+			param = null;
 		}
 	}
 	
-	private void sendActuatorConfig(byte device, int value) throws IOException {
-		sendIntValue(device, (byte) 0, value);
+	private void sendSingleConf(ConfDevice dev, Enum<? extends Parameter> param) throws IOException {
+		Pool<ConfDevice> pool = connection.getSendPool();
+		ConnectionData data = pool.getValue(dev, param);
+		sendData(dev, param, data);
+		//reset changed flag
+		pool.resetChanged(dev, param);
+	}
+
+	private void sendEchoRequest() throws IOException {
+		ConnectionData.Long cl = new ConnectionData.Long(System.currentTimeMillis());
+		sendData(ConfDevice.RPI, ConfRPI.ECHO_REQUEST, cl);
 	}
 	
-	void sendEchoRequest() throws IOException {
-		sendLongValue(Controller.D_RASPBERRY, Controller.P_ECHO_REQUEST, System.currentTimeMillis());
-	}
-	
-	void sendEchoReply(long timestamp) throws IOException {
-		sendLongValue(Controller.D_RASPBERRY, Controller.P_ECHO_REPLY, timestamp);
-	}
-	
-	/*
-	 * the long value is sent in big endian order
-	 */
-	private void sendLongValue(byte device, byte param, long value) throws IOException {
+	private void sendData(ConfDevice device, Enum<? extends Parameter> param, ConnectionData data) throws IOException {
 		synchronized(output) {
-			output.writeShort(Controller.SYNC);
-			output.writeByte(device);
-			output.writeByte(param);
-			output.writeLong(value);
+			output.writeShort(Connection.SYNC);
+			output.writeByte(device.ordinal());
+			output.writeByte(param.ordinal());
+			data.send(output);
 		}
 	}
-	
-	/*
-	 * the int value is sent in big endian order
-	 */
-	private void sendIntValue(byte device, byte param, int value) throws IOException {
-		synchronized(output) {
-			output.writeShort(Controller.SYNC);
-			output.writeByte(device);
-			output.writeByte(param);
-			output.writeInt(value);
+
+	@Override
+	synchronized public void onChanged(Pool<ConfDevice> pool, ConfDevice device, Enum<? extends Parameter> parameter) {
+		if(device == null && parameter == null) {
+			this.device = device;
+			this.param = parameter;
+		} else {
+			this.device = null;
+			this.param = null;
 		}
+		interrupt();
 	}
 	
 }

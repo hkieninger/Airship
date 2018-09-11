@@ -2,32 +2,43 @@ package gui;
 
 import java.awt.Dimension;
 import java.awt.Font;
+import java.awt.event.ActionEvent;
 import java.util.Hashtable;
 
+import javax.swing.AbstractAction;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
+import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSlider;
+import javax.swing.KeyStroke;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
-import controller.ActuatorController;
+import controller.data.parameter.ConfActuator;
+import controller.Pool;
+import controller.data.ConfDevice;
+import controller.data.object.ConnectionData;
 
-public class ActuatorPanel extends JPanel implements ActuatorController, ChangeListener {
+public class ActuatorPanel extends JPanel implements ChangeListener {
 	
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
 	private static final int SLIDER_ZERO_MARGIN_MOTOR = 20; //in percent
 	private static final int SLIDER_ZERO_MARGIN_RUDDER = 15; //in percent
 	private static final int SLIDER_SPACING = 20;
 	private static final int ACTUATOR_SPACING = 50;
 	private static final int SLIDER_LABEL_SIZE = 11;
 	
-	private static final int MOTOR_MAX = ActuatorController.THRUST_MAX + ActuatorController.THRUST_MAX * SLIDER_ZERO_MARGIN_MOTOR / 200;
-	private static final int MOTOR_ZERO = ActuatorController.THRUST_MAX * SLIDER_ZERO_MARGIN_MOTOR / 200;
-	private static final int RUDDER_MAX = ActuatorController.ANGLE_MAX + ActuatorController.ANGLE_MAX * SLIDER_ZERO_MARGIN_RUDDER / 200;
-	private static final int RUDDER_ZERO = ActuatorController.ANGLE_MAX * SLIDER_ZERO_MARGIN_RUDDER / 200;
+	private static final int MOTOR_MAX = ConfActuator.MOTOR_THRUST_MAX + ConfActuator.MOTOR_THRUST_MAX * SLIDER_ZERO_MARGIN_MOTOR / 200;
+	private static final int MOTOR_ZERO = ConfActuator.MOTOR_THRUST_MAX * SLIDER_ZERO_MARGIN_MOTOR / 200;
+	private static final int RUDDER_MAX = ConfActuator.RUDDER_ANGLE_MAX + ConfActuator.RUDDER_ANGLE_MAX * SLIDER_ZERO_MARGIN_RUDDER / 200;
+	private static final int RUDDER_ZERO = ConfActuator.RUDDER_ANGLE_MAX * SLIDER_ZERO_MARGIN_RUDDER / 200;
 	
-	private ActuatorController.Listener listener;
+	private Pool<ConfDevice> pool;
 	
 	private JSlider sliderLeftMotor;
 	private JSlider sliderRightMotor;
@@ -36,7 +47,8 @@ public class ActuatorPanel extends JPanel implements ActuatorController, ChangeL
 	private JSlider sliderRightRudder;
 	private JSlider sliderTopRudder;
 	
-	public ActuatorPanel() {
+	public ActuatorPanel(Pool<ConfDevice> pool) {
+		this.pool = pool;
 		//create the slider instances
 		sliderLeftMotor = new JSlider(JSlider.HORIZONTAL, -MOTOR_MAX, MOTOR_MAX, 0);
 		sliderRightMotor = new JSlider(JSlider.HORIZONTAL, -MOTOR_MAX, MOTOR_MAX, 0);
@@ -82,6 +94,36 @@ public class ActuatorPanel extends JPanel implements ActuatorController, ChangeL
 		JLabel trLabel = new JLabel("Top Rudder (+O, -L)", JLabel.LEFT);
 		add(trLabel);
 		add(sliderTopRudder);
+		
+		//set keyboard shortcuts
+		setFocusable(true);
+		setSliderKeyboardShortcut(sliderLeftMotor, 'q', 'a', ConfActuator.MOTOR_THRUST_MAX);
+		setSliderKeyboardShortcut(sliderRightMotor, 'w', 's', ConfActuator.MOTOR_THRUST_MAX);
+		setSliderKeyboardShortcut(sliderTopRudder, 'o', 'l', ConfActuator.RUDDER_ANGLE_MAX);
+		setSliderKeyboardShortcut(sliderLeftRudder, 'u', 'j', ConfActuator.RUDDER_ANGLE_MAX);
+		setSliderKeyboardShortcut(sliderRightRudder, 'i', 'k', ConfActuator.RUDDER_ANGLE_MAX);
+	}
+	
+	private void setSliderKeyboardShortcut(JSlider slider, char plus, char minus, int max) {
+		getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(plus), "+ " + plus);
+		getActionMap().put("+ " + plus, new AbstractAction() {
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			public void actionPerformed(ActionEvent arg0) {
+				slider.setValue(slider.getValue() + max / 10);
+			}
+		});
+		getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(minus), "- " + minus);
+		getActionMap().put("- " + minus, new AbstractAction() {
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			public void actionPerformed(ActionEvent arg0) {
+				slider.setValue(slider.getValue() - max / 10);
+			}
+		});
+		slider.setFocusable(false);
 	}
 	
 	private void setSliderLabelsAndListener(JSlider[] sliders, int max, int zero, String maxLabel, String minLabel, String zeroLabel) {
@@ -114,71 +156,24 @@ public class ActuatorPanel extends JPanel implements ActuatorController, ChangeL
 	
 	@Override
 	public void stateChanged(ChangeEvent e) {
-		if(listener == null)
-			return;
+		ConnectionData.UByte data = new ConnectionData.UByte();
 		if(e.getSource() == sliderLeftMotor && !sliderLeftMotor.getValueIsAdjusting()) {
-			listener.onLeftMotorChanged(getMotorValue(sliderLeftMotor.getValue()));
+			data.val = getLeftRudder();
+			pool.setValue(ConfDevice.ACTUATOR, ConfActuator.LEFT_MOTOR, data);
 		} else if(e.getSource() == sliderRightMotor && !sliderRightMotor.getValueIsAdjusting()) {
-			listener.onRightMotorChanged(getMotorValue(sliderRightMotor.getValue()));
+			data.val = getRightMotor();
+			pool.setValue(ConfDevice.ACTUATOR, ConfActuator.RIGHT_MOTOR, data);
 		} else if(e.getSource() == sliderLeftRudder && !sliderLeftRudder.getValueIsAdjusting()) {
-			listener.onLeftRudderChanged(getRudderValue(sliderLeftRudder.getValue()));
+			data.val = getLeftRudder();
+			pool.setValue(ConfDevice.ACTUATOR, ConfActuator.LEFT_RUDDER, data);
 		} else if(e.getSource() == sliderRightRudder && !sliderRightRudder.getValueIsAdjusting()) {
-			listener.onRightRudderChanged(getRudderValue(sliderRightRudder.getValue()));
+			data.val = getRightRudder();
+			pool.setValue(ConfDevice.ACTUATOR, ConfActuator.RIGHT_RUDDER, data);;
 		} else if(e.getSource() == sliderTopRudder && !sliderTopRudder.getValueIsAdjusting()) {
-			listener.onTopRudderChanged(getRudderValue(sliderTopRudder.getValue()));
+			data.val = getTopRudder();
+			pool.setValue(ConfDevice.ACTUATOR, ConfActuator.TOP_RUDDER, data);
 		}
-	}
-	
-	@Override
-	public void setListener(ActuatorController.Listener l) {
-		listener = l;
-	}
-
-	//make them thread save
-	
-	@Override
-	public void setLeftMotor(int thrust) {
-		if(thrust > 0)
-			thrust += MOTOR_ZERO;
-		else if(thrust < 0)
-			thrust -= MOTOR_ZERO;
-		sliderLeftMotor.setValue(thrust);
-	}
-
-	@Override
-	public void setRightMotor(int thrust) {
-		if(thrust > 0)
-			thrust += MOTOR_ZERO;
-		else if(thrust < 0)
-			thrust -= MOTOR_ZERO;
-		sliderRightMotor.setValue(thrust);
-	}
-
-	@Override
-	public void setLeftRudder(int angle) {
-		if(angle > 0)
-			angle += RUDDER_ZERO;
-		else if(angle < 0)
-			angle -= RUDDER_ZERO;
-		sliderLeftRudder.setValue(angle);
-	}
-
-	@Override
-	public void setRightRudder(int angle) {
-		if(angle > 0)
-			angle += RUDDER_ZERO;
-		else if(angle < 0)
-			angle -= RUDDER_ZERO;
-		sliderRightRudder.setValue(angle);
-	}
-
-	@Override
-	public void setTopRudder(int angle) {
-		if(angle > 0)
-			angle += RUDDER_ZERO;
-		else if(angle < 0)
-			angle -= RUDDER_ZERO;
-		sliderTopRudder.setValue(angle);
+		
 	}
 	
 	private int getMotorValue(int sliderValue) {
@@ -203,27 +198,22 @@ public class ActuatorPanel extends JPanel implements ActuatorController, ChangeL
 		return sliderValue;
 	}
 
-	@Override
 	public int getLeftMotor() {
 		return getMotorValue(sliderLeftMotor.getValue());
 	}
 
-	@Override
 	public int getRightMotor() {
 		return getMotorValue(sliderRightMotor.getValue());
 	}
 
-	@Override
 	public int getLeftRudder() {
 		return getRudderValue(sliderLeftRudder.getValue());
 	}
 
-	@Override
 	public int getRightRudder() {
 		return getRudderValue(sliderRightRudder.getValue());
 	}
 
-	@Override
 	public int getTopRudder() {
 		return getRudderValue(sliderTopRudder.getValue());
 	}

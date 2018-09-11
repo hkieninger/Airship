@@ -8,22 +8,25 @@ class Servo{
 public:
 
     /*
-     *
+     * sets the initial angle to 0°
      */
     Servo(int signalpin);
 
     /*
-     * destructor
+     * powers off the servo
      */
     ~Servo();
-    //Accepts  -90 to 90 as input
+
+    /*
+     * angle should have a value between -90 to 90°
+     * its up to you not to pass values which are to high or low, which could damage the servo
+     */
     void setAngle(int angle);
 
-    void poweroff();
-
-
-
-
+    /*
+     * powers off the servo
+     */
+    void powerOff();
 };
 
 #endif /* Servo_H */

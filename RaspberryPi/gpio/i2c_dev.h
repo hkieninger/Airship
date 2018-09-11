@@ -11,7 +11,7 @@
 class I2CDev {
 protected:
 	/*
-	 * file descriptor to the device file 
+	 * file descriptor to the device file (not anymore with pigpio, the fd is hidden by pigpio this is only a hanlde)
 	 */
 	int fd;
 public:
@@ -93,15 +93,6 @@ public:
 	 */
 	uint16_t readReg16(int reg);
 
-	/*
-     * wrapper for read from <unistd.h>
-     */
-    size_t readI2C(void *buf, size_t count);
-
-    /*
-     * wrapper for write from <unistd.h>
-     */
-    size_t writeI2C(const void *buf, size_t count);
 };
 
 #endif /* I2C_DEV_H */

@@ -10,4 +10,4 @@ uart_dev.o: uart_dev.cpp uart_dev.h gpio_exception.h
 	$(CC) -c $(CFLAGS) $<
 
 clean:
-	rm *.o
+	rm -f *.o

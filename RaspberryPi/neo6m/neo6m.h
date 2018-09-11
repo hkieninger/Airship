@@ -263,7 +263,7 @@ public:
     void loadConfiguration();
 
     /*
-     * @millis: measurements a taken every millis, max rate is ~5 Hz
+     * @millis: measurements a taken every millis, max rate is 5 Hz
      */
     void setMeasurementRate(uint16_t millis);
 
