@@ -156,20 +156,24 @@ public class ActuatorPanel extends JPanel implements ChangeListener {
 	
 	@Override
 	public void stateChanged(ChangeEvent e) {
-		ConnectionData.UByte data = new ConnectionData.UByte();
 		if(e.getSource() == sliderLeftMotor && !sliderLeftMotor.getValueIsAdjusting()) {
+			ConnectionData.UByte data = new ConnectionData.UByte();
 			data.val = getLeftRudder();
 			pool.setValue(ConfDevice.ACTUATOR, ConfActuator.LEFT_MOTOR, data);
 		} else if(e.getSource() == sliderRightMotor && !sliderRightMotor.getValueIsAdjusting()) {
+			ConnectionData.UByte data = new ConnectionData.UByte();
 			data.val = getRightMotor();
 			pool.setValue(ConfDevice.ACTUATOR, ConfActuator.RIGHT_MOTOR, data);
 		} else if(e.getSource() == sliderLeftRudder && !sliderLeftRudder.getValueIsAdjusting()) {
+			ConnectionData.Byte data = new ConnectionData.Byte();
 			data.val = getLeftRudder();
 			pool.setValue(ConfDevice.ACTUATOR, ConfActuator.LEFT_RUDDER, data);
 		} else if(e.getSource() == sliderRightRudder && !sliderRightRudder.getValueIsAdjusting()) {
+			ConnectionData.Byte data = new ConnectionData.Byte();
 			data.val = getRightRudder();
 			pool.setValue(ConfDevice.ACTUATOR, ConfActuator.RIGHT_RUDDER, data);;
 		} else if(e.getSource() == sliderTopRudder && !sliderTopRudder.getValueIsAdjusting()) {
+			ConnectionData.Byte data = new ConnectionData.Byte();
 			data.val = getTopRudder();
 			pool.setValue(ConfDevice.ACTUATOR, ConfActuator.TOP_RUDDER, data);
 		}

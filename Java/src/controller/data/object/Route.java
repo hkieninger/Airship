@@ -32,6 +32,7 @@ public class Route implements ConnectionData {
 
 	@Override
 	public void send(DataOutputStream out) throws IOException {
+		out.writeShort(3 * 4 * route.size());
 		for(Location l : route) {
 			out.writeInt(l.latitude);
 			out.writeInt(l.longitude);

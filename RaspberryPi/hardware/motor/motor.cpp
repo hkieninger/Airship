@@ -11,7 +11,7 @@
 #define MAX_PW (1900 - ZERO_PW)
 #define STARTUP_PW 1400
 #define STARTUP_THRESHOLD_PW 1100
-#define ZERO_TIME (1000 * 1000)
+#define ZERO_TIME (500 * 1000)
 #define STARTUP_TIME (300 * 1000)
 #define RELAIS_TIME (6 * 1000) //from datasheet
 #define ARM_TIME (2 * 1000 * 1000)

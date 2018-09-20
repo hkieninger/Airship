@@ -47,7 +47,7 @@ public class Picture implements ConnectionData {
 
 	@Override
 	public void receive(DataInputStream in) throws IOException {
-		size = in.readInt();
+		size = in.readUnsignedShort();
 		in.readFully(data, 0, size);
 	}
 

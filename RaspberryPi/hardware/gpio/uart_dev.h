@@ -29,7 +29,7 @@ public:
 	/*
 	 * closes the file descriptor
 	 */
-	~UARTDev();
+	virtual ~UARTDev();
 
     /* 
      * discards all data received, or waiting to be send down the given device 

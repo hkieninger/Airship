@@ -12,7 +12,6 @@ Servo::~Servo() {
   powerOff();
 }
 
-
 void Servo::setAngle(int angle){
   if(angle > 90 || angle < -90)
     throw std::invalid_argument("servo set angle: angle is out of bounds");

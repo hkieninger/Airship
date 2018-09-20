@@ -14,12 +14,14 @@ public class FloatVector implements ConnectionData {
 
 	@Override
 	public void send(DataOutputStream out) throws IOException {
+		out.writeShort(val.length);
 		for(float f : val)
 			out.writeFloat(f);
 	}
 
 	@Override
 	public void receive(DataInputStream in) throws IOException {
+		in.readUnsignedShort();
 		for(int i = 0; i < val.length; i++) {
 			val[i] = in.readFloat();
 		}

@@ -20,8 +20,8 @@ int main(){
     Motor rm(ESC_RIGHT, RELAIS_RIGHT);
 
     printf("set thrust forwards for x s\n");
-    //lm.setThrust(2 * THRUST);
-    //rm.setThrust(2 * THRUST);
+    lm.setThrust(2 * THRUST);
+    rm.setThrust(2 * THRUST);
     //usleep(2 * 1000 * 1000);
     lm.setThrust(THRUST);
     rm.setThrust(THRUST);

@@ -26,7 +26,7 @@ public:
 	/*
 	 * closes the file descriptor
 	 */
-	~I2CDev();
+	virtual ~I2CDev();
 	
 	/*
 	 * sets a bit in a 8bit register

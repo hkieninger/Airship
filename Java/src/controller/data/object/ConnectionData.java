@@ -8,17 +8,36 @@ public interface ConnectionData {
 	public void send(DataOutputStream out) throws IOException;
 	public void receive(DataInputStream in) throws IOException;
 	
+	public static class Byte implements ConnectionData {
+		
+		public int val;
+		
+		@Override
+		public void send(DataOutputStream out) throws IOException {
+			out.writeShort(1);
+			out.writeByte(val);
+		}
+
+		@Override
+		public void receive(DataInputStream in) throws IOException {
+			in.readUnsignedShort();
+			val = in.readByte();
+		}
+	}
+	
 	public static class UByte implements ConnectionData {
 		
 		public int val;
 
 		@Override
 		public void send(DataOutputStream out) throws IOException {
+			out.writeShort(1);
 			out.writeByte(val);
 		}
 
 		@Override
 		public void receive(DataInputStream in) throws IOException {
+			in.readUnsignedShort();
 			val = in.readUnsignedByte();
 		}
 		
@@ -34,11 +53,13 @@ public interface ConnectionData {
 
 		@Override
 		public void send(DataOutputStream out) throws IOException {
+			out.writeShort(8);
 			out.writeLong(val);
 		}
 
 		@Override
 		public void receive(DataInputStream in) throws IOException {
+			in.readUnsignedShort();
 			val = in.readLong();
 		}
 		
@@ -50,11 +71,13 @@ public interface ConnectionData {
 
 		@Override
 		public void send(DataOutputStream out) throws IOException {
+			out.writeShort(4);
 			out.writeFloat(val);
 		}
 
 		@Override
 		public void receive(DataInputStream in) throws IOException {
+			in.readUnsignedShort();
 			val = in.readFloat();
 		}
 		
@@ -66,11 +89,13 @@ public interface ConnectionData {
 
 		@Override
 		public void send(DataOutputStream out) throws IOException {
+			out.writeShort(8);
 			out.writeDouble(val);
 		}
 
 		@Override
 		public void receive(DataInputStream in) throws IOException {
+			in.readUnsignedShort();
 			val = in.readDouble();
 		}
 		
@@ -78,16 +103,24 @@ public interface ConnectionData {
 	
 	public static class String implements ConnectionData {
 		
-		public java.lang.String val;
+		public java.lang.String val = "";
 
 		@Override
 		public void send(DataOutputStream out) throws IOException {
-			out.writeUTF(val);
+			char[] chars = val.toCharArray();
+			out.writeShort(chars.length);
+			for(char c : chars) {
+				out.writeByte(c);
+			}
 		}
 
 		@Override
 		public void receive(DataInputStream in) throws IOException {
-			val = in.readUTF();
+			char[] chars = new char[in.readUnsignedShort()];
+			for(int i = 0; i < chars.length; i++) {
+				chars[i] = (char) in.readByte();
+			}
+			val = new java.lang.String(chars);
 		}
 		
 	}

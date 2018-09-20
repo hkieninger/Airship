@@ -22,7 +22,7 @@ import javax.swing.KeyStroke;
 import controller.Pool;
 import controller.data.ConfDevice;
 import controller.data.object.ConnectionData;
-import controller.data.object.UByteVector;
+import controller.data.object.ByteVector;
 import controller.data.parameter.ConfSteering;
 import gui.component.Slider2D;
 
@@ -63,25 +63,23 @@ public class SteeringPanel extends JPanel {
 		setFocusable(true);
 		sliderVelocity.addChangeListener(e -> {
 			if(!sliderVelocity.getValueIsAdjusting()) {
-				ConnectionData.UByte data = new ConnectionData.UByte();
+				ConnectionData.Byte data = new ConnectionData.Byte();
 				data.val = getVelocity();
 				pool.setValue(ConfDevice.STEERING, ConfSteering.VELOCITY, data);
 			}
 		});
 		sliderDirection.addChangeListener(e -> {
-			ConnectionData.UByte yaw = new ConnectionData.UByte();
-			yaw.val = getYaw();
-			pool.setValue(ConfDevice.STEERING, ConfSteering.YAW, yaw);
-			ConnectionData.UByte pitch = new ConnectionData.UByte();
-			pitch.val = getPitch();
-			pool.setValue(ConfDevice.STEERING, ConfSteering.PITCH, pitch);
+			ByteVector data = new ByteVector(2);
+			data.val[0] = getYaw();
+			data.val[1] = getPitch();
+			pool.setValue(ConfDevice.STEERING, ConfSteering.DIRECTION, data);
 		});
 		zeroButton.addActionListener(e -> {
 			setYaw(0);
 			setPitch(0);
 		});
 		callibrateButton.addActionListener(e -> {
-			UByteVector data = new UByteVector(2);
+			ByteVector data = new ByteVector(2);
 			data.val[0] = getYaw();
 			data.val[1] = getPitch();
 			pool.setValue(ConfDevice.STEERING, ConfSteering.CALLIBRATION, data);
