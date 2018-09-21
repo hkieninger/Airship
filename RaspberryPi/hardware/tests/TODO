@@ -1,0 +1,3 @@
+remove test which doesn't work, aren't really needed
+update, make proper clean makefile
+test all test programms

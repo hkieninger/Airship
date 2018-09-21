@@ -1,7 +1,8 @@
-Do not use these scripts if you have made or want to make some custom modification to following configuration files:
+Do not use these scripts if you have made or want to make some custom modification to the following configuration files:
 -/etc/dhcpcd.conf
 -/etc/dnsmasq.conf
 -/etc/hostapd/hostapd.conf
 -/etc/default/hostapd
 
 The script might not run on all raspian versions and/or raspberry pi models.
+Take care not to delete this folder after having run the script, else the script won't be able to revert the changes.

@@ -2,11 +2,13 @@ package gui.panel;
 
 import java.awt.Component;
 import java.awt.Dimension;
+import java.awt.Font;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.util.Hashtable;
 
 import javax.imageio.ImageIO;
 import javax.swing.AbstractAction;
@@ -21,8 +23,8 @@ import javax.swing.KeyStroke;
 
 import controller.Pool;
 import controller.data.ConfDevice;
-import controller.data.object.ConnectionData;
 import controller.data.object.ByteVector;
+import controller.data.object.ConnectionData;
 import controller.data.parameter.ConfSteering;
 import gui.component.Slider2D;
 
@@ -35,13 +37,20 @@ public class SteeringPanel extends JPanel {
 	
 	private static final int BUTTON_HEIGHT = 20;
 	
+	private static final int SLIDER_LABEL_SIZE = 11;
+	private static final int SLIDER_ZERO_MARGIN_VELOCITY = 20;
+	private static final int VELOCITY_MAX = ConfSteering.MAX + ConfSteering.MAX * SLIDER_ZERO_MARGIN_VELOCITY / 200;
+	private static final int VELOCITY_ZERO = ConfSteering.MAX * SLIDER_ZERO_MARGIN_VELOCITY / 200;
+	
 	private JSlider sliderVelocity;
 	private Slider2D sliderDirection;
 	private JButton zeroButton, callibrateButton;
 
 	public SteeringPanel(Pool<ConfDevice> pool) {
 		//create the components
-		sliderVelocity = new JSlider(JSlider.HORIZONTAL, 0, ConfSteering.MAX, 0);
+		
+		sliderVelocity = new JSlider(JSlider.HORIZONTAL, -VELOCITY_MAX, VELOCITY_MAX, 0);
+		setSliderLabels(sliderVelocity, VELOCITY_MAX, VELOCITY_ZERO, "foward", "backward", "off");
 		sliderVelocity.setFocusable(false);
 		BufferedImage knob, background;
 		try {
@@ -93,7 +102,7 @@ public class SteeringPanel extends JPanel {
 			private static final long serialVersionUID = 1L;
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
-				setVelocity(getVelocity() + ConfSteering.MAX / 10);
+				setVelocity(sliderVelocity.getValue() + ConfSteering.MAX / 10);
 			}
 		});
 		getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke('-'), "minus");
@@ -101,7 +110,7 @@ public class SteeringPanel extends JPanel {
 			private static final long serialVersionUID = 1L;
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
-				setVelocity(getVelocity() - ConfSteering.MAX / 10);
+				setVelocity(sliderVelocity.getValue() - ConfSteering.MAX / 10);
 			}
 		});
 		getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke("DOWN"), "down");
@@ -155,9 +164,33 @@ public class SteeringPanel extends JPanel {
 		panel.add(callibrateButton);
 		add(panel);
 	}
-
-	public void setVelocity(int velocity) {
-		sliderVelocity.setValue(velocity);
+	
+	private void setSliderLabels(JSlider slider, int max, int zero, String maxLabel, String minLabel, String zeroLabel) {
+		JLabel label;
+		Font font = new Font(Font.SANS_SERIF,Font.PLAIN, SLIDER_LABEL_SIZE);
+		Hashtable<Integer, JLabel> table;
+		
+		table = new Hashtable<Integer, JLabel>();
+		label = new JLabel(zeroLabel);
+		label.setFont(font);
+		table.put(Integer.valueOf(-zero), label);
+		label = new JLabel(zeroLabel);
+		label.setFont(font);
+		table.put(Integer.valueOf(zero), label);
+		label = new JLabel(minLabel);
+		label.setFont(font);
+		table.put(Integer.valueOf(-max), label);
+		label = new JLabel(maxLabel);
+		label.setFont(font);
+		table.put(Integer.valueOf(max), label);
+		slider.setLabelTable(table);
+		slider.setPaintLabels(true);
+		slider.setMajorTickSpacing(zero);
+		slider.setPaintTicks(true);
+	}
+	
+	public void setVelocity(int vel) {
+		sliderVelocity.setValue(vel);
 	}
 
 	public void setYaw(int yaw) {
@@ -167,9 +200,20 @@ public class SteeringPanel extends JPanel {
 	public void setPitch(int pitch) {
 		sliderDirection.setYSlider(pitch);
 	}
+	
+	private int considerZeroMarginVelocity(int sliderValue) {
+		if(sliderValue > VELOCITY_ZERO) {
+			sliderValue -= VELOCITY_ZERO;
+		} else if(sliderValue < -VELOCITY_ZERO) {
+			sliderValue += VELOCITY_ZERO;
+		} else {
+			sliderValue = 0;
+		}
+		return sliderValue;
+	}
 
 	public int getVelocity() {
-		return sliderVelocity.getValue();
+		return considerZeroMarginVelocity(sliderVelocity.getValue());
 	}
 
 	public int getYaw() {
