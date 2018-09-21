@@ -96,8 +96,10 @@ public class ReceiveThread extends Thread {
 		//check if echo reply, then special
 		if(device == MeasDevice.RPI && param == MeasRPI.ECHO_REPLY) {
 			lastEchoReply = System.currentTimeMillis();
-			echoTime = (int) (lastEchoReply - input.readLong());
-			pool.setValue(device, param, new ConnectionData.Long(echoTime));
+			ConnectionData.Long data = new ConnectionData.Long();
+			data.receive(input);
+			data.val = (int) (lastEchoReply - data.val);
+			pool.setValue(device, param, data);
 		} else {
 			ConnectionData data = ((Parameter) param).getDataInstance();
 			data.receive(input);

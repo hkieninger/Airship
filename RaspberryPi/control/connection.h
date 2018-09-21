@@ -1,7 +1,7 @@
 #ifndef CONNECTION_H
 #define CONNECTION_H 1
 
-#define PORT 0xCCCC
+#include <stdint.h>
 
 #include "../socket/server_socket.h"
 #include "../socket/socket.h"
@@ -86,6 +86,7 @@ enum MeasSensor {
 
 };
 
+#define PORT 0xCCCC
 #define SYNC 0xABCD
 
 struct Paket {
@@ -99,8 +100,8 @@ struct Paket {
 class ControlThread;
 
 class Connection {
-    ServerSocket server(PORT);
-    Socket sock;
+    ServerSocket server;
+    Socket *sock;
     ControlThread &control;
 
     void syncSocket();
@@ -110,7 +111,8 @@ public:
     ~Connection();
 
     void loop();
-    void sendPaket(Paket &paket);
+    bool sendPaket(Paket &paket);
+    bool isConnected();
 };
 
 #endif /* CONNECTION_H */

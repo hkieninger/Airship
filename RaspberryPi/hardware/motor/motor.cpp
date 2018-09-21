@@ -51,6 +51,7 @@ void Motor::setESC(int pw) {
 }
 
 void Motor::setThrust(int thrust){
+  printf("set thrust to %d\n", thrust); //DEBUG
   if(thrust > MAX_THRUST || thrust < -MAX_THRUST)
     throw std::invalid_argument("set motor thrust: thrust is out of bounds");
 

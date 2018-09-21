@@ -25,7 +25,7 @@ public class Frame extends JFrame implements WindowListener, ControllerListener 
 	 */
 	private static final long serialVersionUID = 1L;
 	
-	public static final String DEFAULT_IP = "192.168.4.1";//"172.17.72.204";//"192.168.4.1";
+	public static final String DEFAULT_IP = "172.17.72.204";//"172.17.72.204";//"192.168.4.1";
 	
 	private Controller controller;
 

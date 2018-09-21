@@ -1,13 +1,12 @@
-all:
+libhardwareZ.a: components
+	ar crs $@ motor/motor.o servo/servo.o
+	ranlib $@
+
+components:
+	$(MAKE) -C motor/ CC=$(CC) CFLAGS=$(CFLAGS)
+	$(MAKE) -C servo/ CC=$(CC) CFLAGS=$(CFLAGS)
 
 clean:
-	#add missing subfolders
-	#$(MAKE) -C gpio/ clean
-	#$(MAKE) -C mpu6050/ clean
-	#$(MAKE) -C ads1115/ clean
-	#$(MAKE) -C bmp280/ clean
-	#$(MAKE) -C qmc5883l/ clean
-	#$(MAKE) -C neo6m/ clean
 	$(MAKE) -C motor/ clean
 	$(MAKE) -C servo/ clean
-	rm -f *.elf
+	rm -f *.a

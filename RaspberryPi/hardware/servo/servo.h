@@ -1,8 +1,6 @@
 #ifndef Servo_H
 #define Servo_H 1
 
-
-
 class Servo{
   int signalpin;
 public:

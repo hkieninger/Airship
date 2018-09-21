@@ -1,8 +1,8 @@
-OBJECTS = motor.o
+OBJECTS = servo.o
 
 all: $(OBJECTS)
 
-motor.o: motor.cpp motor.h
+servo.o: servo.cpp servo.h
 	$(CC) -c $(CFLAGS) $<
 
 clean:
