@@ -3,8 +3,7 @@
 
 #include "servo.h"
 
-Servo::Servo(int signalpin){
-  this->signalpin = signalpin;
+Servo::Servo(int signalpin) : signalpin(signalpin) {
   setAngle(0);
 }
 
@@ -15,9 +14,9 @@ Servo::~Servo() {
 void Servo::setAngle(int angle){
   if(angle > 90 || angle < -90)
     throw std::invalid_argument("servo set angle: angle is out of bounds");
-  gpioServo(signalpin, 500 + (angle + 90) * 2000 / 180);
+  signalpin.setPulsewidth(500 + (angle + 90) * 2000 / 180);
 }
 
 void Servo::powerOff(){
-  gpioServo(signalpin, 0);
+  signalpin.setPulsewidth(0);
 }

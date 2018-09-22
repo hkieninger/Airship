@@ -24,11 +24,8 @@ static void setSignalHandler(int sig, sighandler_t signalhandler) {
 }
 
 int main() {
-    //initialise pigpio
-    if(gpioInitialise() < 0)
-        return EXIT_FAILURE;
     //setup signal handling
-    /* setSignalHandler(SIGINT, &signalHandler); */
+    setSignalHandler(SIGINT, &signalHandler);
     //thread managing the hardware and controlling the airship
     ControlThread controlThread;
     controlThread.start();
@@ -39,7 +36,5 @@ int main() {
     }
     controlThread.stopRunning();
     controlThread.join();
-    //release the resources asociated with pigpio
-    gpioTerminate();
     return EXIT_SUCCESS;
 }

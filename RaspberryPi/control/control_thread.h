@@ -23,10 +23,12 @@ use "" instead of <>
 #include "../thread/thread.h"
 
 class ControlThread: public Thread {
+    int gpioHandle;
+
     //the hardware
-    Motor leftMotor, rightMotor;
-    Servo leftRudder, rightRudder, topRudder;
-    Steering steering;
+    Motor *leftMotor, *rightMotor;
+    Servo *leftRudder, *rightRudder, *topRudder;
+    Steering *steering;
 
     /*
     construct in initaliser list

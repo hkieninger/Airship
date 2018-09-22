@@ -16,11 +16,10 @@
 #define RELAIS_TIME (6 * 1000) //from datasheet
 #define ARM_TIME (2 * 1000 * 1000)
 
-Motor::Motor(int pwmPin, int relaisPin){
-  this->relaisPin = relaisPin;
-  this->pwmPin = pwmPin;
-  gpioSetMode(relaisPin, PI_OUTPUT);
-  gpioWrite(relaisPin, 0);
+Motor::Motor(int pwmPin, int relaisPin) : pwmPin(pwmPin), relaisPin(relaisPin) {
+  pwmPin.setPinMode(PIN_OUTPUT);
+  relaisPin.setPinMode(PIN_OUTPUT);
+  relaisPin.writePin(LOW);
   usleep(RELAIS_TIME);
   powerOn();
   lastThrust = 0;
@@ -35,7 +34,7 @@ int Motor::thrust2pw(int thrust) {
 }
 
 void Motor::setZero() {
-  gpioServo(pwmPin, ZERO_PW); //turn motor off
+  pwmPin.setPulsewidth(ZERO_PW); //turn motor off
   usleep(ZERO_TIME); //wait until it halts
   lastThrust = 0;
 }
@@ -47,18 +46,17 @@ void Motor::setESC(int pw) {
     gpioServo(pwmPin, STARTUP_PW);
     usleep(STARTUP_TIME);
   }*/
-  gpioServo(pwmPin, pw);
+  pwmPin.setPulsewidth(pw);
 }
 
-void Motor::setThrust(int thrust){
-  printf("set thrust to %d\n", thrust); //DEBUG
+void Motor::setThrust(int thrust) {
   if(thrust > MAX_THRUST || thrust < -MAX_THRUST)
     throw std::invalid_argument("set motor thrust: thrust is out of bounds");
 
   if(thrust > 0) {
     if(lastThrust < 0) {
       setZero();
-      gpioWrite(relaisPin, 0); //turn off the relais
+      relaisPin.writePin(LOW); //turn off the relais
       usleep(RELAIS_TIME); //wait until the relais switches position
     }
     setESC(thrust2pw(thrust));
@@ -66,25 +64,25 @@ void Motor::setThrust(int thrust){
     if(lastThrust >= 0) {
       if(lastThrust > 0)
         setZero();
-      gpioWrite(relaisPin, 1); //turn the relais on
+      relaisPin.writePin(HIGH); //turn the relais on
       usleep(RELAIS_TIME); //wait until the relais switches position
     }
     setESC(thrust2pw(thrust));
   } else { //thrust == 0
     setZero();
-    gpioWrite(relaisPin, 0); //turn off the relais
+    relaisPin.writePin(LOW); //turn off the relais
   }
   lastThrust = thrust;
 }
 
 void Motor::powerOn(){
-  gpioServo(pwmPin, ZERO_PW);
+  pwmPin.setPulsewidth(PWM_ZERO);
   usleep(ARM_TIME);
 }
 
 void Motor::powerOff() {
   setThrust(0);
-  gpioServo(pwmPin, 0);
+  pwmPin.setPulsewidth(0);
 }
 
 int Motor::getThrust() {

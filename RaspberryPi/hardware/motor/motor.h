@@ -3,9 +3,11 @@
 
 #define MAX_THRUST 100
 
+#include "../gpio/pin_dev.h"
+
 class Motor {
-    int pwmPin;
-    int relaisPin;
+    PinDevice pwmPin;
+    PinDevice relaisPin;
     int lastThrust;
 
     /*

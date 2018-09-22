@@ -4,16 +4,18 @@
 #include <stdint.h>
 #include <stddef.h>
 
+#include "gpio_dev.h"
+
 /*
  * represents a i2c device
  * functions throw I2CException on errors
  */
-class I2CDev {
+class I2CDev: private GpioDevice {
 protected:
 	/*
-	 * file descriptor to the device file (not anymore with pigpio, the fd is hidden by pigpio this is only a hanlde)
+	 * the fd is hidden by pigpio this is only a handle :(
 	 */
-	int fd;
+	int handle;
 public:
 	/*
 	 * initialises an i2c device

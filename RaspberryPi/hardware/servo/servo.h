@@ -1,8 +1,10 @@
 #ifndef Servo_H
 #define Servo_H 1
 
-class Servo{
-  int signalpin;
+#include "../gpio/pin_dev.h"
+
+class Servo {
+  PinDevice signalpin;
 public:
 
     /*

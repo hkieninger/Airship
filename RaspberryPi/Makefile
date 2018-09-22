@@ -1,6 +1,6 @@
 CC = g++
-CFLAGS = -g
-LIBS = -lpigpio -lpthread -lwiringPi -lm
+CFLAGS = -Wall
+LIBS = -lpigpio -lpthread -lrt -lm
 OWNLIBS = -L./control/ -lcontrolZ -L./hardware/ -lhardwareZ -L./socket/ -lsocketZ -L./thread/ -lthreadZ
 
 zeppelin: main.o librarys

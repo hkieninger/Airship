@@ -10,12 +10,10 @@ inline void invalidParam(const char *deviceName, int paramNr) {
     fprintf(stderr, "invalid %s configuration paket with param: %d\n", deviceName, paramNr);
 }
 
-ControlThread::ControlThread() : 
-    leftMotor(LEFT_MOTOR_ESC, LEFT_MOTOR_RELAIS), rightMotor(RIGHT_MOTOR_ESC, RIGHT_MOTOR_RELAIS),
-    leftRudder(LEFT_RUDDER_SERVO), rightRudder(RIGHT_RUDDER_SERVO), topRudder(TOP_RUDDER_SERVO),
-    steering(leftMotor, rightMotor, leftRudder, rightRudder, topRudder),
-    connection(*this),
-    running(true) {
+ControlThread::ControlThread() : gpioHandle(-1), 
+    leftMotor(NULL), rightMotor(NULL),
+    leftRudder(NULL), rightRudder(NULL), topRudder(NULL),
+    steering(NULL), connection(*this), running(true) {
     pthread_mutex_init(&dequeMutex, NULL);
 }
 
@@ -40,11 +38,11 @@ void ControlThread::configureRpi(Paket &paket) {
 void ControlThread::configureActuator(Paket &paket) {
     int8_t val = *((int8_t *) paket.data);
     switch(paket.param) {
-        case Configuration::LEFT_MOTOR: leftMotor.setThrust(val); break;
-        case Configuration::RIGHT_MOTOR: rightMotor.setThrust(val); break;
-        case Configuration::LEFT_RUDDER: leftRudder.setAngle(val); break;
-        case Configuration::RIGHT_RUDDER: rightRudder.setAngle(val); break;
-        case Configuration::TOP_RUDDER: topRudder.setAngle(val); break;
+        case Configuration::LEFT_MOTOR: leftMotor->setThrust(val); break;
+        case Configuration::RIGHT_MOTOR: rightMotor->setThrust(val); break;
+        case Configuration::LEFT_RUDDER: leftRudder->setAngle(val); break;
+        case Configuration::RIGHT_RUDDER: rightRudder->setAngle(val); break;
+        case Configuration::TOP_RUDDER: topRudder->setAngle(val); break;
         default: invalidParam("actuator", paket.param);
     }
 }
@@ -53,17 +51,17 @@ void ControlThread::configureSteering(Paket &paket) {
     switch(paket.param) {
         case Configuration::VELOCITY: {
             int8_t *vel = (int8_t *) paket.data;
-            steering.setVelocity(vel[0]);
+            steering->setVelocity(vel[0]);
         }
         break;
         case Configuration::DIRECTION: {
             int8_t *dir = (int8_t *) paket.data;
-            steering.setDirection(dir[0], dir[1]);
+            steering->setDirection(dir[0], dir[1]);
         }
         break;
         case Configuration::CALLIBRATION: {
             int8_t *cal = (int8_t *) paket.data;
-            steering.setCallibration(cal[0], cal[1]);
+            steering->setCallibration(cal[0], cal[1]);
         }
         break;
         default:
@@ -91,17 +89,21 @@ void ControlThread::handlePaket(Paket &paket) {
 }
 
 void ControlThread::run() {
-    //initialise pigpio
-    /*if(gpioInitialise() < 0) {
-        fprintf(stderr, "failed to initialise pigpio\n");
-        raise(SIGTERM);
-        return;
-    }*/
+    //initialise gpio
+    GpioDevice::initialiseGpio();
     
+    leftMotor = new Motor(LEFT_MOTOR_ESC, LEFT_MOTOR_RELAIS);
+    rightMotor = new Motor(RIGHT_MOTOR_ESC, RIGHT_MOTOR_RELAIS);
+    leftRudder = new Servo(LEFT_RUDDER_SERVO); 
+    rightRudder = new Servo(RIGHT_RUDDER_SERVO);
+    topRudder = new Servo(TOP_RUDDER_SERVO);
+    steering = new Steering(*leftMotor, *rightMotor, *leftRudder, *rightRudder, *topRudder);
+
     //start the sub threads
     /*neo6mT.start();
     camFrontT.start();
     camBottomT.start();*/
+
     //the control loop of the zeppelin
     while(running) {
         pthread_mutex_lock(&dequeMutex);
@@ -116,6 +118,7 @@ void ControlThread::run() {
 
         //read out sensors and send measured data
     }
+
     //stop the sub threads and wait for them to terminate
     /*neo6mT.stopRunning();
     camFrontT.stopRunning();
@@ -124,6 +127,12 @@ void ControlThread::run() {
     camFrontT.join();
     camBottomT.join();*/
 
-    //release the resources asociated with pigpio
-    //gpioTerminate();
+    delete leftMotor;
+    delete rightMotor;
+    delete leftRudder;
+    delete rightRudder;
+    delete topRudder;
+
+    //release the resources asociated with gpio
+    GpioDevice::terminateGpio();
 }

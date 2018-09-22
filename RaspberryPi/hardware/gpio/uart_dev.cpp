@@ -1,4 +1,4 @@
-#include <wiringSerial.h>
+#include <pigpio.h>
 #include <stddef.h>
 #include <string.h>
 #include <errno.h>
@@ -13,40 +13,39 @@
  */
 
 UARTDev::UARTDev(const std::string &serialport, int baudrate) {
-    fd = serialOpen(serialport.c_str(), baudrate);
-    if(fd < 0)
+    if(GpioDevice::gpioHandle < 0)
+        throw GPIOException("GPIO wasn't initialised.");
+    handle = serial_open(GpioDevice::gpioHandle, serialport.c_str(), baudrate, 0);
+    if(handle < 0)
         throw UARTException("opening serial port: " + std::string(strerror(errno)));
 }
 
 UARTDev::~UARTDev() {
-    serialClose(fd);
-}
-
-void UARTDev::flush() {
-    serialFlush(fd);
+    serial_close(GpioDevice::gpioHandle, handle);
 }
 
 int UARTDev::available() {
-    int ret = serialDataAvail(fd);
+    int ret = serial_data_available(GpioDevice::gpioHandle, handle);
     if(ret < 0)
         throw UARTException("checking for available bytes from UART: " + std::string(strerror(errno)));
 }
 
 unsigned char UARTDev::getChar() {
-    int c = serialGetchar(fd);
+    int c = serial_read_byte(GpioDevice::gpioHandle, handle);
     if(c < 0)
          throw UARTException("reading from UART: " + std::string(strerror(errno)));
     return c;
 }
 
 void UARTDev::putChar(unsigned char c) {
-    serialPutchar(fd, c) ;
+    if(serial_write_byte(GpioDevice::gpioHandle, handle, c) != 0)
+        throw UARTException("writing to UART: " + std::string(strerror(errno)));
 }
 
 void *UARTDev::readAll(void *buf, size_t count) {
     int readed = 0; //grammatically wrong
     while(readed < count) {
-        int ret = read(fd, (uint8_t *) buf + readed, count - readed);
+        int ret = serial_read(GpioDevice::gpioHandle, handle, (uint8_t *) buf + readed, count - readed);
         if(ret < 0)
             throw UARTException("reading from UART: " + std::string(strerror(errno)));
         readed += ret;
@@ -57,7 +56,7 @@ void *UARTDev::readAll(void *buf, size_t count) {
 void UARTDev::writeAll(const void *buf, size_t count) {
     int written = 0;
     while(written < count) {
-        int ret = write(fd, (uint8_t *) buf + written, count - written);
+        int ret = serial_write(GpioDevice::gpioHandle, handle, (uint8_t *) buf + written, count - written);
         if(ret < 0)
             throw UARTException("writing to UART: " + std::string(strerror(errno)));
         written += ret;
