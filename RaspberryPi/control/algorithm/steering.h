@@ -6,8 +6,9 @@
 #include "../../hardware/motor/motor.h"
 #include "../../hardware/servo/servo.h"
 
-#define MAX_YAW 100
-#define MAX_PITCH 100
+#define MAX_RADIUS 100
+#define MAX_YAW MAX_RADIUS
+#define MAX_PITCH MAX_RADIUS
 #define MAX_VELOCITY MAX_THRUST
 
 class Steering {

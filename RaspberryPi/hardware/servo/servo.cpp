@@ -1,4 +1,3 @@
-#include <pigpio.h>
 #include <stdexcept>
 
 #include "servo.h"

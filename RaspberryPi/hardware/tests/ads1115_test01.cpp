@@ -5,7 +5,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <pigpio.h>
+#include <pigpiod_if2.h>
 
 #include "../gpio/i2c_dev.h"
 #include "../ads1115/ads1115.h"

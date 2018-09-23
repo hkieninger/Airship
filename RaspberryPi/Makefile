@@ -1,16 +1,17 @@
 CC = g++
-CFLAGS = -Wall
-LIBS = -lpigpio -lpthread -lrt -lm
+CFLAGS = -Wall -pthread -g
+LIBS = -lpigpiod_if2 -lpthread -lrt -lm
 OWNLIBS = -L./control/ -lcontrolZ -L./hardware/ -lhardwareZ -L./socket/ -lsocketZ -L./thread/ -lthreadZ
+export
 
 zeppelin: main.o librarys
-	$(CC) -o $@ main.o $(LIBS) $(OWNLIBS)
+	$(CC) -o $@ $(CFLAGS) main.o $(LIBS) $(OWNLIBS)
 
 librarys:
-	$(MAKE) -C control/ CC=$(CC) CFLAGS=$(CFLAGS)
-	$(MAKE) -C hardware/ CC=$(CC) CFLAGS=$(CFLAGS)
-	$(MAKE) -C socket/ CC=$(CC) CFLAGS=$(CFLAGS)
-	$(MAKE) -C thread/ CC=$(CC) CFLAGS=$(CFLAGS)
+	$(MAKE) -C control/
+	$(MAKE) -C hardware/
+	$(MAKE) -C socket/
+	$(MAKE) -C thread/
 
 main.o: main.cpp control/connection.h control/control_thread.h thread/interrupted_exception.h
 	$(CC) -c $(CFLAGS) $<

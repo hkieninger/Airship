@@ -1,4 +1,4 @@
-#include <pigpio.h>
+#include <pigpiod_if2.h>
 #include <errno.h>
 #include <string.h>
 #include <unistd.h>
@@ -16,7 +16,7 @@
 I2CDev::I2CDev(int addr, int bus) {
 	if(GpioDevice::gpioHandle < 0)
         throw GPIOException("GPIO wasn't initialised.");
-	handle = i2c_open(GpioDevice::gpioHanlde, bus, addr, 0);
+	handle = i2c_open(GpioDevice::gpioHandle, bus, addr, 0);
 	if(handle < 0)
 		throw I2CException("opening i2c device: " + std::string(strerror(errno)));
 }

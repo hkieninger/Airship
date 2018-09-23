@@ -1,5 +1,5 @@
 #include <unistd.h>
-#include <pigpio.h>
+#include <pigpiod_if2.h>
 
 int main() {
     gpioInitialise();

@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <unistd.h>
-#include <pigpio.h>
+#include <pigpiod_if2.h>
 
 //left and right not true yet
 #define RELAIS_LEFT 17

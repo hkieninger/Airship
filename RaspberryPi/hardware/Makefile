@@ -1,11 +1,13 @@
+export
+
 libhardwareZ.a: components
 	ar crs $@ gpio/gpio_dev.o gpio/pin_dev.o motor/motor.o servo/servo.o
 	ranlib $@
 
 components:
-	$(MAKE) -C gpio/ CC=$(CC) CFLAGS=$(CFLAGS)
-	$(MAKE) -C motor/ CC=$(CC) CFLAGS=$(CFLAGS)
-	$(MAKE) -C servo/ CC=$(CC) CFLAGS=$(CFLAGS)
+	$(MAKE) -C gpio/
+	$(MAKE) -C motor/
+	$(MAKE) -C servo/
 
 clean:
 	$(MAKE) -C gpio/ clean

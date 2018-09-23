@@ -67,9 +67,9 @@ void Connection::loop() {
                 syncSocket();
                 uint8_t header[4];
                 sock->recvAll(header, 4);
-                if(header[0] == Configuration::RPI && header[1] == Configuration::ECHO_REQUEST)
+                if(header[0] == Configuration::RPI && header[1] == Configuration::ECHO_REQUEST) {
                     sendEchoReply();
-                else {
+                } else {
                     Paket *paket = new Paket(); //don't forget to delete
                     paket->device = header[0];
                     paket->param = header[1];

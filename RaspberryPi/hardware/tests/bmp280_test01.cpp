@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <pigpio.h>
+#include <pigpiod_if2.h>
 
 #include "../bmp280/bmp280.h"
 

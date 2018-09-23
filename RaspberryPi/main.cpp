@@ -10,7 +10,7 @@
 #include "control/control_thread.h"
 
 static void signalHandler(int sig) {
-    printf("Signal %s has occured.\n", strsignal(sig));
+    printf("Signal \" %s \" has occured.\n", strsignal(sig));
 }
 
 static void setSignalHandler(int sig, sighandler_t signalhandler) {
@@ -32,7 +32,7 @@ int main() {
     try {
         controlThread.getConnection().loop();
     } catch(const InterruptedException &e) {
-        printf("Programm has been interrupted. Terminating ...");
+        printf("Programm has been interrupted. Terminating ...\n");
     }
     controlThread.stopRunning();
     controlThread.join();

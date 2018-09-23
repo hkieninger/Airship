@@ -48,8 +48,9 @@ public class Frame extends JFrame implements WindowListener, ControllerListener 
 		addWindowListener(this);
 		setLayout(new GridLayout(2, 2));
 		
+		String ip = JOptionPane.showInputDialog("IP of the airship: ", DEFAULT_IP);
 		try {
-			controller = new Controller(InetAddress.getByName(DEFAULT_IP));
+			controller = new Controller(InetAddress.getByName(ip));
 		} catch (IOException e) {
 			e.printStackTrace();
 			JOptionPane.showMessageDialog(this, "Connection couldn't be established: " + e.getMessage(), e.getClass().getSimpleName(), JOptionPane.ERROR_MESSAGE);

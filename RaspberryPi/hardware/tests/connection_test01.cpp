@@ -3,7 +3,7 @@
 #include <stdint.h>
 #include <byteswap.h>
 #include <signal.h>
-#include <pigpio.h>
+#include <pigpiod_if2.h>
 
 #include "../socket/socket_exception.h"
 #include "../socket/server_socket.h"

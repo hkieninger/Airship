@@ -11,7 +11,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <math.h>
-#include <pigpio.h>
+#include <pigpiod_if2.h>
 
 #define BYTE_TO_BINARY_PATTERN "%c%c%c%c%c%c%c%c"
 #define BYTE_TO_BINARY(byte)  \

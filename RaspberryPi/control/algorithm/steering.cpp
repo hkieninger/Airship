@@ -1,21 +1,22 @@
 #include <stdlib.h>
 #include <stdexcept>
 #include <math.h>
+#include <stdio.h>
 
 #include "steering.h"
 
 #define PI ((float) M_PI)
 
 float direction2angle(int8_t yaw, int8_t pitch) {
-    if(yaw == 0) {
-        if(pitch > 0) {
+    if(pitch == 0) {
+        if(yaw > 0) {
             return PI / 2;
         } else {
             return -PI / 2;
         }
     } else {
-        float angle = atanf(1.0 * yaw / pitch);
-        if(yaw < 0)
+        float angle = atanf(-1.0 * yaw / pitch);
+        if(pitch > 0)
             return angle + PI;
         return angle;
     }
@@ -38,7 +39,8 @@ int sign(int i) {
 }
 
 Steering::Steering(Motor &leftMotor, Motor &rightMotor, Servo &leftRudder, Servo &rightRudder, Servo &topRudder) :
-    leftMotor(leftMotor), rightMotor(rightMotor), leftRudder(leftRudder), rightRudder(rightRudder), topRudder(topRudder) {
+    leftMotor(leftMotor), rightMotor(rightMotor), leftRudder(leftRudder), rightRudder(rightRudder), topRudder(topRudder),
+    yaw(0), pitch(0), velocity(0), callibrationYaw(0), callibrationPitch(0) {
         setCallibration(0, 0);
         setDirection(0, 0);
         setVelocity(0);
@@ -52,27 +54,28 @@ void Steering::updateActuators() {
     //apply callibration
     int yaw = this->yaw + callibrationYaw;
     int pitch = this->pitch + callibrationPitch;
-
-    //set yaw and pitch to bounds
-    yaw = (yaw > MAX_YAW) ? MAX_YAW : yaw;
-    yaw = (yaw < -MAX_YAW) ? -MAX_YAW : yaw;
-    pitch = (pitch > MAX_PITCH) ? MAX_PITCH : pitch;
-    pitch = (pitch < -MAX_PITCH) ? -MAX_PITCH : pitch;
+    yaw = -yaw;
 
     //calculate how to control the rudders
     float angle = direction2angle(yaw, pitch);
     float radius = direction2radius(yaw, pitch);
+    //set radius to bound
+    if(radius > MAX_RADIUS)
+        radius = MAX_RADIUS;
 
     float topForce = sinf(angle);
     float rightForce = sinf(angle + 2 * PI / 3);
     float leftForce = sinf(angle + 4 * PI / 3);
+    float maxForce = fmaxf(fabsf(topForce), fmaxf(fabsf(rightForce), fabsf(leftForce)));
 
-    float totalForce = fabsf(topForce) + fabsf(rightForce) + fabsf(leftForce);
-    totalForce /= radius / (MAX_YAW * MAX_YAW + MAX_PITCH * MAX_PITCH);
+    float factor = maxForce * MAX_RADIUS / radius;
+    topForce /= factor;
+    rightForce /= factor;
+    leftForce /= factor;
 
-    int topAngle = radian2degree(asinf(topForce / totalForce) / 2);
-    int rightAngle = radian2degree(asinf(rightForce / totalForce) / 2);
-    int leftAngle = radian2degree(asinf(leftForce / totalForce) / 2);
+    int topAngle = radian2degree(asinf(topForce) / 2);
+    int rightAngle = radian2degree(asinf(rightForce) / 2);
+    int leftAngle = radian2degree(asinf(leftForce) / 2);
 
     topRudder.setAngle(topAngle);
     rightRudder.setAngle(rightAngle);
@@ -80,9 +83,7 @@ void Steering::updateActuators() {
 
     //calculate how to control the motors
     /*
-     * fakes the correct relation between yaw and pitch and velocity, but allows a stronger yaw
      * velocity has priority over yaw
-     * a better more elegant solution is required
      */
     int leftThrust;
     int rightThrust;

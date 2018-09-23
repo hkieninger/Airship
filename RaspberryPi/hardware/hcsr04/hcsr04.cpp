@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <pigpio.h>
+#include <pigpiod_if2.h>
 #include <iostream>
 #include "hcsr04.h"
 

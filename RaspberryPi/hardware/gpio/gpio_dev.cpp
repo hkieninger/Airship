@@ -1,4 +1,4 @@
-#include <pigpio.h>
+#include <pigpiod_if2.h>
 
 #include "gpio_exception.h"
 #include "gpio_dev.h"

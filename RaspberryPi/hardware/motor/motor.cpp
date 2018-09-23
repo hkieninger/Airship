@@ -1,13 +1,11 @@
-#include <stdio.h>
 #include <stdlib.h>
-#include <pigpio.h>
 #include <unistd.h>
 #include <stdexcept>
 
 #include "motor.h"
 
 //TODO: reduce TIMEs to minimum and find optimal values for PWs (pulse width)
-#define ZERO_PW 1000
+#define ZERO_PW 1100
 #define MAX_PW (1900 - ZERO_PW)
 #define STARTUP_PW 1400
 #define STARTUP_THRESHOLD_PW 1100
@@ -17,9 +15,9 @@
 #define ARM_TIME (2 * 1000 * 1000)
 
 Motor::Motor(int pwmPin, int relaisPin) : pwmPin(pwmPin), relaisPin(relaisPin) {
-  pwmPin.setPinMode(PIN_OUTPUT);
-  relaisPin.setPinMode(PIN_OUTPUT);
-  relaisPin.writePin(LOW);
+  this->pwmPin.setPinMode(PIN_OUTPUT);
+  this->relaisPin.setPinMode(PIN_OUTPUT);
+  this->relaisPin.writePin(LOW);
   usleep(RELAIS_TIME);
   powerOn();
   lastThrust = 0;
@@ -76,7 +74,7 @@ void Motor::setThrust(int thrust) {
 }
 
 void Motor::powerOn(){
-  pwmPin.setPulsewidth(PWM_ZERO);
+  pwmPin.setPulsewidth(ZERO_PW);
   usleep(ARM_TIME);
 }
 

@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <iostream>
-#include <pigpio.h>
+#include <pigpiod_if2.h>
 #include "../motor/motor.h"
 
 //left and right not true yet

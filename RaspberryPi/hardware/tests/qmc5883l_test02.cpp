@@ -10,7 +10,7 @@
 #include <unistd.h>
 #include <stdint.h>
 #include <sys/time.h>
-#include <pigpio.h>
+#include <pigpiod_if2.h>
 
 int main() {
     atexit(gpioTerminate);

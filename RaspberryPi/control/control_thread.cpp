@@ -1,7 +1,7 @@
 #include <arpa/inet.h>
 #include <stdint.h>
-#include <pigpio.h>
-#include <signal.h>
+#include <stdio.h>
+#include <unistd.h>
 
 #include "makros.h"
 #include "control_thread.h"
@@ -104,19 +104,24 @@ void ControlThread::run() {
     camFrontT.start();
     camBottomT.start();*/
 
+    printf("Hardware has been initialised successfully.\n");
     //the control loop of the zeppelin
     while(running) {
         pthread_mutex_lock(&dequeMutex);
         while (!paketDeque.empty()) {
             Paket *paket = paketDeque.front();
+            paketDeque.pop_front();
+            pthread_mutex_unlock(&dequeMutex);
+            //do not block mutex, while processing paket
             handlePaket(*paket);
             delete paket->data;
             delete paket;
-            paketDeque.pop_front();
+            pthread_mutex_lock(&dequeMutex);
         }
         pthread_mutex_unlock(&dequeMutex);
 
         //read out sensors and send measured data
+        //usleep(100 * 1000);
     }
 
     //stop the sub threads and wait for them to terminate
