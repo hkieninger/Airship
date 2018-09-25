@@ -15,9 +15,9 @@ use "" instead of <>
 #include <../hardware/neo6m/neo6m_exception.h>
 #include <../hardware/neo6m/neo6m.h>
 #include <../hardware/bmp280/bmp280.h>
-#include <../hardware/ads1115/ads1115.h>
 #include <../hardware/qmc5883l/qmc5883l.h>
 #include <../hardware/hcsr04/hcsr04.h>*/
+#include "../hardware/ads1115/ads1115.h"
 #include "../hardware/servo/servo.h"
 #include "../hardware/motor/motor.h"
 #include "../thread/thread.h"
@@ -29,11 +29,9 @@ class ControlThread: public Thread {
     Motor *leftMotor, *rightMotor;
     Servo *leftRudder, *rightRudder, *topRudder;
     Steering *steering;
-
-    /*
-    construct in initaliser list
-    Ads1115 ads;
-    Bmp280 bmp;
+    Ads1115 *ads;
+    
+    /* Bmp280 bmp;
     Mpu6050 mpu; //add interrupt pin and function
     Qmc5883l qmc; //add interrupt pin and function
     Hcsr04 hcFront(FRONT_HCSR04_TRIG, FRONT_HCSR04_ECHO);
@@ -58,6 +56,9 @@ class ControlThread: public Thread {
     void configureSensor(Paket &paket);
 
     void handlePaket(Paket &paket);
+
+    void measureAds();
+    void measureData();
 public:
     ControlThread();
     ~ControlThread();

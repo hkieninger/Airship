@@ -8,11 +8,11 @@
 #include "connection.h"
 
 Connection::Connection(ControlThread &control) : server(PORT), sock(NULL), control(control) {
-    
+    pthread_mutex_init(&sendMutex, NULL);
 }
 
 Connection::~Connection() {
-
+    pthread_mutex_destroy(&sendMutex);
 }
 
 void Connection::syncSocket() {
@@ -37,10 +37,10 @@ void Connection::sendEchoReply() {
     sendPaket(paket);
 }
 
-//TODO protect with mutex
 bool Connection::sendPaket(Paket &paket) {
     if(!isConnected())
         return false;
+    pthread_mutex_lock(&sendMutex);
     uint16_t sync = htons(SYNC);
     sock->sendAll(&sync, 2);
     sock->sendAll(&paket.device, 1);
@@ -48,6 +48,7 @@ bool Connection::sendPaket(Paket &paket) {
     uint16_t bigendian = htons(paket.len);
     sock->sendAll(&bigendian, 2);
     sock->sendAll(paket.data, paket.len);
+    pthread_mutex_unlock(&sendMutex);
     return true;
 }
 

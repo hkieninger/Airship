@@ -7,12 +7,9 @@
 //TODO: reduce TIMEs to minimum and find optimal values for PWs (pulse width)
 #define ZERO_PW 1100
 #define MAX_PW (1900 - ZERO_PW)
-#define STARTUP_PW 1400
-#define STARTUP_THRESHOLD_PW 1100
 #define ZERO_TIME (500 * 1000)
-#define STARTUP_TIME (300 * 1000)
 #define RELAIS_TIME (6 * 1000) //from datasheet
-#define ARM_TIME (2 * 1000 * 1000)
+#define ARM_TIME (2 * 1000 * 1000) //from datasheet
 
 Motor::Motor(int pwmPin, int relaisPin) : pwmPin(pwmPin), relaisPin(relaisPin) {
   this->pwmPin.setPinMode(PIN_OUTPUT);
@@ -38,12 +35,6 @@ void Motor::setZero() {
 }
 
 void Motor::setESC(int pw) {
-  //to start the motor you need more power
-  /*if(pw < STARTUP_PW && thrust2pw(lastThrust) < STARTUP_THRESHOLD_PW) {
-    printf("power start\n");
-    gpioServo(pwmPin, STARTUP_PW);
-    usleep(STARTUP_TIME);
-  }*/
   pwmPin.setPulsewidth(pw);
 }
 
@@ -66,9 +57,10 @@ void Motor::setThrust(int thrust) {
       usleep(RELAIS_TIME); //wait until the relais switches position
     }
     setESC(thrust2pw(thrust));
-  } else { //thrust == 0
+  } else if(lastThrust != 0) { //thrust == 0
     setZero();
     relaisPin.writePin(LOW); //turn off the relais
+    usleep(RELAIS_TIME); //wait until the relais switches position
   }
   lastThrust = thrust;
 }

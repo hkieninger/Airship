@@ -2,6 +2,11 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <errno.h>
+#include <string.h>
+#include <sys/time.h>
+#include <stdexcept>
+#include <math.h>
 
 #include "makros.h"
 #include "control_thread.h"
@@ -13,7 +18,8 @@ inline void invalidParam(const char *deviceName, int paramNr) {
 ControlThread::ControlThread() : gpioHandle(-1), 
     leftMotor(NULL), rightMotor(NULL),
     leftRudder(NULL), rightRudder(NULL), topRudder(NULL),
-    steering(NULL), connection(*this), running(true) {
+    steering(NULL), ads(NULL),
+    connection(*this), running(true) {
     pthread_mutex_init(&dequeMutex, NULL);
 }
 
@@ -88,10 +94,48 @@ void ControlThread::handlePaket(Paket &paket) {
     }
 }
 
+uint64_t micros() {
+    struct timeval tv;
+    if(gettimeofday(&tv, NULL) < 0)
+        throw std::runtime_error("get time of day: " + std::string(strerror(errno)));
+    return tv.tv_sec + tv.tv_usec;
+}
+
+//replace with realistic function (non linear)
+int8_t voltage2percentage(float voltage) {
+    float batteryVoltage = voltage * (67.3f + 224) / 67.3f; //firt resistor has 224 kOhm, second resistor has 67.3 kOhm
+    return roundf((100 * batteryVoltage - 620) / 2.2f); //3.1 V per cell considered as 0%, 4.2V per cell considered as 100%
+}
+
+void ControlThread::measureAds() {
+    float voltage = ads->getSingleShot();
+    int8_t percent = voltage2percentage(voltage);
+    struct Paket paket;
+    paket.device = Measurement::SENSOR;
+    paket.param = Measurement::BATTERY;
+    paket.len = 1;
+    paket.data = (uint8_t *) &percent;
+    connection.sendPaket(paket);
+}
+
+#define ADS_MEASUREMENT_RATE (500 * 1000)
+
+void ControlThread::measureData() {
+    static uint64_t lastAdsMeas = 0;
+    uint64_t now = micros();
+    if(now - lastAdsMeas > ADS_MEASUREMENT_RATE) {
+        lastAdsMeas = now;
+        measureAds();
+    }
+}
+
 void ControlThread::run() {
     //initialise gpio
     GpioDevice::initialiseGpio();
     
+    ads = new Ads1115();
+    ads->setInputPin(3);
+
     leftMotor = new Motor(LEFT_MOTOR_ESC, LEFT_MOTOR_RELAIS);
     rightMotor = new Motor(RIGHT_MOTOR_ESC, RIGHT_MOTOR_RELAIS);
     leftRudder = new Servo(LEFT_RUDDER_SERVO); 
@@ -121,7 +165,7 @@ void ControlThread::run() {
         pthread_mutex_unlock(&dequeMutex);
 
         //read out sensors and send measured data
-        //usleep(100 * 1000);
+        measureData();
     }
 
     //stop the sub threads and wait for them to terminate
@@ -132,11 +176,13 @@ void ControlThread::run() {
     camFrontT.join();
     camBottomT.join();*/
 
+    delete steering;
     delete leftMotor;
     delete rightMotor;
     delete leftRudder;
     delete rightRudder;
     delete topRudder;
+    delete ads;
 
     //release the resources asociated with gpio
     GpioDevice::terminateGpio();

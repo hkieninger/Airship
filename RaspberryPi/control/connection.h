@@ -2,6 +2,7 @@
 #define CONNECTION_H 1
 
 #include <stdint.h>
+#include <pthread.h>
 
 #include "../socket/server_socket.h"
 #include "../socket/socket.h"
@@ -103,6 +104,7 @@ class Connection {
     ServerSocket server;
     Socket *sock;
     ControlThread &control;
+    pthread_mutex_t sendMutex;
 
     void syncSocket();
     void sendEchoReply();
