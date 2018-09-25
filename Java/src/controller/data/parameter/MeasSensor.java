@@ -11,7 +11,7 @@ public enum MeasSensor implements Parameter {
 	@Override
 	public ConnectionData getDataInstance() {
 		switch(this) {
-			case BATTERY: return new ConnectionData.UByte();
+			case BATTERY: return new ConnectionData.Byte();
 			case ACCEL: return new FloatVector(3);
 			case GYRO: return new FloatVector(3);
 			case COMPASS: return new FloatVector(3);

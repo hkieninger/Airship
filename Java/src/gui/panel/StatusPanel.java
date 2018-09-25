@@ -132,7 +132,7 @@ public class StatusPanel extends JPanel implements Pool.Listener<MeasDevice>, Co
 						((ConnectionData.String) pool.getValue(device, parameter)).val, 0xFFFFFF);
 			}
 		} else if(device == MeasDevice.SENSOR && parameter == MeasSensor.BATTERY) {
-			setBatteryPercentage(((ConnectionData.UByte) pool.getValue(device, parameter)).val);
+			setBatteryPercentage(((ConnectionData.Byte) pool.getValue(device, parameter)).val);
 		}
 	}
 
