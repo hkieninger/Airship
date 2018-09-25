@@ -10,6 +10,7 @@
 #include <stdint.h>
 
 #include "socket_exception.h"
+#include "../thread/interrupted_exception.h"
 #include "socket.h"
 #include "server_socket.h"
 
@@ -40,7 +41,11 @@ Socket ServerSocket::acceptConnection() {
     struct sockaddr_in addr;
     socklen_t addrlen = sizeof(addr);
     int fd = accept(sockfd, (struct sockaddr *) &addr, &addrlen);
-    if(fd < 0)
-        throw SocketException("couldn't accept client: " + std::string(strerror(errno)));
+    if(fd < 0) {
+        if(errno == EINTR)
+            throw InterruptedException("signal occured: " + std::string(strerror(errno)));
+        else
+            throw SocketException("couldn't accept client: " + std::string(strerror(errno)));
+    }
     return Socket(fd, ntohl(addr.sin_addr.s_addr), ntohs(addr.sin_port));
 }

@@ -10,7 +10,8 @@ package controller;
 public interface ControllerListener {
 	
 	/**
-	 * called when an error has occured, thread shouldn't blcok
+	 * called when an error has occured and connection has been closed
+	 * you may want to retry to connect to the host
 	 * @param e a exception containing the error
 	 */
 	public void onError(Exception e);

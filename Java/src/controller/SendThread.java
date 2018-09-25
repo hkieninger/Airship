@@ -2,6 +2,8 @@ package controller;
 
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.util.HashSet;
+import java.util.Set;
 
 import controller.data.ConfDevice;
 import controller.data.object.ConnectionData;
@@ -11,7 +13,7 @@ import controller.data.parameter.Parameter;
 public class SendThread extends Thread implements Pool.Listener<ConfDevice> {
 	
 	static final int SEND_ECHO_DELAY = 1000; //in ms
-	public static final long CONNECTION_LOST_TIME = SEND_ECHO_DELAY * 10;
+	public static final long CONNECTION_LOST_TIME = SEND_ECHO_DELAY * 5;
 	
 	private boolean isRunning;
 	private Connection connection;
@@ -19,15 +21,16 @@ public class SendThread extends Thread implements Pool.Listener<ConfDevice> {
 	
 	private long lastEchoRequest;
 	
-	private ConfDevice device;
-	private Enum<? extends Parameter> param;
+	private Set<Change> changes;
 	
 	public SendThread(Connection connection) throws IOException {
+		setName("Send Thread");
 		this.connection = connection;
-		connection.getSendPool().addListener(this);
+		changes = new HashSet<>();
 		isRunning = true;
 		output = new DataOutputStream(connection.getSocket().getOutputStream());
 		lastEchoRequest = 0;
+		connection.getSendPool().addListener(this);
 	}
 
 	@Override
@@ -72,33 +75,25 @@ public class SendThread extends Thread implements Pool.Listener<ConfDevice> {
 		isRunning = false;
 	}
 	
+	public boolean isRunning() {
+		return isRunning;
+	}
+	
 	/*
 	 * Helper methods
 	 */
 	
 	synchronized private void sendConf() throws IOException {
-		if(device == null || param == null) {
-			//loop over all configuration parameters
-			for(ConfDevice dev : ConfDevice.values()) {
-				for(Enum<? extends Parameter> param : dev.getParameters()) {
-					//check if parameter has changed
-					if(connection.getSendPool().hasChanged(dev, param))
-						sendSingleConf(dev, param);
-				}
-			}
-		} else {
-			sendSingleConf(device, param);
-			device = null;
-			param = null;
+		for(Change change : changes) {
+			sendSingleConf(change.device, change.param);
 		}
+		changes.clear();
 	}
 	
 	private void sendSingleConf(ConfDevice dev, Enum<? extends Parameter> param) throws IOException {
 		Pool<ConfDevice> pool = connection.getSendPool();
 		ConnectionData data = pool.getValue(dev, param);
 		sendData(dev, param, data);
-		//reset changed flag
-		pool.resetChanged(dev, param);
 	}
 
 	private void sendEchoRequest() throws IOException {
@@ -117,14 +112,29 @@ public class SendThread extends Thread implements Pool.Listener<ConfDevice> {
 
 	@Override
 	synchronized public void onChanged(Pool<ConfDevice> pool, ConfDevice device, Enum<? extends Parameter> parameter) {
-		if(device == null && parameter == null) {
-			this.device = device;
-			this.param = parameter;
-		} else {
-			this.device = null;
-			this.param = null;
-		}
+		changes.add(new Change(device, parameter));
 		interrupt();
+	}
+	
+	private static class Change {
+		
+		ConfDevice device;
+		Enum<? extends Parameter> param;
+		
+		public Change(ConfDevice device, Enum<? extends Parameter> param) {
+			this.device = device;
+			this.param = param;
+		}
+		
+		@Override
+		public boolean equals(Object obj) {
+			return device.hashCode() == obj.hashCode();
+		}
+		
+		@Override
+		public int hashCode() {
+			return device.ordinal() << 8 | param.ordinal();
+		}
 	}
 	
 }

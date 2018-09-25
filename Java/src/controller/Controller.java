@@ -10,11 +10,11 @@ import controller.data.MeasDevice;
 
 public class Controller implements Connection.Listener {
 
-	private static final long CLOSE_TIMEOUT = 1 * 1000;
+	private static final long CLOSE_TIMEOUT = 3 * 1000;
 	
 	public static final int PORT = 0xCCCC;
 	
-	private boolean stop;
+	private boolean stopping;
 	
 	private InetAddress host;
 	private Connection connection;
@@ -24,6 +24,7 @@ public class Controller implements Connection.Listener {
 	private Pool<MeasDevice> measPool;
 	
 	public Controller(InetAddress host) throws IOException {
+		stopping = false;
 		this.listeners = new ArrayList<>();
 		this.host = host;
 		this.confPool = new Pool<>(ConfDevice.class);
@@ -51,25 +52,30 @@ public class Controller implements Connection.Listener {
 		connection = new Connection(host, PORT, measPool, confPool);
 		connection.addListener(this);
 		connection.start();
+		for(ControllerListener l : listeners)
+			l.onConnectionRestored();
 	}
 	
-	public void close() {
+	public void close() throws Exception {
 		synchronized(host) {
-			stop = true;
+			stopping = true;
 			connection.stop();
 			try {
 				host.wait(CLOSE_TIMEOUT);
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
+			if(stopping == true)
+				throw new Exception("close hangs.");
 		}
 	}
 
 	@Override
 	public void onStopped(Exception cause) {
 		synchronized(host) {
-			if(stop) {
+			if(stopping) {
 				host.notify();
+				stopping = false;
 				return;
 			}
 		}
@@ -78,14 +84,13 @@ public class Controller implements Connection.Listener {
 			if(cause != null)
 				throw cause;
 		} catch(Connection.LostException e) {
+			for(ControllerListener l : listeners)
+				l.onConnectionLost();
 			try {
-				for(ControllerListener l : listeners)
-					l.onConnectionLost();
 				restore();
-				for(ControllerListener l : listeners)
-					l.onConnectionRestored();
 			} catch (IOException ioe) {
-				ioe.printStackTrace();
+				for(ControllerListener l : listeners)
+					l.onError(ioe);
 			}
 		} catch(Connection.ClosedByHostException e) {
 			for(ControllerListener l : listeners)

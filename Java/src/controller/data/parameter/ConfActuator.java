@@ -10,6 +10,9 @@ public enum ConfActuator implements Parameter {
 
 	@Override
 	public ConnectionData getDataInstance() {
-		return new ConnectionData.UByte();
+		if(this == LEFT_MOTOR || this == RIGHT_MOTOR) 
+			return new ConnectionData.UByte();
+		else
+			return new ConnectionData.Byte();
 	}
 }

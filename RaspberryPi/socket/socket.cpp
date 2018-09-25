@@ -9,6 +9,7 @@
 #include <string>
 #include <stdexcept>
 
+#include "../thread/interrupted_exception.h"
 #include "socket_exception.h"
 #include "socket.h"
 
@@ -41,8 +42,12 @@ void Socket::sendAll(const void *buf, int len) {
     int sent = 0;
     while(sent < len) {
         int ret = send(sockfd, (uint8_t *) buf + sent, len - sent, 0);
-        if(ret < 0)
-            throw SocketException("send on socket: " + std::string(strerror(errno)));
+        if(ret < 0) {
+            if(errno == EINTR)
+                throw InterruptedException("signal occured: " + std::string(strerror(errno)));
+            else
+                throw SocketException("send on socket: " + std::string(strerror(errno)));
+        }
         sent += ret;
     }
 }
@@ -51,8 +56,12 @@ void *Socket::recvAll(void *buf, int len) {
     int received = 0;
     while(received < len) {
         int ret = recv(sockfd, (uint8_t *) buf + received, len - received, 0);
-        if(ret < 0)
-            throw SocketException("receive on socket: " + std::string(strerror(errno)));
+        if(ret < 0) {
+            if(errno == EINTR)
+                throw InterruptedException("signal occured: " + std::string(strerror(errno)));
+            else
+                throw SocketException("receive on socket: " + std::string(strerror(errno)));
+        }
         if(ret == 0)
             throw SocketClosedException("socket has been closed by peer");
         received += ret;
