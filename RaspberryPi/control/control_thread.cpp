@@ -101,10 +101,27 @@ uint64_t micros() {
     return tv.tv_sec + tv.tv_usec;
 }
 
-//replace with realistic function (non linear)
 int8_t voltage2percentage(float voltage) {
-    float batteryVoltage = voltage * (67.3f + 224) / 67.3f; //firt resistor has 224 kOhm, second resistor has 67.3 kOhm
-    return roundf((100 * batteryVoltage - 620) / 2.2f); //3.1 V per cell considered as 0%, 4.2V per cell considered as 100%
+    //calculate the voltage of the battery
+    voltage = voltage * (67.3f + 224) / 67.3f; //firt resistor has 224 kOhm, second resistor has 67.3 kOhm
+    //calculate the voltage for one cell
+    voltage /= 2;
+    //use a interpolation function to calculate the percentage from the voltage of a cell
+    float function = 34423760.7101f;
+    function += -50969927.8613f * voltage;
+    voltage *= voltage; //pow 2
+    function += +31421708.1782f * voltage;
+    voltage *= voltage; //pow 3
+    function += -10323913.2151f * voltage;
+    voltage *= voltage; //pow 4
+    function += +1906811.7969f * voltage;
+    voltage *= voltage; //pow 5
+    function += -187724.2842f * voltage;
+    voltage *= voltage; // pow 6
+    function += 7696.5308f * voltage;
+    return roundf(function);
+    
+    //return roundf((100 * batteryVoltage - 620) / 2.2f); //3.1 V per cell considered as 0%, 4.2V per cell considered as 100%
 }
 
 void ControlThread::measureAds() {

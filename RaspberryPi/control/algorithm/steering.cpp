@@ -82,6 +82,12 @@ void Steering::updateActuators() {
     leftRudder.setAngle(leftAngle);
 
     //calculate how to control the motors
+
+    //set yaw to normal and bounds
+    yaw = -yaw;
+    yaw = (yaw > MAX_YAW) ? MAX_YAW : yaw;
+    yaw = (yaw < -MAX_YAW) ? -MAX_YAW : yaw;
+
     /*
      * velocity has priority over yaw
      */
