@@ -2,35 +2,20 @@
 #define HCSR04_H 1
 
 #include <stdint.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <wiringPi.h>
-#include <iostream>
-
-
+#include "../gpio/pin_dev.h"
 
 class Hcsr04{
-  int trig;
+    PinDevice trig;
+    PinDevice echo;
 
 public:
-    /*
-     * Adds a hcsr04 Ultrasonic distance sensor
-     */
-    Hcsr04(int trig, int echo);
+    Hcsr04(int trigPin, int echoPin);
 
     /*
-     * destructor
+     * measures the distance in mm
+     * @return: the distance in mm (20 - 4000) or -1 if the distance is too big or too small
      */
-    ~Hcsr04();
-
-    /*
-     * get distance in Meters
-     */
-     double getDistance();
-
-     double getSpeed();
-
-
+    int16_t getDistance();
 };
 
 #endif /* HCSR04_H */

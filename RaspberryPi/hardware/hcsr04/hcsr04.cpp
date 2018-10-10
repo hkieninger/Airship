@@ -1,49 +1,47 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <pigpiod_if2.h>
-#include <iostream>
+#include <unistd.h>
+#include <stdexcept>
+#include <string>
+#include <string.h>
+#include <errno.h>
+#include <sys/time.h>
+
 #include "hcsr04.h"
 
-Hcsr04::Hcsr04(int trig, int echo){
-      gpioSetMode(trig, PI_OUTPUT);
-      gpioSetMode(echo, PI_INPUT);
-      this->trig = trig;
-      //trig pin must start LOW
-      gpioWrite(trig, 0);
-      usleep(3000);
+static uint64_t micros() {
+    struct timeval tv;
+    if(gettimeofday(&tv, NULL) < 0)
+        throw std::runtime_error("get time of day: " + std::string(strerror(errno)));
+    return tv.tv_sec + tv.tv_usec;
 }
 
-Hcsr04::~Hcsr04() {
-  gpioWrite(trig, LOW);
+Hcsr04::Hcsr04(int trigPin, int echoPin) : trig(trigPin), echo(echoPin) {
+    trig.setPinMode(PIN_OUTPUT);
+    trig.writePin(LOW);
+    echo.setPinMode(PIN_INPUT);
 }
 
-double Hcsr04::getDistance(){
-  //Send trig pulse
-  gpioWrite(trig, 1);
-  usleep(20);
-  gpioWrite(trig, 0);
-  //Wait for echo start
-  while(gpioRead(echo) == 0);
-  //Wait for echo end
-  long startTime = micros();
-  while(gpioRead(echo) == 1);
-  long travelTime = micros() - startTime;
-  //Get distance in m
-  double distance = travelTime / 5800;
-  //Make sure that the next Trigger is at least 50us away
-  usleep(70);
-
-  return distance;
-
-
-}
-
-double Hcsr04::getSpeed(){
-  dist1 = getDistance();
-  startTimeSpeed = micros()
-  delay(40);
-  dist2 = getDistance();
-  endTimeSpeed = micros()
-  return (dist1 - dist2) / (endTimeSpeed-startTimeSpeed);
-
+int16_t Hcsr04::getDistance(){
+    //trigger a measurement
+    trig.writePin(HIGH);
+    usleep(10);
+    trig.writePin(LOW);
+    //measure the duration of the answer pulse
+    uint64_t start, stop;
+    do {
+        start = micros();
+    } while(echo.readPin() == LOW);
+    do {
+        stop = micros();
+    } while(echo.readPin() == HIGH);
+    int diff = stop - start;
+    //calculate the distance from the duration
+    int distance = diff * 343 / 1000 / 2;
+    if(distance < 20 || distance > 4000)
+        return -1;
+    //ensure that the max repetition rate is 50 micro seconds
+    int delay = 50 - 10 - diff;
+    if(delay > 0)
+        usleep(delay);
+    
+    return distance;
 }

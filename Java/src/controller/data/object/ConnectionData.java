@@ -43,6 +43,24 @@ public interface ConnectionData {
 		
 	}
 	
+	public static class Short implements ConnectionData {
+		
+		public short val;
+
+		@Override
+		public void send(DataOutputStream out) throws IOException {
+			out.writeShort(2);
+			out.writeShort(val);
+		}
+
+		@Override
+		public void receive(DataInputStream in) throws IOException {
+			in.readUnsignedShort();
+			val = in.readShort();
+		}
+		
+	}
+	
 	public static class Long implements ConnectionData {
 		
 		public long val;

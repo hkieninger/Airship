@@ -1,6 +1,11 @@
 HARDWARE = \
 ../hardware/servo/servo.h \
-../hardware/motor/motor.h
+../hardware/motor/motor.h \
+../hardware/ads1115/ads1115.h \
+../hardware/mpu6050/mpu6050.h \
+../hardware/bmp280/bmp280.h \
+../hardware/qmc5883l/qmc5883l.h \
+../hardware/hcsr04/hcsr04.h
 ALGORITHM = \
 algorithm/steering.h
 SOCKET = \
@@ -9,14 +14,17 @@ SOCKET = \
 ../socket/socket_exception.h
 export
 
-libcontrolZ.a: control_thread.o connection.o algorithms
-	ar crs $@ control_thread.o connection.o algorithm/*.o
+libcontrolZ.a: control_thread_conf.o control_thread_meas.o connection.o algorithms
+	ar crs $@ control_thread_conf.o control_thread_meas.o connection.o algorithm/*.o
 	ranlib $@
 
 algorithms:
 	$(MAKE) -C algorithm/
 
-control_thread.o: control_thread.cpp control_thread.h pin.h ../thread/thread.h connection.h makros.h $(ALGORITHM) $(HARDWARE)
+control_thread_conf.o: control_thread_conf.cpp control_thread.h pin.h ../thread/thread.h connection.h makros.h $(ALGORITHM) $(HARDWARE)
+	$(CC) -c $(CFLAGS) $<
+
+control_thread_meas.o: control_thread_meas.cpp control_thread.h pin.h ../thread/thread.h connection.h makros.h $(ALGORITHM) $(HARDWARE)
 	$(CC) -c $(CFLAGS) $<
 
 connection.o: connection.cpp connection.h control_thread.h $(SOCKET)

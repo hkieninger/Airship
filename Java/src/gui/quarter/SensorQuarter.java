@@ -11,6 +11,7 @@ public class SensorQuarter extends JTabbedPane {
 	private static final long serialVersionUID = 1L;
 	
 	public SensorQuarter(Controller controller) {
+		setFocusable(false);
 		SensorPanel sensorPanel = new SensorPanel();
 		controller.getMeasPool().addListener(sensorPanel);
 		this.addTab("sensor data", sensorPanel);

@@ -1,13 +1,11 @@
 #include <stdio.h>
-#include <stdlib.h>
-#include <wiringPi.h>
-#include <iostream>
 #include "../hcsr04/hcsr04.h"
 
-int main(){
-  Hcsr04 hcsr(28,29);
-
-  //test function
-  printf("Distance: %x\n", hcsr.getDistance());
-
+int main() {
+  GpioDevice::initialiseGpio();
+  Hcsr04 hcsr(20,21);
+  while(true) {
+    printf("distance: %d cm\n", hcsr.getDistance());
+  }
+  GpioDevice::terminateGpio();
 }

@@ -19,8 +19,8 @@ public enum MeasSensor implements Parameter {
 			case BARO: return new ConnectionData.Double();
 			case CAM_FRONT: return Picture.getFrontPicture(); //avoid frequent allocation
 			case CAM_BOTTOM: return Picture.getBottomPicture(); //avoid frequent allocation
-			case DIST_FRONT: return new ConnectionData.Float();
-			case DIST_BOTTOM: return new ConnectionData.Float();
+			case DIST_FRONT: return new ConnectionData.Short();
+			case DIST_BOTTOM: return new ConnectionData.Short();
 			case KALMAN: throw new UnsupportedOperationException("Not implemented yet.");
 		}
 		throw new UnsupportedOperationException("Not implemented yet.");

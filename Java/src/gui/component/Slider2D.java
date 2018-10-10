@@ -21,7 +21,7 @@ public class Slider2D extends JComponent {
 	 */
 	private static final long serialVersionUID = 1L;
 	private static final int LIGHT_GRAY_LINES = 11;
-	private static final int KNOB_WIDTH = 80;
+	private static final int KNOB_WIDTH = 30;
 	
 	private int maxX, maxY;
 	private int xSlider, ySlider;
@@ -113,7 +113,7 @@ public class Slider2D extends JComponent {
 		int xSlider = this.xSlider * width / 2 / maxX;
 		int ySlider = this.ySlider * height / 2 / maxY;
 		//draw background
-		if(background == null ) {
+		if(background == null) {
 			g2.setColor(Color.WHITE);
 			g2.fillRect(0, 0, width, height);
 		} else {

@@ -57,7 +57,7 @@ public class SteeringPanel extends JPanel {
 			knob = ImageIO.read(new File("res/zeppelin_knob.png"));
 			background = ImageIO.read(new File("res/himmel_background.jpg"));
 		} catch (IOException e) {
-			e.printStackTrace();
+			//e.printStackTrace();
 			knob = null;
 			background = null;
 		}

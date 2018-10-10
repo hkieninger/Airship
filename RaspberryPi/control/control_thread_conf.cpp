@@ -1,13 +1,8 @@
 #include <arpa/inet.h>
 #include <stdint.h>
 #include <stdio.h>
-#include <unistd.h>
-#include <errno.h>
-#include <string.h>
-#include <sys/time.h>
-#include <stdexcept>
-#include <math.h>
 
+#include "pin.h"
 #include "makros.h"
 #include "control_thread.h"
 
@@ -94,58 +89,6 @@ void ControlThread::handlePaket(Paket &paket) {
     }
 }
 
-uint64_t micros() {
-    struct timeval tv;
-    if(gettimeofday(&tv, NULL) < 0)
-        throw std::runtime_error("get time of day: " + std::string(strerror(errno)));
-    return tv.tv_sec + tv.tv_usec;
-}
-
-int8_t voltage2percentage(float voltage) {
-    //calculate the voltage of the battery
-    voltage = voltage * (67.3f + 224) / 67.3f; //firt resistor has 224 kOhm, second resistor has 67.3 kOhm
-    //calculate the voltage for one cell
-    voltage /= 2;
-    //use a interpolation function to calculate the percentage from the voltage of a cell
-    float function = 34423760.7101f;
-    function += -50969927.8613f * voltage;
-    voltage *= voltage; //pow 2
-    function += +31421708.1782f * voltage;
-    voltage *= voltage; //pow 3
-    function += -10323913.2151f * voltage;
-    voltage *= voltage; //pow 4
-    function += +1906811.7969f * voltage;
-    voltage *= voltage; //pow 5
-    function += -187724.2842f * voltage;
-    voltage *= voltage; // pow 6
-    function += 7696.5308f * voltage;
-    return roundf(function);
-    
-    //return roundf((100 * batteryVoltage - 620) / 2.2f); //3.1 V per cell considered as 0%, 4.2V per cell considered as 100%
-}
-
-void ControlThread::measureAds() {
-    float voltage = ads->getSingleShot();
-    int8_t percent = voltage2percentage(voltage);
-    struct Paket paket;
-    paket.device = Measurement::SENSOR;
-    paket.param = Measurement::BATTERY;
-    paket.len = 1;
-    paket.data = (uint8_t *) &percent;
-    connection.sendPaket(paket);
-}
-
-#define ADS_MEASUREMENT_RATE (500 * 1000)
-
-void ControlThread::measureData() {
-    static uint64_t lastAdsMeas = 0;
-    uint64_t now = micros();
-    if(now - lastAdsMeas > ADS_MEASUREMENT_RATE) {
-        lastAdsMeas = now;
-        measureAds();
-    }
-}
-
 void ControlThread::run() {
     //initialise gpio
     GpioDevice::initialiseGpio();
@@ -159,6 +102,12 @@ void ControlThread::run() {
     rightRudder = new Servo(RIGHT_RUDDER_SERVO);
     topRudder = new Servo(TOP_RUDDER_SERVO);
     steering = new Steering(*leftMotor, *rightMotor, *leftRudder, *rightRudder, *topRudder);
+
+    mpu = new Mpu6050();
+    qmc = new Qmc5883l();
+    bmp = new Bmp280();
+    hcFront = new Hcsr04(FRONT_HCSR04_TRIG, FRONT_HCSR04_ECHO);
+    hcBottom = new Hcsr04(BOTTOM_HCSR04_TRIG, BOTTOM_HCSR04_ECHO);
 
     //start the sub threads
     /*neo6mT.start();
@@ -182,7 +131,7 @@ void ControlThread::run() {
         pthread_mutex_unlock(&dequeMutex);
 
         //read out sensors and send measured data
-        measureData();
+        measureData(); //impementation is in control_thread_meas.cpp
     }
 
     //stop the sub threads and wait for them to terminate
@@ -193,12 +142,19 @@ void ControlThread::run() {
     camFrontT.join();
     camBottomT.join();*/
 
+    delete mpu;
+    delete qmc;
+    delete bmp;
+    delete hcBottom;
+    delete hcFront;
+
     delete steering;
     delete leftMotor;
     delete rightMotor;
     delete leftRudder;
     delete rightRudder;
     delete topRudder;
+
     delete ads;
 
     //release the resources asociated with gpio

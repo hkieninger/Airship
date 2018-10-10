@@ -14,7 +14,7 @@ public class FloatVector implements ConnectionData {
 
 	@Override
 	public void send(DataOutputStream out) throws IOException {
-		out.writeShort(val.length);
+		out.writeShort(val.length * 4);
 		for(float f : val)
 			out.writeFloat(f);
 	}

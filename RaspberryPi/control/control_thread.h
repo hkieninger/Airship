@@ -6,18 +6,17 @@
 
 #include "connection.h"
 #include "algorithm/steering.h"
-#include "pin.h"
 
 /*
 use "" instead of <>
 
-#include <../hardware/mpu6050/mpu6050.h>
 #include <../hardware/neo6m/neo6m_exception.h>
-#include <../hardware/neo6m/neo6m.h>
-#include <../hardware/bmp280/bmp280.h>
-#include <../hardware/qmc5883l/qmc5883l.h>
-#include <../hardware/hcsr04/hcsr04.h>*/
+#include <../hardware/neo6m/neo6m.h>> */
+#include "../hardware/hcsr04/hcsr04.h"
 #include "../hardware/ads1115/ads1115.h"
+#include "../hardware/mpu6050/mpu6050.h"
+#include "../hardware/bmp280/bmp280.h"
+#include "../hardware/qmc5883l/qmc5883l.h"
 #include "../hardware/servo/servo.h"
 #include "../hardware/motor/motor.h"
 #include "../thread/thread.h"
@@ -26,16 +25,19 @@ class ControlThread: public Thread {
     int gpioHandle;
 
     //the hardware
+    //actuators
     Motor *leftMotor, *rightMotor;
     Servo *leftRudder, *rightRudder, *topRudder;
     Steering *steering;
+    //sensors
     Ads1115 *ads;
-    
-    /* Bmp280 bmp;
-    Mpu6050 mpu; //add interrupt pin and function
-    Qmc5883l qmc; //add interrupt pin and function
-    Hcsr04 hcFront(FRONT_HCSR04_TRIG, FRONT_HCSR04_ECHO);
-    Hcsr04 hcBottom(BOTTOM_HCSR04_TRIG, BOTTOM_HCSR04_ECHO);
+    Mpu6050 *mpu;
+    Bmp280 *bmp;
+    Qmc5883l *qmc;
+    Hcsr04 *hcFront;
+    Hcsr04 *hcBottom;
+
+    /*
     Neo6MThread neo6mT;
     CameraThread camBottomT(CSI);
     CameraThread camtFrontT(USB); */
@@ -57,7 +59,11 @@ class ControlThread: public Thread {
 
     void handlePaket(Paket &paket);
 
+    void measureQmc();
+    void measureHcsr();
+    void measureBmp();
     void measureAds();
+    void measureMpu();
     void measureData();
 public:
     ControlThread();

@@ -46,6 +46,7 @@ float *Qmc5883l::getMag(float *array) {
 	array[0] = getMagX();
 	array[1] = getMagY();
 	array[2] = getMagZ();
+	return array;
 }
 
 //max speed 200Hz -> 5ms pause

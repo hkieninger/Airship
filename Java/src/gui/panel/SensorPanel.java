@@ -152,15 +152,21 @@ public class SensorPanel extends JPanel implements Pool.Listener<MeasDevice> {
 		});
 	}
 
-	public void setDistanceFront(float cm) {
+	public void setDistanceFront(short mm) {
 		SwingUtilities.invokeLater(() -> {
-			restTable.setValueAt(cm, 0, 1);
+			if(mm == -1)
+				restTable.setValueAt("out of range", 0, 1);
+			else
+				restTable.setValueAt(mm/10.0f, 0, 1);
 		});
 	}
 
-	public void setDistanceBottom(float cm) {
+	public void setDistanceBottom(short mm) {
 		SwingUtilities.invokeLater(() -> {
-			restTable.setValueAt(cm, 0, 2);
+			if(mm == -1)
+				restTable.setValueAt("out of range", 0, 2);
+			else
+				restTable.setValueAt(mm/10.0f, 0, 2);
 		});
 	}
 
@@ -184,9 +190,9 @@ public class SensorPanel extends JPanel implements Pool.Listener<MeasDevice> {
 			} else if(parameter == MeasSensor.BARO) {
 				setBarometer(((ConnectionData.Double) pool.getValue(device, parameter)).val);
 			} else if(parameter == MeasSensor.DIST_FRONT) {
-				setDistanceFront(((ConnectionData.Float) pool.getValue(device, parameter)).val);
+				setDistanceFront(((ConnectionData.Short) pool.getValue(device, parameter)).val);
 			} else if(parameter == MeasSensor.DIST_BOTTOM) {
-				setDistanceBottom(((ConnectionData.Float) pool.getValue(device, parameter)).val);
+				setDistanceBottom(((ConnectionData.Short) pool.getValue(device, parameter)).val);
 			} else
 				return;
 		}
