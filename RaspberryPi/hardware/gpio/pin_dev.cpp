@@ -1,34 +1,34 @@
-#include <pigpiod_if2.h>
-
 #include "gpio_exception.h"
 #include "pin_dev.h"
 
-PinDevice::PinDevice(int pin) : pin(pin) {
-    if(GpioDevice::gpioHandle < 0)
-        throw GPIOException("GPIO wasn't initialised.");
-}
+PinDevice::PinDevice(int pin) : pin(pin) {}
 
 void PinDevice::setPinMode(unsigned int mode) {
-    int ret = set_mode(GpioDevice::gpioHandle, pin, mode);
+    int ret = gpioSetMode(pin, mode);
     if(ret != 0)
-        throw GPIOException("Failed to set pin mode: " + std::string(pigpio_error(ret)));
+        throw GPIOException("Failed to set pin mode: BCM" + pin);
 }
 
 int PinDevice::readPin() {
-    int ret = gpio_read(GpioDevice::gpioHandle, pin);
+    int ret = gpioRead(pin);
     if(ret == PI_BAD_GPIO)
-        throw GPIOException("Failed to read pin: " + std::string(pigpio_error(ret)));
+        throw GPIOException("Failed to read pin: BCM" + pin);
     return ret;
 }
 
 void PinDevice::writePin(unsigned int level) {
-    int ret = gpio_write(GpioDevice::gpioHandle, pin, level);
+    int ret = gpioWrite(pin, level);
     if(ret != 0)
-        throw GPIOException("Failed to write pin: " + std::string(pigpio_error(ret)));
+        throw GPIOException("Failed to write pin: BCM" + pin);
 }
 
 void PinDevice::setPulsewidth(unsigned int microseconds) {
-    int ret = set_servo_pulsewidth(GpioDevice::gpioHandle, pin, microseconds);
+    int ret = gpioServo(pin, microseconds);
     if(ret != 0)
-        throw GPIOException("Failed to set pulsewidth: "  + std::string(pigpio_error(ret))); 
+        throw GPIOException("Failed to set pulsewidth: BCM" + pin);
+}
+
+void PinDevice::triggerPin(unsigned int pulse_length, unsigned int level) {
+    if(gpioTrigger(pin, pulse_length, level) != 0)
+        throw GPIOException("Failed to trigger: BCM" + pin);
 }

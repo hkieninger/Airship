@@ -7,6 +7,8 @@
 
 #include "hcsr04.h"
 
+#define TIMEOUT_MICROS (25 * 1000)
+
 static uint64_t micros() {
     struct timeval tv;
     if(gettimeofday(&tv, NULL) < 0)
@@ -22,26 +24,41 @@ Hcsr04::Hcsr04(int trigPin, int echoPin) : trig(trigPin), echo(echoPin) {
 
 int16_t Hcsr04::getDistance(){
     //trigger a measurement
-    trig.writePin(HIGH);
-    usleep(10);
-    trig.writePin(LOW);
+    trig.triggerPin(10, HIGH);
     //measure the duration of the answer pulse
-    uint64_t start, stop;
+    uint64_t start, stop, timeout = micros();
     do {
         start = micros();
+        if(start - timeout > TIMEOUT_MICROS) {
+            usleep(15 * 1000);
+            return -1;
+        }
     } while(echo.readPin() == LOW);
+    timeout = start;
     do {
         stop = micros();
+        if(stop - timeout > TIMEOUT_MICROS) {
+            usleep(15 * 1000);
+            return -1;
+        }
     } while(echo.readPin() == HIGH);
     int diff = stop - start;
     //calculate the distance from the duration
     int distance = diff * 343 / 1000 / 2;
+    //ensure a certain delay between subsequent measurements
+    usleep(15 * 1000);
+    //return the distance
     if(distance < 20 || distance > 4000)
         return -1;
-    //ensure that the max repetition rate is 50 micro seconds
-    int delay = 50 - 10 - diff;
-    if(delay > 0)
-        usleep(delay);
-    
     return distance;
+}
+
+int16_t Hcsr04::getMedian() {
+    for(int i = 0; i < SAMPLES_COUNT; i++) {
+
+    }
+}
+
+int16_t median(int n, int16_t[] x) {
+    
 }

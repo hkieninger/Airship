@@ -49,6 +49,13 @@ public:
      * @microseconds: the pulsewidth in microseconds, a value between 500 and 2500 or 0
      */
     void setPulsewidth(unsigned int microseconds);
+
+    /*
+     * generate a short pulse of @level and switches than back to not @level
+     * @pulse_length: the duration of the pulse in microseconds (1us - 100us)
+     * @level: HIGH = 1 or LOW = 0
+     */
+    void triggerPin(unsigned int pulse_length, unsigned int level);
 };
 
 #endif /* PIN_DEVICE_H */

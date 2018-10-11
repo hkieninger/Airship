@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <pigpiod_if2.h>
+#include <pigpio.h>
 #include <unistd.h>
 #include <stdint.h>
 #include <stdexcept>
@@ -12,8 +12,6 @@
 #define TRIG 20
 #define ECHO 21
 
-int gpioHandle = -1;
-
 static uint64_t micros() {
     struct timeval tv;
     if(gettimeofday(&tv, NULL) < 0)
@@ -22,29 +20,32 @@ static uint64_t micros() {
 }
 
 static void setMode(int pin, int mode) {
-    int ret = set_mode(gpioHandle, pin, mode);
+    int ret = gpioSetMode(pin, mode);
     if(ret != 0)
         exit(1);
 }
 
 static void writePin(int pin, int level) {
-    int ret = gpio_write(gpioHandle, pin, level);
+    int ret = gpioWrite(pin, level);
     if(ret != 0)
         exit(1);
 }
 
 static int readPin(int pin) {
-    int ret = gpio_read(gpioHandle, pin);
+    int ret = gpioRead(pin);
     if(ret == PI_BAD_GPIO)
         exit(1);
     return ret;
 }
 
-static int distance(int gpioHandle) {
+static void triggerPin(int pin) {
+    if(gpioTrigger(pin, 10, 1) != 0)
+        exit(1);
+}
+
+static int distance() {
     //trigger a measurement
-    writePin(TRIG, 1);
-    usleep(10);
-    writePin(TRIG, 0);
+    triggerPin(TRIG);
     //measure the duration of the answer pulse
     uint64_t start, stop;
     do {
@@ -56,20 +57,14 @@ static int distance(int gpioHandle) {
     int diff = stop - start;
     //calculate the distance from the duration
     int distance = diff * 343 / 1000 / 2;
-    if(distance < 20 || distance > 4000)
-        return -1;
-    //ensure that the max repetition rate is 50 micro seconds
-    int delay = 50 - 10 - diff;
-    if(delay > 0)
-        usleep(delay);
-    
+    usleep(50 * 1000);
     return distance;
 }
 
 int main() {
+    printf("millis %d\n", micros() / 1000);
     //init pigpio
-    gpioHandle = pigpio_start(NULL, NULL);
-    if(gpioHandle < 0)
+    if(gpioInitialise() < 0)
         return 1;
     //init pins
     setMode(TRIG, PI_OUTPUT);
@@ -77,9 +72,10 @@ int main() {
     setMode(ECHO, PI_INPUT);
     //loop
     while(true) {
-        printf("distance %d cm\n", distance(gpioHandle));
+        //sleep(1);
+        printf("distance %d cm\n", distance());
     }
     //uninit pigpio
-    pigpio_stop(gpioHandle);
+    gpioTerminate();
     return 0;
 }

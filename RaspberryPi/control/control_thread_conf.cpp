@@ -91,7 +91,7 @@ void ControlThread::handlePaket(Paket &paket) {
 
 void ControlThread::run() {
     //initialise gpio
-    GpioDevice::initialiseGpio();
+    //GpioDevice::initialiseGpio();
     
     ads = new Ads1115();
     ads->setInputPin(3);
@@ -158,5 +158,5 @@ void ControlThread::run() {
     delete ads;
 
     //release the resources asociated with gpio
-    GpioDevice::terminateGpio();
+    //GpioDevice::terminateGpio();
 }

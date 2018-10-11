@@ -1,4 +1,4 @@
-#include <pigpiod_if2.h>
+#include <pigpio.h>
 #include <errno.h>
 #include <string.h>
 #include <unistd.h>
@@ -14,15 +14,13 @@
  */
 
 I2CDev::I2CDev(int addr, int bus) {
-	if(GpioDevice::gpioHandle < 0)
-        throw GPIOException("GPIO wasn't initialised.");
-	handle = i2c_open(GpioDevice::gpioHandle, bus, addr, 0);
+	handle = i2cOpen(bus, addr, 0);
 	if(handle < 0)
 		throw I2CException("opening i2c device: " + std::string(strerror(errno)));
 }
 
 I2CDev::~I2CDev() {
-	i2c_close(GpioDevice::gpioHandle, handle);
+	i2cClose(handle);
 }
 
 void I2CDev::writeBitReg8(int reg, int bit, bool value) {
@@ -52,24 +50,24 @@ bool I2CDev::readBitReg16(int reg, int bit) {
 }
 
 void I2CDev::writeReg8(int reg, uint8_t value) {
-	if(i2c_write_byte_data(GpioDevice::gpioHandle, handle, reg, value) < 0)
+	if(i2cWriteByteData(handle, reg, value) < 0)
 		throw I2CException("writing register 8bit of i2c device: " + std::string(strerror(errno)));
 }
 
 uint8_t I2CDev::readReg8(int reg) {
-	int ret = i2c_read_byte_data(GpioDevice::gpioHandle, handle, reg);
+	int ret = i2cReadByteData(handle, reg);
 	if(ret < 0)
 		throw I2CException("reading register 8bit of i2c device: " + std::string(strerror(errno)));
 	return ret;
 }
 
 void I2CDev::writeReg16(int reg, uint16_t value) {
-	if(i2c_write_word_data(GpioDevice::gpioHandle, handle, reg, value) < 0)
+	if(i2cWriteWordData(handle, reg, value) < 0)
 		throw I2CException("writing register 16bit of i2c device: " + std::string(strerror(errno)));
 }
 
 uint16_t I2CDev::readReg16(int reg) {
-	int ret = i2c_read_word_data(GpioDevice::gpioHandle, handle, reg);
+	int ret = i2cReadWordData(handle, reg);
 	if(ret < 0)
 		throw I2CException("reading register 16bit of i2c device: " + std::string(strerror(errno)));
 	return ret;
