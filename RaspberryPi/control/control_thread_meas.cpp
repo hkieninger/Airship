@@ -110,15 +110,15 @@ void ControlThread::measureHcsr() {
     paket.len = sizeof(int16_t);
     paket.data = (uint8_t *) &dist;
     //send front distance
-    dist = hcFront->getDistance();
+    dist = hcFront->getMedian();
     dist = bswap_16(dist);
     paket.param = Measurement::DIST_FRONT;
     connection.sendPaket(paket);
     //send bottom distance;
-    /*dist = hcBottom->getDistance();
+    dist = hcBottom->getMedian();
     dist = bswap_16(dist);
     paket.param = Measurement::DIST_BOTTOM;
-    connection.sendPaket(paket);*/
+    connection.sendPaket(paket);
 }
 
 void ControlThread::measureBmp() {

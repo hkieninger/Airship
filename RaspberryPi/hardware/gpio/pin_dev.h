@@ -22,8 +22,22 @@
 #define HIGH 1
 #define LOW 0
 
+/*
+ * constants for edge, for registerInterrupt...()
+ */
+#define EDGE_RISING RISING_EDGE
+#define EDGE_FALLING FALLING_EDGE
+#define EDGE_BOTH EITHER_EDGE
+
+typedef void (*interruptFunction) (int pin, int level, uint32_t tick);
+
+class InterruptInterface {
+    virtual void onInterrupt(int pin, int level, uint32_t tick) = 0;
+}
+
 class PinDevice: private GpioDevice {
     int pin;
+    static void helperFunc(int pin, int level, uint32_t tick, void *interruptInterfaceInstance);
 public:
     PinDevice(int pin);
 
@@ -56,6 +70,10 @@ public:
      * @level: HIGH = 1 or LOW = 0
      */
     void triggerPin(unsigned int pulse_length, unsigned int level);
+
+    void registerInterruptFunction(unsigned int edge, interruptFunction function);
+    void registerInterruptMethod(unsigned int edge, InterruptInterface &interface)
+    void unregisterInterrupt();
 };
 
 #endif /* PIN_DEVICE_H */

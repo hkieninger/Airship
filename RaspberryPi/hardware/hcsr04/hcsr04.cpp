@@ -16,6 +16,18 @@ static uint64_t micros() {
     return tv.tv_sec + tv.tv_usec;
 }
 
+static void sort(int n, int16_t *x) {
+    for(int i = 0; i < n; i++) {
+        for(int j = i + 1; j < n; j++) {
+            if(x[i] > x[j]) {
+                int16_t temp = x[i];
+                x[i] = x[j];
+                x[j] = temp;
+            }
+        }
+    }
+}
+
 Hcsr04::Hcsr04(int trigPin, int echoPin) : trig(trigPin), echo(echoPin) {
     trig.setPinMode(PIN_OUTPUT);
     trig.writePin(LOW);
@@ -53,12 +65,18 @@ int16_t Hcsr04::getDistance(){
     return distance;
 }
 
+#include <stdio.h>
+
 int16_t Hcsr04::getMedian() {
+    int16_t array[SAMPLES_COUNT];
     for(int i = 0; i < SAMPLES_COUNT; i++) {
-
+        array[i] = getDistance();
     }
-}
-
-int16_t median(int n, int16_t[] x) {
-    
+    sort(SAMPLES_COUNT, array);
+    int median = SAMPLES_COUNT / 2;
+    if(SAMPLES_COUNT % 2 == 0) {
+        return (array[median] + array[median + 1]) / 2;
+    } else {
+        return array[median];
+    }
 }

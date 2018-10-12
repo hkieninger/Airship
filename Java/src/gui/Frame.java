@@ -25,7 +25,7 @@ public class Frame extends JFrame implements WindowListener, ControllerListener 
 	 */
 	private static final long serialVersionUID = 1L;
 	
-	public static final String DEFAULT_IP = "192.168.178.49";//"192.168.0.27", "172.17.72.204", "192.168.4.1";
+	public static final String DEFAULT_IP = "192.168.0.24";//"192.168.0.27", "172.17.72.204", "192.168.4.1";
 	
 	private Controller controller;
 
@@ -62,7 +62,11 @@ public class Frame extends JFrame implements WindowListener, ControllerListener 
 		//Status panels
 		add(new StatusQuarter(controller));
 		//Video panels
-		add(new VideoQuarter(controller));
+		try {
+			add(new VideoQuarter(controller));
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 		//Sensor panels
 		add(new SensorQuarter(controller));
 		

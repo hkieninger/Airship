@@ -2,7 +2,6 @@
 #define CAMERA_H
 
 #include <string>
-#include <deque>
 
 #include <stdint.h>
 #include <linux/videodev2.h>
@@ -12,15 +11,19 @@
 #define DEFAULT_HEIGHT 480
 #define DEFAULT_FORMAT V4L2_PIX_FMT_YUYV
 
-#define BUFFER_COUNT 2
+#define BUFFER_COUNT 4
+
+struct video_buffer {
+    void *ptr;
+    struct v4l2_buffer info;
+};
 
 class Camera {
     int fd;
 
     int buffer_count;
     void *buffer[BUFFER_COUNT];
-    struct v4l2_buffer bufferinfo[BUFFER_COUNT];
-    std::deque<int> buffer_order;
+    uint32_t buffer_length[BUFFER_COUNT];
 
     const std::string device_file;
     uint32_t width, height, format;
@@ -46,29 +49,21 @@ public:
 
     /*
      * blocks until the next buffer in the queue is filled
-     * @return the index of the filled buffer
+     * @return the next filled buffer with the corresponding info
      */
-    int dequeueBuffer();
+    video_buffer *dequeueBuffer();
     
     /*
-     * @buffer: the index of the buffer to be queued, must be dequeued beforehand with dequeueBuffer()
+     * @buf: must be dequeued beforehand with dequeueBuffer()
      */
-    void queueBuffer(int buf);
+    void queueBuffer(video_buffer *buf);
 
     /*
      * getters for the private fields
      */
 
-    void *getBuffer(int buf) {
-        return buffer[buf];
-    }
-
     uint32_t getBufferCount() {
         return buffer_count;
-    }
-
-    uint32_t getBufferLength() {
-        return bufferinfo[0].length;
     }
 
     const std::string &getDeviceFile() {

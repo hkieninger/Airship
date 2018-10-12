@@ -10,11 +10,7 @@ inline void invalidParam(const char *deviceName, int paramNr) {
     fprintf(stderr, "invalid %s configuration paket with param: %d\n", deviceName, paramNr);
 }
 
-ControlThread::ControlThread() : gpioHandle(-1), 
-    leftMotor(NULL), rightMotor(NULL),
-    leftRudder(NULL), rightRudder(NULL), topRudder(NULL),
-    steering(NULL), ads(NULL),
-    connection(*this), running(true) {
+ControlThread::ControlThread() : connection(*this), running(true) {
     pthread_mutex_init(&dequeMutex, NULL);
 }
 
@@ -90,9 +86,6 @@ void ControlThread::handlePaket(Paket &paket) {
 }
 
 void ControlThread::run() {
-    //initialise gpio
-    //GpioDevice::initialiseGpio();
-    
     ads = new Ads1115();
     ads->setInputPin(3);
 
@@ -108,8 +101,10 @@ void ControlThread::run() {
     bmp = new Bmp280();
     hcFront = new Hcsr04(FRONT_HCSR04_TRIG, FRONT_HCSR04_ECHO);
     hcBottom = new Hcsr04(BOTTOM_HCSR04_TRIG, BOTTOM_HCSR04_ECHO);
+    camBottom = new CameraThread(connection);
 
     //start the sub threads
+    camBottom.start();
     /*neo6mT.start();
     camFrontT.start();
     camBottomT.start();*/
@@ -135,6 +130,9 @@ void ControlThread::run() {
     }
 
     //stop the sub threads and wait for them to terminate
+    camBottom.stopRunning();
+    camBottom.join();
+
     /*neo6mT.stopRunning();
     camFrontT.stopRunning();
     camBottomT.stopRunning();
@@ -142,6 +140,7 @@ void ControlThread::run() {
     camFrontT.join();
     camBottomT.join();*/
 
+    delete camBottom;
     delete mpu;
     delete qmc;
     delete bmp;
@@ -156,7 +155,4 @@ void ControlThread::run() {
     delete topRudder;
 
     delete ads;
-
-    //release the resources asociated with gpio
-    //GpioDevice::terminateGpio();
 }

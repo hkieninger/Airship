@@ -4,45 +4,28 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Image;
 import java.awt.image.BufferedImage;
-import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.IOException;
 
-import javax.imageio.ImageIO;
 import javax.swing.JComponent;
 import javax.swing.SwingUtilities;
 
-import controller.Pool;
-import controller.data.MeasDevice;
-import controller.data.object.Picture;
-import controller.data.parameter.MeasSensor;
-import controller.data.parameter.Parameter;
-
-public class VideoPanel extends JComponent implements Pool.Listener<MeasDevice> {
+public class VideoPanel extends JComponent {
 	
 	/**
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
 	
-	private BufferedImage image;
+	protected BufferedImage image;
 	private Image scaledImage;
 	private int width, height;
 	
-	private MeasSensor camera;
-	
-	public VideoPanel(MeasSensor camera) {
-		if(camera != MeasSensor.CAM_BOTTOM && camera != MeasSensor.CAM_FRONT)
-			throw new IllegalArgumentException();
-		this.camera = camera;
-		if(camera == MeasSensor.CAM_BOTTOM) {
-			try {
-				image = ImageIO.read(new File("res/vlc.jpg"));
-			} catch (IOException e) {
-				//e.printStackTrace();
-				image = null;
-			}
-		}
+	public void setImage(BufferedImage image) {
+		SwingUtilities.invokeLater(() -> {
+			width = 0;
+			height = 0;
+			this.image = image;
+			repaint();
+		});
 	}
 	
 	@Override
@@ -69,29 +52,4 @@ public class VideoPanel extends JComponent implements Pool.Listener<MeasDevice> 
 		}
 	}
 
-	public void setImage(byte[] data, int length) {
-		SwingUtilities.invokeLater(() -> {
-			ByteArrayInputStream stream = new ByteArrayInputStream(data, 0, length);
-			try {
-				image = ImageIO.read(stream);
-				stream.close();
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-			repaint();
-		});
-	}
-
-	@Override
-	public void onChanged(Pool<MeasDevice> pool, MeasDevice device, Enum<? extends Parameter> parameter) {
-		if(device == MeasDevice.SENSOR && parameter == camera) {
-			Picture pic = (Picture) pool.getValue(device, parameter);
-			width = 0;
-			height = 0;
-			setImage(pic.getData(), pic.getSize());
-		}
-	}
-	
-	
-	
 }

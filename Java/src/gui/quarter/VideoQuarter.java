@@ -1,24 +1,26 @@
 package gui.quarter;
 
+import java.io.IOException;
+
 import javax.swing.JTabbedPane;
 
 import controller.Controller;
 import controller.data.ConfDevice;
 import controller.data.object.ConnectionData.UByte;
 import controller.data.parameter.ConfSensor;
-import controller.data.parameter.MeasSensor;
-import gui.panel.VideoPanel;
+import gui.panel.BottomVideoPanel;
+import gui.panel.FrontVideoPanel;
 
 public class VideoQuarter extends JTabbedPane {
 
 	private static final long serialVersionUID = 1L;
 	
-	public VideoQuarter(Controller controller) {
+	public VideoQuarter(Controller controller) throws IOException {
 		this.setFocusable(false);
-		VideoPanel bottomVideoPanel = new VideoPanel(MeasSensor.CAM_BOTTOM);
+		BottomVideoPanel bottomVideoPanel = new BottomVideoPanel();
 		controller.getMeasPool().addListener(bottomVideoPanel);
 		this.addTab("camera bottom", bottomVideoPanel);
-		VideoPanel frontVideoPanel = new VideoPanel(MeasSensor.CAM_FRONT);
+		FrontVideoPanel frontVideoPanel = new FrontVideoPanel();
 		controller.getMeasPool().addListener(frontVideoPanel);
 		this.addTab("camera front", frontVideoPanel);
 		this.addChangeListener((event) -> {

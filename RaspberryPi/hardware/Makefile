@@ -8,7 +8,8 @@ ads1115/ads1115.o \
 mpu6050/mpu6050.o \
 qmc5883l/qmc5883l.o \
 bmp280/bmp280.o \
-hcsr04/hcsr04.o
+hcsr04/hcsr04.o \
+camera/camera.o
 
 export
 
@@ -25,6 +26,7 @@ components:
 	$(MAKE) -C qmc5883l/
 	$(MAKE) -C bmp280/
 	$(MAKE) -C hcsr04/
+	$(MAKE) -C camera/
 
 clean:
 	$(MAKE) -C gpio/ clean
@@ -35,4 +37,5 @@ clean:
 	$(MAKE) -C qmc5883l/ clean
 	$(MAKE) -C bmp280/ clean
 	$(MAKE) -C hcsr04/ clean
+	$(MAKE) -C camera/ clean
 	rm -f *.a

@@ -1,5 +1,5 @@
 CC = g++
-CFLAGS = -Wall -pthread -g
+CFLAGS = -Wall -g
 LIBS = -lpigpio -lpthread -lm
 OWNLIBS = -L./control/ -lcontrolZ -L./hardware/ -lhardwareZ -L./socket/ -lsocketZ -L./thread/ -lthreadZ
 export

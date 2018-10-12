@@ -4,14 +4,10 @@
 #include <pthread.h>
 #include <deque>
 
+#include "../thread/thread.h"
 #include "connection.h"
 #include "algorithm/steering.h"
-
-/*
-use "" instead of <>
-
-#include <../hardware/neo6m/neo6m_exception.h>
-#include <../hardware/neo6m/neo6m.h>> */
+#include "threads/camera_thread.h"
 #include "../hardware/hcsr04/hcsr04.h"
 #include "../hardware/ads1115/ads1115.h"
 #include "../hardware/mpu6050/mpu6050.h"
@@ -19,11 +15,8 @@ use "" instead of <>
 #include "../hardware/qmc5883l/qmc5883l.h"
 #include "../hardware/servo/servo.h"
 #include "../hardware/motor/motor.h"
-#include "../thread/thread.h"
 
 class ControlThread: public Thread {
-    int gpioHandle;
-
     //the hardware
     //actuators
     Motor *leftMotor, *rightMotor;
@@ -39,8 +32,8 @@ class ControlThread: public Thread {
 
     /*
     Neo6MThread neo6mT;
-    CameraThread camBottomT(CSI);
     CameraThread camtFrontT(USB); */
+    CameraThread *camBottom;
 
     //the connection to the controlling computer
     Connection connection;

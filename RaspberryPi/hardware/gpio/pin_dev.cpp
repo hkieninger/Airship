@@ -32,3 +32,20 @@ void PinDevice::triggerPin(unsigned int pulse_length, unsigned int level) {
     if(gpioTrigger(pin, pulse_length, level) != 0)
         throw GPIOException("Failed to trigger: BCM" + pin);
 }
+
+void PinDevice::helperFunc(int pin, int level, uint32_t tick, void *interruptInterfaceInstance) {
+    InterruptInterface *interface = (InterruptInterface *) interruptInterfaceInstance;
+    interface->onInterrupt(pin, level, tick);
+}
+
+void PinDevice::registerInterruptFunction(unsigned int edge, interruptFunction function) {
+    //if(gpioSetISRFunc(pin, edge, 0, )
+}
+
+void PinDevice::registerInterruptMethod(unsigned int edge, InterruptInterface &interface) {
+
+}
+
+void PinDevice::unregisterInterrupt() {
+
+}

@@ -6,7 +6,7 @@ import java.io.IOException;
 
 public class Picture implements ConnectionData {
 	
-	private static final int MAX_SIZE =  3 * 2592 * 1944; //from max resolution of rpi cam
+	public static final int MAX_SIZE =  3 * 2592 * 1944; //from max resolution of rpi cam
 	
 	private static Picture bottom = new Picture();
 	private static Picture front = new Picture();

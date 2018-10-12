@@ -11,10 +11,10 @@ int main() {
     int fd = open("test.h264", O_WRONLY | O_CREAT, 0644);
     if(fd < 0)
         return 1;
-    for(int i = 0; i < 30; i++) {
-        int bufIndex = cam.dequeueBuffer();
-        write(fd, cam.getBuffer(bufIndex), cam.getBufferLength());
-        cam.queueBuffer(bufIndex);
+    for(int i = 0; i < 300; i++) {
+        video_buffer *buf = cam.dequeueBuffer();
+        write(fd, buf->ptr, buf->info.bytesused);
+        cam.queueBuffer(buf);
     }
     close(fd);
 }
