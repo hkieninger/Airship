@@ -7,7 +7,7 @@
 #include "../thread/thread.h"
 #include "connection.h"
 #include "algorithm/steering.h"
-#include "threads/camera_thread.h"
+#include "thread/camera_thread.h"
 #include "../hardware/hcsr04/hcsr04.h"
 #include "../hardware/ads1115/ads1115.h"
 #include "../hardware/mpu6050/mpu6050.h"
@@ -60,7 +60,7 @@ class ControlThread: public Thread {
     void measureData();
 public:
     ControlThread();
-    ~ControlThread();
+    virtual ~ControlThread();
     void stopRunning();
     void pushPaket(Paket *paket);
     virtual void run();

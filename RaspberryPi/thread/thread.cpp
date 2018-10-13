@@ -13,6 +13,8 @@ void *Thread::helperFunc(void *threadInstance) {
     return NULL;
 }
 
+Thread::~Thread() {}
+
 Thread::Thread() : thread(-1), detached(false), alive(false) {
     pthread_mutex_lock(&staticMutex);
     number = count;

@@ -13,7 +13,7 @@ static uint64_t micros() {
     struct timeval tv;
     if(gettimeofday(&tv, NULL) < 0)
         throw std::runtime_error("get time of day: " + std::string(strerror(errno)));
-    return tv.tv_sec + tv.tv_usec;
+    return 1000 * 1000 * tv.tv_sec + tv.tv_usec;
 }
 
 static void sort(int n, int16_t *x) {

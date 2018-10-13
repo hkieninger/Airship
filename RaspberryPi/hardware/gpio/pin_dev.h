@@ -32,8 +32,9 @@
 typedef void (*interruptFunction) (int pin, int level, uint32_t tick);
 
 class InterruptInterface {
+public:
     virtual void onInterrupt(int pin, int level, uint32_t tick) = 0;
-}
+};
 
 class PinDevice: private GpioDevice {
     int pin;
@@ -72,7 +73,7 @@ public:
     void triggerPin(unsigned int pulse_length, unsigned int level);
 
     void registerInterruptFunction(unsigned int edge, interruptFunction function);
-    void registerInterruptMethod(unsigned int edge, InterruptInterface &interface)
+    void registerInterruptMethod(unsigned int edge, InterruptInterface &interface);
     void unregisterInterrupt();
 };
 

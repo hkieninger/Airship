@@ -104,7 +104,7 @@ void ControlThread::run() {
     camBottom = new CameraThread(connection);
 
     //start the sub threads
-    camBottom.start();
+    camBottom->start();
     /*neo6mT.start();
     camFrontT.start();
     camBottomT.start();*/
@@ -130,8 +130,8 @@ void ControlThread::run() {
     }
 
     //stop the sub threads and wait for them to terminate
-    camBottom.stopRunning();
-    camBottom.join();
+    camBottom->stopRunning();
+    camBottom->join();
 
     /*neo6mT.stopRunning();
     camFrontT.stopRunning();

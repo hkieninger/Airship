@@ -27,7 +27,7 @@ void Camera::munmapBuffers() {
 }
 
 Camera::Camera(const std::string &device, uint32_t format, uint32_t width, uint32_t height) : 
-    device_file(device), buffer_count(0) {
+    buffer_count(0), device_file(device) {
     try {
         //open device file
         fd = open(device.c_str(), O_RDWR);
@@ -84,7 +84,7 @@ Camera::Camera(const std::string &device, uint32_t format, uint32_t width, uint3
             buffer_count++;
         }
         //queue the buffers
-        for(unsigned int i = 0; i < buffer_count; i++) {
+        for(int i = 0; i < buffer_count; i++) {
             struct v4l2_buffer info;
             memset(&info, 0, sizeof(info));
 			info.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;

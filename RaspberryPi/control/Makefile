@@ -8,8 +8,8 @@ HARDWARE = \
 ../hardware/hcsr04/hcsr04.h
 ALGORITHM = \
 algorithm/steering.h
-THREADS = \
-threads/camera_thread.h
+THREAD = \
+thread/camera_thread.h
 SOCKET = \
 ../socket/socket.h \
 ../socket/server_socket.h \
@@ -17,19 +17,19 @@ SOCKET = \
 export
 
 libcontrolZ.a: control_thread_conf.o control_thread_meas.o connection.o algorithms threads
-	ar crs $@ control_thread_conf.o control_thread_meas.o connection.o algorithm/*.o threads/*.o
+	ar crs $@ control_thread_conf.o control_thread_meas.o connection.o algorithm/*.o thread/*.o
 	ranlib $@
 
 threads:
-	$(MAKE) -C threads/
+	$(MAKE) -C thread/
 
 algorithms:
 	$(MAKE) -C algorithm/
 
-control_thread_conf.o: control_thread_conf.cpp control_thread.h pin.h ../thread/thread.h connection.h makros.h $(THREADS) $(ALGORITHM) $(HARDWARE)
+control_thread_conf.o: control_thread_conf.cpp control_thread.h pin.h ../thread/thread.h connection.h makros.h $(THREAD) $(ALGORITHM) $(HARDWARE)
 	$(CC) -c $(CFLAGS) $<
 
-control_thread_meas.o: control_thread_meas.cpp control_thread.h pin.h ../thread/thread.h connection.h makros.h $(THREADS) $(ALGORITHM) $(HARDWARE)
+control_thread_meas.o: control_thread_meas.cpp control_thread.h pin.h ../thread/thread.h connection.h makros.h $(THREAD) $(ALGORITHM) $(HARDWARE)
 	$(CC) -c $(CFLAGS) $<
 
 connection.o: connection.cpp connection.h control_thread.h $(SOCKET)

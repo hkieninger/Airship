@@ -13,6 +13,7 @@ class CameraThread: public Thread {
     bool running;
 public:
     CameraThread(Connection &connection);
+    virtual ~CameraThread();
     void stopRunning();
     virtual void run();
 };

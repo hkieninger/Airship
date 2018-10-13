@@ -106,6 +106,8 @@ class Connection {
     ControlThread &control;
     pthread_mutex_t sendMutex;
 
+    uint64_t lastEchoRequest;
+
     void syncSocket();
     void sendEchoReply();
 public:
@@ -115,6 +117,7 @@ public:
     void loop();
     bool sendPaket(Paket &paket);
     bool isConnected();
+    bool isLost();
 };
 
 #endif /* CONNECTION_H */

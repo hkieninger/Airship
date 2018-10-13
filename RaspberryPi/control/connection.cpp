@@ -1,13 +1,26 @@
 #include <stdio.h>
 #include <arpa/inet.h>
 #include <string>
+#include <errno.h>
+#include <string.h>
+#include <sys/time.h>
+#include <stdexcept>
 
 #include "../socket/socket_exception.h"
 #include "control_thread.h"
 
 #include "connection.h"
 
-Connection::Connection(ControlThread &control) : server(PORT), sock(NULL), control(control) {
+#define CONNECTION_LOST_TIME (5 * 1000 * 1000)
+
+static uint64_t micros() {
+    struct timeval tv;
+    if(gettimeofday(&tv, NULL) < 0)
+        throw std::runtime_error("get time of day: " + std::string(strerror(errno)));
+    return 1000 * 1000 * tv.tv_sec + tv.tv_usec;
+}
+
+Connection::Connection(ControlThread &control) : server(PORT), sock(NULL), control(control), lastEchoRequest(0) {
     pthread_mutex_init(&sendMutex, NULL);
 }
 
@@ -56,6 +69,10 @@ bool Connection::isConnected() {
     return sock != NULL;
 }
 
+bool Connection::isLost() {
+    return  micros() - lastEchoRequest > CONNECTION_LOST_TIME;
+}
+
 void Connection::loop() {
     //loop for accepting incoming connections
     while(true) { //exited when interrupted exception is thrown
@@ -70,6 +87,7 @@ void Connection::loop() {
                 sock->recvAll(header, 4);
                 if(header[0] == Configuration::RPI && header[1] == Configuration::ECHO_REQUEST) {
                     sendEchoReply();
+                    lastEchoRequest = micros();
                 } else {
                     Paket *paket = new Paket(); //don't forget to delete
                     paket->device = header[0];
