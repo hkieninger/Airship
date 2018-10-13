@@ -15,10 +15,14 @@ public class VideoQuarter extends JTabbedPane {
 
 	private static final long serialVersionUID = 1L;
 	
+	private BottomVideoPanel bottomVideoPanel;
+	
 	public VideoQuarter(Controller controller) throws IOException {
 		this.setFocusable(false);
-		BottomVideoPanel bottomVideoPanel = new BottomVideoPanel();
-		controller.getMeasPool().addListener(bottomVideoPanel);
+		bottomVideoPanel = new BottomVideoPanel(controller);
+		Thread thread = new Thread(bottomVideoPanel);
+		thread.start();
+		//controller.getMeasPool().addListener(bottomVideoPanel);
 		this.addTab("camera bottom", bottomVideoPanel);
 		FrontVideoPanel frontVideoPanel = new FrontVideoPanel();
 		controller.getMeasPool().addListener(frontVideoPanel);
@@ -36,6 +40,10 @@ public class VideoQuarter extends JTabbedPane {
 				controller.getConfPool().setValue(ConfDevice.SENSOR, ConfSensor.CAM_FRONT, enable);
 			}
 		});
+	}
+	
+	public void close() throws IOException {
+		bottomVideoPanel.stopRunning();
 	}
 
 }

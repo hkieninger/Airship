@@ -32,6 +32,13 @@ public:
      */
     Socket acceptConnection();
 
+    /*
+     * accepts the first connection in the backlog and returns a Socket to it
+     * if the timeout expires before a connection came in, a TimeoutException will be thrown
+     * @timeout: the timeout in milliseconds
+     */
+    Socket acceptConnection(int timeout);
+
     uint16_t getPort() {
         return port;
     }

@@ -8,6 +8,8 @@
 #include <string.h>
 #include <string>
 #include <stdint.h>
+#include <poll.h>
+#include <stdexcept>
 
 #include "socket_exception.h"
 #include "../thread/interrupted_exception.h"
@@ -48,4 +50,21 @@ Socket ServerSocket::acceptConnection() {
             throw SocketException("couldn't accept client: " + std::string(strerror(errno)));
     }
     return Socket(fd, ntohl(addr.sin_addr.s_addr), ntohs(addr.sin_port));
+}
+
+Socket ServerSocket::acceptConnection(int timeout) {
+    //wait until a connection comes in or the timeout expires
+    struct pollfd poll_struct;
+    memset(&poll_struct, 0, sizeof(poll_struct));
+    poll_struct.fd = sockfd;
+    poll_struct.events = POLLIN;
+    int ret = poll(&poll_struct, 1, timeout);
+    if(ret < 0)
+        throw std::runtime_error("server socket: poll failed: " + std::string(strerror(errno)));
+    else if(ret == 0)
+        throw TimeoutException("server socket: poll timed out");
+    else if((poll_struct.revents & POLLERR) || (poll_struct.revents & POLLNVAL))
+        throw std::runtime_error("server socket: poll failed");
+    //accept the connection
+    return acceptConnection();
 }

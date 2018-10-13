@@ -3,16 +3,17 @@
 
 #include <string>
 
-#include "../connection.h"
 #include "../../thread/thread.h"
 #include "../../hardware/camera/camera.h"
+#include "../../socket/server_socket.h"
+
+#define CAMERA_PORT 0xCCCD
 
 class CameraThread: public Thread {
-    Camera cam;
-    Connection &connection;
+    ServerSocket server;
     bool running;
 public:
-    CameraThread(Connection &connection);
+    CameraThread();
     virtual ~CameraThread();
     void stopRunning();
     virtual void run();

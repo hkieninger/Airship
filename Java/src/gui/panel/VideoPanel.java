@@ -1,5 +1,6 @@
 package gui.panel;
 
+import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Image;
@@ -16,13 +17,9 @@ public class VideoPanel extends JComponent {
 	private static final long serialVersionUID = 1L;
 	
 	protected BufferedImage image;
-	private Image scaledImage;
-	private int width, height;
 	
 	public void setImage(BufferedImage image) {
 		SwingUtilities.invokeLater(() -> {
-			width = 0;
-			height = 0;
 			this.image = image;
 			repaint();
 		});
@@ -44,11 +41,20 @@ public class VideoPanel extends JComponent {
 			int width = getWidth();
 			int height = getHeight();
 			//draw background
-			if(width != this.width || height != this.height)
-				scaledImage = image.getScaledInstance(width, height, Image.SCALE_FAST);
-			g2.drawImage(scaledImage, 0, 0, null);
-			this.width = width;
-			this.height = height;
+			g2.setColor(Color.BLACK);
+			g2.fillRect(0, 0, width, height);
+			//draw image
+			float imageRatio = 1.0f * image.getWidth() / image.getHeight();
+			float panelRatio = 1.0f * width / height;
+			if(panelRatio > imageRatio) {
+				int scaledWidth = (int) (height * imageRatio);
+				Image scaledImage = image.getScaledInstance(scaledWidth, height, Image.SCALE_FAST);
+				g2.drawImage(scaledImage, (width - scaledWidth) / 2, 0, null);
+			} else {
+				int scaledHeight = (int) (width / imageRatio);
+				Image scaledImage = image.getScaledInstance(width, scaledHeight, Image.SCALE_FAST);
+				g2.drawImage(scaledImage, 0, (height - scaledHeight) / 2, null);
+			}
 		}
 	}
 

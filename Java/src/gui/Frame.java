@@ -28,6 +28,7 @@ public class Frame extends JFrame implements WindowListener, ControllerListener 
 	public static final String DEFAULT_IP = "192.168.0.24";//"192.168.0.27", "172.17.72.204", "192.168.4.1";
 	
 	private Controller controller;
+	private VideoQuarter videoQuarter;
 
 	public static void main(String[] args) {
 		SwingUtilities.invokeLater(new Runnable() {
@@ -63,7 +64,8 @@ public class Frame extends JFrame implements WindowListener, ControllerListener 
 		add(new StatusQuarter(controller));
 		//Video panels
 		try {
-			add(new VideoQuarter(controller));
+			videoQuarter = new VideoQuarter(controller);
+			add(videoQuarter);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -80,6 +82,7 @@ public class Frame extends JFrame implements WindowListener, ControllerListener 
 	public void windowClosed(WindowEvent arg0) {
 		//cleanup code here
 		try {
+			videoQuarter.close();
 			controller.close();
 		} catch (Exception e) {
 			e.printStackTrace();

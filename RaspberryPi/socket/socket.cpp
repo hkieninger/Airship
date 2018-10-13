@@ -45,6 +45,8 @@ void Socket::sendAll(const void *buf, int len) {
         if(ret < 0) {
             if(errno == EINTR)
                 throw InterruptedException("signal occured: " + std::string(strerror(errno)));
+            else if(errno == ECONNRESET)
+                throw SocketClosedException("socket has been reset by peer");
             else
                 throw SocketException("send on socket: " + std::string(strerror(errno)));
         }

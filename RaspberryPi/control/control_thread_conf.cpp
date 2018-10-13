@@ -101,7 +101,7 @@ void ControlThread::run() {
     bmp = new Bmp280();
     hcFront = new Hcsr04(FRONT_HCSR04_TRIG, FRONT_HCSR04_ECHO);
     hcBottom = new Hcsr04(BOTTOM_HCSR04_TRIG, BOTTOM_HCSR04_ECHO);
-    camBottom = new CameraThread(connection);
+    camBottom = new CameraThread();
 
     //start the sub threads
     camBottom->start();

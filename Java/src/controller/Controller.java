@@ -100,5 +100,9 @@ public class Controller implements Connection.Listener {
 				l.onError(e);
 		}
 	}
+	
+	public InetAddress getHost() {
+		return host;
+	}
 
 }

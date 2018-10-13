@@ -19,4 +19,10 @@ class SocketClosedException: public SocketException {
         explicit SocketClosedException(const char* what_arg) : SocketException(what_arg) {};
 };
 
+class TimeoutException: public SocketException {
+    public:
+        explicit TimeoutException(const std::string& what_arg) : SocketException(what_arg) {};
+        explicit TimeoutException(const char* what_arg) : SocketException(what_arg) {};
+};
+
 #endif /* SOCKET_EXCEPTION_H */
