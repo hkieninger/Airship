@@ -87,7 +87,7 @@ void ControlThread::handlePaket(Paket &paket) {
 
 void ControlThread::run() {
     ads = new Ads1115();
-    ads->setInputPin(3);
+    ads->setInputPin(ADS_INPUT_PIN);
 
     leftMotor = new Motor(LEFT_MOTOR_ESC, LEFT_MOTOR_RELAIS);
     rightMotor = new Motor(RIGHT_MOTOR_ESC, RIGHT_MOTOR_RELAIS);
@@ -101,13 +101,13 @@ void ControlThread::run() {
     bmp = new Bmp280();
     hcFront = new Hcsr04(FRONT_HCSR04_TRIG, FRONT_HCSR04_ECHO);
     hcBottom = new Hcsr04(BOTTOM_HCSR04_TRIG, BOTTOM_HCSR04_ECHO);
-    camBottom = new CameraThread();
+
+    camBottom = new CameraThread(CSI_CAMERA, V4L2_PIX_FMT_H264, CAMERA_WIDTH, CAMERA_HEIGHT, CSI_PORT); //constants defined in pin.h
+    camFront = new JpgCameraThread(USB_CAMERA, 320, 240, 0xCCCB); //constants defined in pin.h
 
     //start the sub threads
     camBottom->start();
-    /*neo6mT.start();
-    camFrontT.start();
-    camBottomT.start();*/
+    camFront->start();
 
     printf("Hardware has been initialised successfully.\n");
     //the control loop of the zeppelin
@@ -131,16 +131,13 @@ void ControlThread::run() {
 
     //stop the sub threads and wait for them to terminate
     camBottom->stopRunning();
+    camFront->stopRunning();
     camBottom->join();
+    camFront->join();
 
-    /*neo6mT.stopRunning();
-    camFrontT.stopRunning();
-    camBottomT.stopRunning();
-    neo6mT.join();
-    camFrontT.join();
-    camBottomT.join();*/
-
+    delete camFront;
     delete camBottom;
+
     delete mpu;
     delete qmc;
     delete bmp;

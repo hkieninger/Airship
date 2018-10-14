@@ -16,16 +16,18 @@ public class VideoQuarter extends JTabbedPane {
 	private static final long serialVersionUID = 1L;
 	
 	private BottomVideoPanel bottomVideoPanel;
+	private FrontVideoPanel frontVideoPanel;
 	
 	public VideoQuarter(Controller controller) throws IOException {
 		this.setFocusable(false);
-		bottomVideoPanel = new BottomVideoPanel(controller);
-		Thread thread = new Thread(bottomVideoPanel);
+		Thread thread;
+		bottomVideoPanel = new BottomVideoPanel(controller.getHost());
+		thread = new Thread(bottomVideoPanel);
 		thread.start();
-		//controller.getMeasPool().addListener(bottomVideoPanel);
 		this.addTab("camera bottom", bottomVideoPanel);
-		FrontVideoPanel frontVideoPanel = new FrontVideoPanel();
-		controller.getMeasPool().addListener(frontVideoPanel);
+		frontVideoPanel = new FrontVideoPanel(controller.getHost());
+		thread = new Thread(frontVideoPanel);
+		thread.start();
 		this.addTab("camera front", frontVideoPanel);
 		this.addChangeListener((event) -> {
 			UByte enable = new UByte();
@@ -44,6 +46,7 @@ public class VideoQuarter extends JTabbedPane {
 	
 	public void close() throws IOException {
 		bottomVideoPanel.stopRunning();
+		frontVideoPanel.stopRunning();
 	}
 
 }

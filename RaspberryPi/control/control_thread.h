@@ -8,6 +8,7 @@
 #include "connection.h"
 #include "algorithm/steering.h"
 #include "thread/camera_thread.h"
+#include "thread/jpg_camera_thread.h"
 #include "../hardware/hcsr04/hcsr04.h"
 #include "../hardware/ads1115/ads1115.h"
 #include "../hardware/mpu6050/mpu6050.h"
@@ -29,11 +30,9 @@ class ControlThread: public Thread {
     Qmc5883l *qmc;
     Hcsr04 *hcFront;
     Hcsr04 *hcBottom;
-
-    /*
-    Neo6MThread neo6mT;
-    CameraThread camtFrontT(USB); */
+    //cameras
     CameraThread *camBottom;
+    JpgCameraThread *camFront;
 
     //the connection to the controlling computer
     Connection connection;

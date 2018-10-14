@@ -2,6 +2,7 @@ package gui.panel;
 
 import java.awt.image.BufferedImage;
 import java.io.IOException;
+import java.net.InetAddress;
 import java.net.Socket;
 
 import org.bytedeco.javacv.FFmpegFrameGrabber;
@@ -32,9 +33,9 @@ public class BottomVideoPanel extends VideoPanel implements Runnable {
 	
 	private boolean running;
 	
-	public BottomVideoPanel(Controller controller) throws IOException {
+	public BottomVideoPanel(InetAddress host) throws IOException {
 		running = true;
-		sock = new Socket(controller.getHost(), PORT);
+		sock = new Socket(host, PORT);
 		converter = new Java2DFrameConverter();
 		grabber = new FFmpegFrameGrabber(sock.getInputStream());
 		grabber.setFormat("h264");

@@ -9,7 +9,8 @@ HARDWARE = \
 ALGORITHM = \
 algorithm/steering.h
 THREAD = \
-thread/camera_thread.h
+thread/camera_thread.h \
+thread/jpg_camera_thread.h
 SOCKET = \
 ../socket/socket.h \
 ../socket/server_socket.h \
