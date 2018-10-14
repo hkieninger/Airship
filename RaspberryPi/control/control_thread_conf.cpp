@@ -102,8 +102,8 @@ void ControlThread::run() {
     hcFront = new Hcsr04(FRONT_HCSR04_TRIG, FRONT_HCSR04_ECHO);
     hcBottom = new Hcsr04(BOTTOM_HCSR04_TRIG, BOTTOM_HCSR04_ECHO);
 
-    camBottom = new CameraThread(CSI_CAMERA, V4L2_PIX_FMT_H264, CAMERA_WIDTH, CAMERA_HEIGHT, CSI_PORT); //constants defined in pin.h
-    camFront = new JpgCameraThread(USB_CAMERA, 320, 240, 0xCCCB); //constants defined in pin.h
+    camBottom = new CameraThread(CSI_CAMERA, V4L2_PIX_FMT_H264, CSI_WIDTH, CSI_HEIGHT, CSI_PORT); //constants defined in pin.h
+    camFront = new JpgCameraThread(USB_CAMERA, USB_WIDTH, USB_HEIGHT, USB_PORT); //constants defined in pin.h
 
     //start the sub threads
     camBottom->start();

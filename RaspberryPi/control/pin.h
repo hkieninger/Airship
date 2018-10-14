@@ -22,12 +22,18 @@
 /*
  * other resources
  */
+
+//raspi cam
 #define CSI_CAMERA "/dev/video0"
-#define USB_CAMERA "/dev/video1"
+#define CSI_WIDTH 640
+#define CSI_HEIGHT 480
 #define CSI_PORT 0xCCCD
+
+//usb cam
+#define USB_CAMERA "/dev/video1"
+#define USB_WIDTH 320
+#define USB_HEIGHT 240
 #define USB_PORT 0xCCCE
-#define CAMERA_WIDTH 640
-#define CAMERA_HEIGHT 480
 
 #define ADS_INPUT_PIN 3
 
