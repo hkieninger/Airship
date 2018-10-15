@@ -22,7 +22,6 @@ void cleanup(int sig) {
 }
 
 int main(void) {
-    GpioDevice::initialiseGpio();
     signal(SIGINT, cleanup);
     neo = new Neo6M(SERIAL_PORT);
     neo->setProtocol(UBX_AND_NMEA);
@@ -32,6 +31,7 @@ int main(void) {
     neo->disableNMEAMessage("VTG");
     neo->disableNMEAMessage("GGA");
     usleep(250 * 1000); //sleep 250ms, it's necessary
+    neo->flush();
 
     printf("should only be RMC and TXT messages\n");
     for(int i = 0; i < 10; i++) {
@@ -45,6 +45,6 @@ int main(void) {
     }
 
     delete neo;
-    GpioDevice::terminateGpio();
+
     return EXIT_SUCCESS;
 }

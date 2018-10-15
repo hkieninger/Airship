@@ -5,6 +5,7 @@
 #include <sys/time.h>
 #include <stdexcept>
 #include <math.h>
+#include <stdio.h>
 
 #include "makros.h"
 #include "control_thread.h"
@@ -168,4 +169,37 @@ void ControlThread::measureData() {
         lastHcsrMeas = now;
         measureHcsr();
     }
+}
+
+void ControlThread::onNMEAMessage(std::string *nmea, bool valid) {
+    if(valid) {
+        struct Paket paket;
+        paket.device = Measurement::RPI;
+        paket.param = Measurement::INFO;
+        paket.len = nmea->length() + 1;
+        paket.data = (uint8_t *) nmea->c_str();
+        connection.sendPaket(paket);
+    }
+    delete nmea;
+}
+
+void ControlThread::onUBXMessage(struct UBXMsg *msg, bool valid) {
+    if(valid) {
+        /*struct Paket paket;
+        paket.device = Measurement::SENSOR;
+        paket.param = Measurement::GPS;
+        paket.len = nmea->length() + 1;
+        paket.data = nmea.c_str();
+        connection.sendPaket(paket);*/
+    }
+    delete msg->playload;
+    delete msg;
+}
+
+void ControlThread::onACKMessage(struct UBXMsg *ack, bool valid) {
+    if(valid && ack->id == NEO6M_ACK_NAK) {
+        fprintf(stderr, "Neo6M: following configuration failed: class %d, id %d\n", ack->playload[0], ack->playload[1]);
+    }
+    delete ack->playload;
+    delete ack;
 }

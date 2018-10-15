@@ -16,8 +16,18 @@
 #include "../hardware/qmc5883l/qmc5883l.h"
 #include "../hardware/servo/servo.h"
 #include "../hardware/motor/motor.h"
+#include "../hardware/neo6m/neo6m_thread.h"
 
-class ControlThread: public Thread {
+class ControlThread: public Neo6MThreadListener, public Thread {
+    //the connection to the controlling computer
+    Connection connection;
+    //deque of incoming pakets
+    std::deque<Paket *> paketDeque;
+    //mutex to synchronize the deque
+    pthread_mutex_t dequeMutex;
+
+    bool running;
+    
     //the hardware
     //actuators
     Motor *leftMotor, *rightMotor;
@@ -33,15 +43,8 @@ class ControlThread: public Thread {
     //cameras
     CameraThread *camBottom;
     JpgCameraThread *camFront;
-
-    //the connection to the controlling computer
-    Connection connection;
-    //deque of incoming pakets
-    std::deque<Paket *> paketDeque;
-    //mutex to synchronize the deque
-    pthread_mutex_t dequeMutex;
-
-    bool running;
+    //GPS
+    Neo6MThread *neo6m;
 
     void configureRpi(Paket &paket);
     void configureActuator(Paket &paket);
@@ -63,6 +66,10 @@ public:
     void stopRunning();
     void pushPaket(Paket *paket);
     virtual void run();
+
+    virtual void onNMEAMessage(std::string *nmea, bool valid);
+    virtual void onUBXMessage(struct UBXMsg *msg, bool valid);
+    virtual void onACKMessage(struct UBXMsg *ack, bool valid);
 
     Connection &getConnection() {
         return connection;

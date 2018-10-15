@@ -2,6 +2,7 @@ OBJECTS = \
 gpio/gpio_dev.o \
 gpio/pin_dev.o \
 gpio/i2c_dev.o \
+gpio/uart_dev.o \
 motor/motor.o \
 servo/servo.o \
 ads1115/ads1115.o \
@@ -9,7 +10,9 @@ mpu6050/mpu6050.o \
 qmc5883l/qmc5883l.o \
 bmp280/bmp280.o \
 hcsr04/hcsr04.o \
-camera/camera.o
+camera/camera.o \
+neo6m/neo6m.o \
+neo6m/neo6m_thread.o
 
 export
 
@@ -27,6 +30,7 @@ components:
 	$(MAKE) -C bmp280/
 	$(MAKE) -C hcsr04/
 	$(MAKE) -C camera/
+	$(MAKE) -C neo6m/
 
 clean:
 	$(MAKE) -C gpio/ clean
@@ -38,4 +42,5 @@ clean:
 	$(MAKE) -C bmp280/ clean
 	$(MAKE) -C hcsr04/ clean
 	$(MAKE) -C camera/ clean
+	$(MAKE) -C neo6m/ clean
 	rm -f *.a

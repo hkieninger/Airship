@@ -6,7 +6,7 @@
 
 #define SAMPLES_COUNT 3
 
-class Hcsr04{
+class Hcsr04 {
     PinDevice trig;
     PinDevice echo;
 
@@ -28,6 +28,7 @@ public:
      * @return: the median of the distance measurements, see getDistance()
      */
     int16_t getMedian();
+
 };
 
 #endif /* HCSR04_H */

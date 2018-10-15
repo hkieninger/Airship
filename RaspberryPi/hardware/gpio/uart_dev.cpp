@@ -1,4 +1,4 @@
-#include <pigpio.h>
+#include <wiringSerial.h>
 #include <stddef.h>
 #include <string.h>
 #include <errno.h>
@@ -13,40 +13,41 @@
  */
 
 UARTDev::UARTDev(const std::string &serialport, int baudrate) {
-    char str[serialport.size() + 1];
-    memcpy(str, serialport.c_str(), sizeof(str));
-    handle = serOpen(str, baudrate, 0);
-    if(handle < 0)
+    fd = serialOpen(serialport.c_str(), baudrate);
+    if(fd < 0)
         throw UARTException("opening serial port: " + std::string(strerror(errno)));
 }
 
 UARTDev::~UARTDev() {
-    serClose(handle);
+    serialClose(fd);
+}
+
+void UARTDev::flush() {
+    serialFlush(fd);
 }
 
 int UARTDev::available() {
-    int ret = serDataAvailable(handle);
+    int ret = serialDataAvail(fd);
     if(ret < 0)
         throw UARTException("checking for available bytes from UART: " + std::string(strerror(errno)));
     return ret;
 }
 
 unsigned char UARTDev::getChar() {
-    int c = serReadByte(handle);
+    int c = serialGetchar(fd);
     if(c < 0)
          throw UARTException("reading from UART: " + std::string(strerror(errno)));
     return c;
 }
 
 void UARTDev::putChar(unsigned char c) {
-    if(serWriteByte(handle, c) != 0)
-        throw UARTException("writing to UART: " + std::string(strerror(errno)));
+    serialPutchar(fd, c) ;
 }
 
 void *UARTDev::readAll(void *buf, size_t count) {
     size_t readed = 0; //grammatically wrong
     while(readed < count) {
-        int ret = serRead(handle, (char *) buf + readed, count - readed);
+        int ret = read(fd, (uint8_t *) buf + readed, count - readed);
         if(ret < 0)
             throw UARTException("reading from UART: " + std::string(strerror(errno)));
         readed += ret;
@@ -57,8 +58,8 @@ void *UARTDev::readAll(void *buf, size_t count) {
 void UARTDev::writeAll(const void *buf, size_t count) {
     size_t written = 0;
     while(written < count) {
-        int ret = serWrite(handle, (char *) buf + written, count - written);
-        if(ret != 0)
+        int ret = write(fd, (uint8_t *) buf + written, count - written);
+        if(ret < 0)
             throw UARTException("writing to UART: " + std::string(strerror(errno)));
         written += ret;
     }

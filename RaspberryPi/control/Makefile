@@ -5,7 +5,8 @@ HARDWARE = \
 ../hardware/mpu6050/mpu6050.h \
 ../hardware/bmp280/bmp280.h \
 ../hardware/qmc5883l/qmc5883l.h \
-../hardware/hcsr04/hcsr04.h
+../hardware/hcsr04/hcsr04.h \
+../hardware/neo6m/neo6m_thread.h
 ALGORITHM = \
 algorithm/steering.h
 THREAD = \

@@ -65,8 +65,6 @@ int16_t Hcsr04::getDistance(){
     return distance;
 }
 
-#include <stdio.h>
-
 int16_t Hcsr04::getMedian() {
     int16_t array[SAMPLES_COUNT];
     for(int i = 0; i < SAMPLES_COUNT; i++) {

@@ -1,6 +1,6 @@
 CC = g++
 CFLAGS = -Wall -g
-LIBS = -lpigpio -lpthread -lm -ljpeg
+LIBS = -lpigpio -lwiringPi -lpthread -lm -ljpeg
 OWNLIBS = -L./control/ -lcontrolZ -L./hardware/ -lhardwareZ -L./socket/ -lsocketZ -L./thread/ -lthreadZ
 export
 

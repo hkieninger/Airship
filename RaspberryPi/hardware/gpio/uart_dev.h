@@ -4,18 +4,18 @@
 #include <stddef.h>
 #include <string>
 
-#include "gpio_dev.h"
-
 /*
  * represents a device which communicates over the asynchronous serial interface (uses the UART)
  * functions throw UARTException on errors
  */
-class UARTDev: private GpioDevice {
+class UARTDev {
 protected:
-    /*
-	 * the fd is hidden by pigpio this is only a handle :(
+	/*
+	 * file descriptor to the device file
+     * if the class doesn't fullfill your needa you can manipulate it with termios 
+     * and use write() and read()
 	 */
-	int handle;
+	int fd;
 public:
 	/*
 	 * initialises an uart device

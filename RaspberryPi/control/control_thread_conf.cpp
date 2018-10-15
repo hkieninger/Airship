@@ -105,9 +105,12 @@ void ControlThread::run() {
     camBottom = new CameraThread(CSI_CAMERA, V4L2_PIX_FMT_H264, CSI_WIDTH, CSI_HEIGHT, CSI_PORT); //constants defined in pin.h
     camFront = new JpgCameraThread(USB_CAMERA, USB_WIDTH, USB_HEIGHT, USB_PORT); //constants defined in pin.h
 
+    neo6m = new Neo6MThread(*this); //implementation of callbacks in control_thread_meas.cpp
+
     //start the sub threads
     camBottom->start();
     camFront->start();
+    neo6m->start();
 
     printf("Hardware has been initialised successfully.\n");
     //the control loop of the zeppelin
@@ -132,8 +135,13 @@ void ControlThread::run() {
     //stop the sub threads and wait for them to terminate
     camBottom->stopRunning();
     camFront->stopRunning();
+    neo6m->stopRunning();
+
     camBottom->join();
     camFront->join();
+    neo6m->join();
+
+    delete neo6m;
 
     delete camFront;
     delete camBottom;
