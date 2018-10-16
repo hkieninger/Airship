@@ -33,8 +33,11 @@ public class Frame extends JFrame implements WindowListener, ControllerListener 
 	private static final long serialVersionUID = 1L;
 	
 	public static final String DEFAULT_IP = "172.17.72.204";//"192.168.0.27", "172.17.72.204", "192.168.4.1";
+<<<<<<< HEAD
+=======
 	public static final int FRONT_CAM_PORT = 0xCCCE;
 	public static final int BOTTOM_CAM_PORT = 0xCCCD;
+>>>>>>> b7d7832f4270efe15ec0900a51c59627acf0d3f1
 	
 	private InetAddress ip;
 	
