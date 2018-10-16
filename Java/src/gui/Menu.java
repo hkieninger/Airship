@@ -27,7 +27,7 @@ public class Menu extends JMenuBar implements ItemListener, ActionListener {
 		JMenu menuC = new JMenu("connection");
 		add(menuC);
 		
-		connect = new JMenuItem("connected");
+		connect = new JMenuItem("connect");
 		connect.addActionListener(this);
 		menuC.add(connect);
 		

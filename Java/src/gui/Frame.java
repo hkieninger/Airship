@@ -33,11 +33,9 @@ public class Frame extends JFrame implements WindowListener, ControllerListener 
 	private static final long serialVersionUID = 1L;
 	
 	public static final String DEFAULT_IP = "172.17.72.204";//"192.168.0.27", "172.17.72.204", "192.168.4.1";
-<<<<<<< HEAD
-=======
+
 	public static final int FRONT_CAM_PORT = 0xCCCE;
 	public static final int BOTTOM_CAM_PORT = 0xCCCD;
->>>>>>> b7d7832f4270efe15ec0900a51c59627acf0d3f1
 	
 	private InetAddress ip;
 	
@@ -91,21 +89,24 @@ public class Frame extends JFrame implements WindowListener, ControllerListener 
 			public void onConnect() {
 				if(!controller.isConnected()) {
 					try {
-						ip = InetAddress.getByName(JOptionPane.showInputDialog("Enter the IP of the Airship: ", ip.getHostAddress()));
-						Thread thread = new Thread(() -> {
-							try {
-								controller.connect(ip);
-								frontCamera.connect(ip, FRONT_CAM_PORT);
-								bottomCamera.connect(ip, BOTTOM_CAM_PORT);
-								frontCamera.start();
-								bottomCamera.start();
-							} catch (IOException e) {
-								e.printStackTrace();
-								JOptionPane.showMessageDialog(null, "connect failed: " + e.getMessage(), e.getClass().getSimpleName(), JOptionPane.ERROR_MESSAGE);
-								System.exit(1);
-							}
-						});
-						thread.start();
+						String input = JOptionPane.showInputDialog("Enter the IP of the Airship: ", ip.getHostAddress());
+						if(input != null) {
+							ip = InetAddress.getByName(input);
+							Thread thread = new Thread(() -> {
+								try {
+									controller.connect(ip);
+									frontCamera.connect(ip, FRONT_CAM_PORT);
+									bottomCamera.connect(ip, BOTTOM_CAM_PORT);
+									frontCamera.start();
+									bottomCamera.start();
+								} catch (IOException e) {
+									e.printStackTrace();
+									JOptionPane.showMessageDialog(null, "connect failed: " + e.getMessage(), e.getClass().getSimpleName(), JOptionPane.ERROR_MESSAGE);
+									System.exit(1);
+								}
+							});
+							thread.start();
+						}
 					} catch (UnknownHostException e) {
 						JOptionPane.showMessageDialog(null, "invalid IP: " + e.getMessage(), e.getClass().getSimpleName(), JOptionPane.ERROR_MESSAGE);
 					}
