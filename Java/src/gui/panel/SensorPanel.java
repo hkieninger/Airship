@@ -50,9 +50,9 @@ public class SensorPanel extends JPanel implements Pool.Listener<MeasDevice> {
 		vectorTable = new JTable(new StaticTableModel(data, columns));
 		addTable(vectorTable, panel);
 		
-		columns = new String[] {"", "Latitude", "Longitude", "Altitude [m]", "Precision [m]", "Velocity [m/s]", "Azimuth [°]"};
+		columns = new String[] {"", "Latitude", "Longitude", "Altitude [m]", "Precision [m]", "Velocity [m/s]", "Azimuth [°]", "Satelites"};
 		data = new Object[][] {
-			{"GPS", "0 °N", "0 °E", 0, 0, 0, 0}
+			{"GPS", "0 °N", "0 °E", 0, 0, 0, 0, 0}
 		};
 		gpsTable = new JTable(new StaticTableModel(data, columns));
 		addTable(gpsTable, panel);
@@ -127,7 +127,7 @@ public class SensorPanel extends JPanel implements Pool.Listener<MeasDevice> {
 		});
 	}
 
-	public void setGPS(double latitude, double longitude, double altitude, double precision, double velocity, double azimuth) {
+	public void setGPS(double latitude, double longitude, double altitude, double precision, double velocity, double azimuth, int satelites) {
 		SwingUtilities.invokeLater(() -> {
 			if(latitude > 0) {
 				gpsTable.setValueAt(latitude + " °N", 0, 1);
@@ -143,6 +143,7 @@ public class SensorPanel extends JPanel implements Pool.Listener<MeasDevice> {
 			gpsTable.setValueAt(precision, 0, 4);
 			gpsTable.setValueAt(velocity, 0, 5);
 			gpsTable.setValueAt(azimuth, 0, 6);
+			gpsTable.setValueAt(satelites, 0, 7);
 		});
 	}
 
@@ -186,7 +187,7 @@ public class SensorPanel extends JPanel implements Pool.Listener<MeasDevice> {
 				GPSData data = (GPSData) pool.getValue(device, parameter);
 				double[] pos = data.getGpsPosition();
 				double[] prec = data.getGpsPosPrecision();
-				setGPS(pos[0], pos[1], pos[2], prec[0], data.getVelocityOverGround(), data.getGpsHeading());
+				setGPS(pos[0], pos[1], pos[2], prec[0], data.getVelocityOverGround(), data.getGpsHeading(), data.getSattelites());
 			} else if(parameter == MeasSensor.BARO) {
 				setBarometer(((ConnectionData.Double) pool.getValue(device, parameter)).val);
 			} else if(parameter == MeasSensor.DIST_FRONT) {

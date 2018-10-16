@@ -1,6 +1,7 @@
 #include <arpa/inet.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "pin.h"
 #include "makros.h"
@@ -10,7 +11,9 @@ inline void invalidParam(const char *deviceName, int paramNr) {
     fprintf(stderr, "invalid %s configuration paket with param: %d\n", deviceName, paramNr);
 }
 
-ControlThread::ControlThread() : connection(*this), running(true) {
+ControlThread::ControlThread() : connection(*this), running(true)
+    position(NULL), velocity(NULL) {
+    status.time = 0;
     pthread_mutex_init(&dequeMutex, NULL);
 }
 
@@ -87,7 +90,7 @@ void ControlThread::handlePaket(Paket &paket) {
 
 void ControlThread::run() {
     ads = new Ads1115();
-    ads->setInputPin(3);
+    ads->setInputPin(ADS_INPUT_PIN);
 
     leftMotor = new Motor(LEFT_MOTOR_ESC, LEFT_MOTOR_RELAIS);
     rightMotor = new Motor(RIGHT_MOTOR_ESC, RIGHT_MOTOR_RELAIS);
@@ -101,13 +104,20 @@ void ControlThread::run() {
     bmp = new Bmp280();
     hcFront = new Hcsr04(FRONT_HCSR04_TRIG, FRONT_HCSR04_ECHO);
     hcBottom = new Hcsr04(BOTTOM_HCSR04_TRIG, BOTTOM_HCSR04_ECHO);
-    camBottom = new CameraThread();
+
+    camBottom = new CameraThread(CSI_CAMERA, V4L2_PIX_FMT_H264, CSI_WIDTH, CSI_HEIGHT, CSI_PORT); //constants defined in pin.h
+    camFront = new JpgCameraThread(USB_CAMERA, USB_WIDTH, USB_HEIGHT, USB_PORT); //constants defined in pin.h
+
+    neo6m = new Neo6MThread(*this); //implementation of callbacks in control_thread_meas.cpp
+    neo6m->setMessageRate(NEO6M_CLS_NAV, NEO6M_NAV_POSLLH, 1);
+    neo6m->setMessageRate(NEO6M_CLS_NAV, NEO6M_NAV_VELNED, 1);
+    neo6m->setMessageRate(NEO6M_CLS_NAV, NEO6M_NAV_STATUS, 1);
+    neo6m->setMessageRate(NEO6M_CLS_NAV, NEO6M_NAV_SVINFO, 1);
 
     //start the sub threads
     camBottom->start();
-    /*neo6mT.start();
-    camFrontT.start();
-    camBottomT.start();*/
+    camFront->start();
+    neo6m->start();
 
     printf("Hardware has been initialised successfully.\n");
     //the control loop of the zeppelin
@@ -131,16 +141,18 @@ void ControlThread::run() {
 
     //stop the sub threads and wait for them to terminate
     camBottom->stopRunning();
+    camFront->stopRunning();
+    neo6m->stopRunning();
+
     camBottom->join();
+    camFront->join();
+    neo6m->join();
 
-    /*neo6mT.stopRunning();
-    camFrontT.stopRunning();
-    camBottomT.stopRunning();
-    neo6mT.join();
-    camFrontT.join();
-    camBottomT.join();*/
+    delete neo6m;
 
+    delete camFront;
     delete camBottom;
+
     delete mpu;
     delete qmc;
     delete bmp;

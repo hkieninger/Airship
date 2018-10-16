@@ -29,7 +29,7 @@
 #define EDGE_FALLING FALLING_EDGE
 #define EDGE_BOTH EITHER_EDGE
 
-typedef void (*interruptFunction) (int pin, int level, uint32_t tick);
+typedef void (*interrupt_function) (int pin, int level, uint32_t tick);
 
 class InterruptInterface {
 public:
@@ -72,8 +72,8 @@ public:
      */
     void triggerPin(unsigned int pulse_length, unsigned int level);
 
-    void registerInterruptFunction(unsigned int edge, interruptFunction function);
-    void registerInterruptMethod(unsigned int edge, InterruptInterface &interface);
+    void registerInterruptFunction(unsigned int edge, interrupt_function function);
+    void registerInterruptMethod(unsigned int edge, InterruptInterface *interface);
     void unregisterInterrupt();
 };
 

@@ -5,12 +5,8 @@ import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
-import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.IOException;
 import java.util.Hashtable;
 
-import javax.imageio.ImageIO;
 import javax.swing.AbstractAction;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
@@ -26,6 +22,7 @@ import controller.data.ConfDevice;
 import controller.data.object.ByteVector;
 import controller.data.object.ConnectionData;
 import controller.data.parameter.ConfSteering;
+import controller.video.VideoConnection;
 import gui.component.Slider2D;
 
 public class SteeringPanel extends JPanel {
@@ -46,13 +43,13 @@ public class SteeringPanel extends JPanel {
 	private Slider2D sliderDirection;
 	private JButton zeroButton, callibrateButton;
 
-	public SteeringPanel(Pool<ConfDevice> pool) {
+	public SteeringPanel(Pool<ConfDevice> pool, VideoConnection videoBackground) {
 		//create the components
 		
 		sliderVelocity = new JSlider(JSlider.HORIZONTAL, -VELOCITY_MAX, VELOCITY_MAX, 0);
 		setSliderLabels(sliderVelocity, VELOCITY_MAX, VELOCITY_ZERO, "foward", "backward", "off");
 		sliderVelocity.setFocusable(false);
-		BufferedImage knob, background;
+		/* BufferedImage knob, background;
 		try {
 			knob = ImageIO.read(new File("res/zeppelin_knob.png"));
 			background = ImageIO.read(new File("res/himmel_background.jpg"));
@@ -61,7 +58,8 @@ public class SteeringPanel extends JPanel {
 			knob = null;
 			background = null;
 		}
-		sliderDirection = new Slider2D(ConfSteering.MAX, ConfSteering.MAX, knob, background);
+		sliderDirection = new Slider2D(ConfSteering.MAX, ConfSteering.MAX, knob, background); */
+		sliderDirection = new Slider2D(ConfSteering.MAX, ConfSteering.MAX, videoBackground);
 		sliderDirection.setFocusable(false);
 		zeroButton = new JButton("zero");
 		zeroButton.setFocusable(false);

@@ -11,8 +11,11 @@ import java.awt.event.MouseMotionAdapter;
 import java.awt.image.BufferedImage;
 
 import javax.swing.JComponent;
+import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+
+import controller.video.VideoConnection;
 
 public class Slider2D extends JComponent {
 	
@@ -31,6 +34,9 @@ public class Slider2D extends JComponent {
 	private Image scaledBackground;
 	private Color color = Color.RED;
 	
+	private boolean keepRatio;
+	private int cornerX, cornerY;
+	
 	public Slider2D(int maxX, int maxY, Color color) {
 		this(maxX, maxY);
 		this.color = color;
@@ -42,6 +48,12 @@ public class Slider2D extends JComponent {
 			this.knob = knob.getScaledInstance(KNOB_WIDTH, knob.getHeight() * KNOB_WIDTH / knob.getWidth(), Image.SCALE_DEFAULT);
 		}
 		this.background = background;
+	}
+	
+	public Slider2D(int maxX, int maxY, VideoConnection background) {
+		this(maxX, maxY);
+		background.addListener((i) -> setBackground(i));
+		keepRatio = true;
 	}
 	
 	public Slider2D(int maxX, int maxY) {
@@ -117,9 +129,30 @@ public class Slider2D extends JComponent {
 			g2.setColor(Color.WHITE);
 			g2.fillRect(0, 0, width, height);
 		} else {
-			if(width != this.width || height != this.height)
-				scaledBackground = background.getScaledInstance(width, height, Image.SCALE_FAST);
-			g2.drawImage(scaledBackground, 0, 0, null);
+			if(width != this.width || height != this.height) {
+				if(keepRatio) {
+					//draw background
+					g2.setColor(Color.WHITE);
+					g2.fillRect(0, 0, width, height);
+					//draw image
+					float imageRatio = 1.0f * background.getWidth() / background.getHeight();
+					float panelRatio = 1.0f * width / height;
+					if(panelRatio > imageRatio) {
+						int scaledWidth = (int) (height * imageRatio);
+						scaledBackground = background.getScaledInstance(scaledWidth, height, Image.SCALE_FAST);
+						cornerX = (width - scaledWidth) / 2;
+						cornerY = 0;
+					} else {
+						int scaledHeight = (int) (width / imageRatio);
+						scaledBackground = background.getScaledInstance(width, scaledHeight, Image.SCALE_FAST);
+						cornerX = 0;
+						cornerY = (height - scaledHeight) / 2;
+					}
+				} else {
+					scaledBackground = background.getScaledInstance(width, height, Image.SCALE_FAST);
+				}
+			}
+			g2.drawImage(scaledBackground, cornerX, cornerY, null);
 		}
 		//draw axis and squares
 		g2.setColor(Color.LIGHT_GRAY);
@@ -159,6 +192,15 @@ public class Slider2D extends JComponent {
 				l.stateChanged(new ChangeEvent(this));
 			}
 		}
+	}
+	
+	private void setBackground(BufferedImage image) {
+		SwingUtilities.invokeLater(() -> {
+			width = 0;
+			height = 0;
+			background = image;
+			repaint();
+		});
 	}
 	
 }

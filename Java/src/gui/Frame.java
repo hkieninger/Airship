@@ -13,6 +13,8 @@ import javax.swing.SwingUtilities;
 
 import controller.Controller;
 import controller.ControllerListener;
+import controller.video.H264Connection;
+import controller.video.JPGConnection;
 import gui.quarter.ControllQuarter;
 import gui.quarter.SensorQuarter;
 import gui.quarter.StatusQuarter;
@@ -26,9 +28,15 @@ public class Frame extends JFrame implements WindowListener, ControllerListener 
 	private static final long serialVersionUID = 1L;
 	
 	public static final String DEFAULT_IP = "172.17.72.204";//"192.168.0.27", "172.17.72.204", "192.168.4.1";
+<<<<<<< HEAD
+=======
+	public static final int FRONT_CAM_PORT = 0xCCCE;
+	public static final int BOTTOM_CAM_PORT = 0xCCCD;
+>>>>>>> b7d7832f4270efe15ec0900a51c59627acf0d3f1
 	
 	private Controller controller;
-	private VideoQuarter videoQuarter;
+	private H264Connection bottomCamera;
+	private JPGConnection frontCamera;
 
 	public static void main(String[] args) {
 		SwingUtilities.invokeLater(new Runnable() {
@@ -58,17 +66,21 @@ public class Frame extends JFrame implements WindowListener, ControllerListener 
 			System.exit(1);
 		}
 		
-		//controll panels
-		add(new ControllQuarter(controller));
-		//Status panels
-		add(new StatusQuarter(controller));
-		//Video panels
 		try {
-			videoQuarter = new VideoQuarter(controller);
-			add(videoQuarter);
+			frontCamera = new JPGConnection(controller.getHost(), FRONT_CAM_PORT);
+			bottomCamera = new H264Connection(controller.getHost(), BOTTOM_CAM_PORT);
+			frontCamera.start();
+			bottomCamera.start();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+		
+		//controll panels
+		add(new ControllQuarter(controller, frontCamera));
+		//Status panels
+		add(new StatusQuarter(controller));
+		//Video panels
+		add(new VideoQuarter(controller, frontCamera, bottomCamera));
 		//Sensor panels
 		add(new SensorQuarter(controller));
 		
@@ -82,7 +94,8 @@ public class Frame extends JFrame implements WindowListener, ControllerListener 
 	public void windowClosed(WindowEvent arg0) {
 		//cleanup code here
 		try {
-			videoQuarter.close();
+			frontCamera.stopRunning();
+			bottomCamera.stopRunning();
 			controller.close();
 		} catch (Exception e) {
 			e.printStackTrace();

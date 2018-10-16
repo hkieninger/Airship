@@ -1,33 +1,22 @@
 package gui.quarter;
 
-import java.io.IOException;
-
 import javax.swing.JTabbedPane;
 
 import controller.Controller;
-import controller.data.ConfDevice;
-import controller.data.object.ConnectionData.UByte;
-import controller.data.parameter.ConfSensor;
-import gui.panel.BottomVideoPanel;
-import gui.panel.FrontVideoPanel;
+import controller.video.VideoConnection;
+import gui.panel.VideoPanel;
 
 public class VideoQuarter extends JTabbedPane {
 
 	private static final long serialVersionUID = 1L;
 	
-	private BottomVideoPanel bottomVideoPanel;
-	
-	public VideoQuarter(Controller controller) throws IOException {
+	public VideoQuarter(Controller controller, VideoConnection frontCamera, VideoConnection bottomCamera){
 		this.setFocusable(false);
-		bottomVideoPanel = new BottomVideoPanel(controller);
-		Thread thread = new Thread(bottomVideoPanel);
-		thread.start();
-		//controller.getMeasPool().addListener(bottomVideoPanel);
+		VideoPanel bottomVideoPanel = new VideoPanel(bottomCamera);
 		this.addTab("camera bottom", bottomVideoPanel);
-		FrontVideoPanel frontVideoPanel = new FrontVideoPanel();
-		controller.getMeasPool().addListener(frontVideoPanel);
+		VideoPanel frontVideoPanel = new VideoPanel(frontCamera);
 		this.addTab("camera front", frontVideoPanel);
-		this.addChangeListener((event) -> {
+		/*this.addChangeListener((event) -> {
 			UByte enable = new UByte();
 			enable.val = ConfSensor.ENABLE;
 			UByte disable = new UByte();
@@ -39,11 +28,7 @@ public class VideoQuarter extends JTabbedPane {
 				controller.getConfPool().setValue(ConfDevice.SENSOR, ConfSensor.CAM_BOTTOM, disable);
 				controller.getConfPool().setValue(ConfDevice.SENSOR, ConfSensor.CAM_FRONT, enable);
 			}
-		});
-	}
-	
-	public void close() throws IOException {
-		bottomVideoPanel.stopRunning();
+		});*/
 	}
 
 }

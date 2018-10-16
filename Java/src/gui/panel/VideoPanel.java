@@ -9,6 +9,8 @@ import java.awt.image.BufferedImage;
 import javax.swing.JComponent;
 import javax.swing.SwingUtilities;
 
+import controller.video.*;
+
 public class VideoPanel extends JComponent {
 	
 	/**
@@ -17,6 +19,10 @@ public class VideoPanel extends JComponent {
 	private static final long serialVersionUID = 1L;
 	
 	protected BufferedImage image;
+	
+	public VideoPanel(VideoConnection connection) {
+		connection.addListener((i) -> setImage(i));
+	}
 	
 	public void setImage(BufferedImage image) {
 		SwingUtilities.invokeLater(() -> {

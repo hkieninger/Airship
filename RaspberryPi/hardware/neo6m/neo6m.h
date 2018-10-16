@@ -99,6 +99,10 @@ struct GPSFixStatus {
 };
 
 /*
+ * structures with the attribute packed, correspond to the structure of the bytes in the playload received from the neo6m
+ */
+
+/*
  * structure contains position in ecef with timestamp
  */
 struct __attribute__((__packed__)) GPSEcefPos { //avoid alignment reduces performance, but allows easier implementation
@@ -161,7 +165,7 @@ public:
      * powers off the neo6m
      * closes the serial device file
      */
-    ~Neo6M();
+    virtual ~Neo6M();
 
 
     

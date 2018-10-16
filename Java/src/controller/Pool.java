@@ -28,16 +28,22 @@ public class Pool<D extends Enum<?> & Device> {
 	}
 	
 	public void addListener(Listener<D> l) {
-		listeners.add(l);
+		synchronized(listeners) {
+			listeners.add(l);
+		}
 	}
 	
 	public void removeListener(Listener<D> l) {
-		listeners.remove(l);
+		synchronized(listeners) {
+			listeners.remove(l);
+		}
 	}
 	
 	void notifyListeners(D device, Enum<? extends Parameter> parameter) {
-		for(Listener<D> l : listeners) {
-			l.onChanged(this, device, parameter);
+		synchronized(listeners) {
+			for(Listener<D> l : listeners) {
+				l.onChanged(this, device, parameter);
+			}
 		}
 	}
 	

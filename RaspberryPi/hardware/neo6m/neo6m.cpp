@@ -60,7 +60,7 @@ struct UBXMsg &Neo6M::receiveUBXMessage(struct UBXMsg &msg) {
 struct UBXMsg &Neo6M::pollUBXMessage(struct UBXMsg &msg) {
     /* Note for messages of the class CFG:
      * the neo6m sends first the polled message and 
-     * then the acknowledge message or onyl a not acknowledge message */
+     * then the acknowledge message or only a not acknowledge message */
     uint8_t cls = msg.cls;
     msg.length = 0;
     sendUBXStructure(msg);
@@ -299,7 +299,7 @@ void Neo6M::disableNMEAMessage(const std::string &msg) {
     if(msg.length() != 3)
         throw std::length_error("NMEA message identifier must contain 3 characters");
     char buffer[24]; //don't forget \0
-    if(snprintf(buffer, sizeof(buffer), "PUBX,40,%s,0,0,0,0,0,0", msg.c_str()) != sizeof(buffer) - 1)
+    if(snprintf(buffer, sizeof(buffer), "PUBX,40,%s,0,0,0,0,0,0", msg.c_str()) != (int) (sizeof(buffer) - 1))
         throw std::runtime_error("creating NMEA message: " + std::string(strerror(errno)));
     sendNMEAMessage(buffer);
 }
@@ -308,7 +308,7 @@ void Neo6M::enableNMEAMessage(const std::string &msg) {
     if(msg.length() != 3)
         throw std::length_error("NMEA message identifier must contain 3 characters");
     char buffer[24]; //don't forget \0
-    if(snprintf(buffer, sizeof(buffer), "PUBX,40,%s,0,1,0,0,0,0", msg.c_str()) != sizeof(buffer) - 1)
+    if(snprintf(buffer, sizeof(buffer), "PUBX,40,%s,0,1,0,0,0,0", msg.c_str()) != (int) (sizeof(buffer) - 1))
         throw std::runtime_error("creating NMEA message: " + std::string(strerror(errno)));
     sendNMEAMessage(buffer);
 }
@@ -316,12 +316,12 @@ void Neo6M::enableNMEAMessage(const std::string &msg) {
 void Neo6M::sendNMEAMessage(const std::string &msg) {
     char buffer[msg.length() + 7]; //don't forget \0
     uint8_t checksum = calcNMEAChecksum(msg);
-    if(snprintf(buffer, sizeof(buffer), "$%s*%.2X\r\n", msg.c_str(), checksum) != sizeof(buffer) - 1)
+    if(snprintf(buffer, sizeof(buffer), "$%s*%.2X\r\n", msg.c_str(), checksum) != (int) (sizeof(buffer) - 1))
         throw std::runtime_error("creating NMEA message: " + std::string(strerror(errno)));
     writeAll(buffer, sizeof(buffer)-1);
 }
 
-int8_t ascii2hex(char ascii) {
+static int8_t ascii2hex(char ascii) {
     if(ascii >= '0' && ascii <= '9')
         return ascii - '0';
     else if(ascii >= 'a' && ascii <= 'f')
@@ -361,7 +361,7 @@ std::string Neo6M::readNMEAMessage() {
 
 uint8_t Neo6M::calcNMEAChecksum(const std::string &msg) {
     uint8_t sum = 0;
-    for(int i = 0; i < msg.length(); i++) {
+    for(unsigned int i = 0; i < msg.length(); i++) {
         sum ^= msg[i];
     }
     return sum;
