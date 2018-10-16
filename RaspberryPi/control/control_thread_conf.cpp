@@ -1,6 +1,7 @@
 #include <arpa/inet.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "pin.h"
 #include "makros.h"
@@ -10,7 +11,9 @@ inline void invalidParam(const char *deviceName, int paramNr) {
     fprintf(stderr, "invalid %s configuration paket with param: %d\n", deviceName, paramNr);
 }
 
-ControlThread::ControlThread() : connection(*this), running(true) {
+ControlThread::ControlThread() : connection(*this), running(true)
+    position(NULL), velocity(NULL) {
+    status.time = 0;
     pthread_mutex_init(&dequeMutex, NULL);
 }
 
@@ -106,6 +109,10 @@ void ControlThread::run() {
     camFront = new JpgCameraThread(USB_CAMERA, USB_WIDTH, USB_HEIGHT, USB_PORT); //constants defined in pin.h
 
     neo6m = new Neo6MThread(*this); //implementation of callbacks in control_thread_meas.cpp
+    neo6m->setMessageRate(NEO6M_CLS_NAV, NEO6M_NAV_POSLLH, 1);
+    neo6m->setMessageRate(NEO6M_CLS_NAV, NEO6M_NAV_VELNED, 1);
+    neo6m->setMessageRate(NEO6M_CLS_NAV, NEO6M_NAV_STATUS, 1);
+    neo6m->setMessageRate(NEO6M_CLS_NAV, NEO6M_NAV_SVINFO, 1);
 
     //start the sub threads
     camBottom->start();

@@ -2,6 +2,7 @@ package controller.data.object;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.io.IOException;
 
 /*
  * make thread safe!
@@ -16,7 +17,7 @@ public class GPSData implements ConnectionData {
 	private double[] gpsVelocity;
 	private double gpsHeading;
 	//gps velocity precision: 0 = velocity, 1 = heading;
-	private double[] gpsVelPrecision;
+	//private double[] gpsVelPrecision;
 	//number of satelites
 	private int sattelites;
 	
@@ -30,7 +31,7 @@ public class GPSData implements ConnectionData {
 		this.gpsPosition = new double[3];
 		this.gpsPosPrecision = new double[2];
 		this.gpsVelocity = new double[3];
-		this.gpsVelPrecision = new double[2];
+		//this.gpsVelPrecision = new double[2];
 	}
 
 	/**
@@ -68,9 +69,9 @@ public class GPSData implements ConnectionData {
 	/**
 	 * @return the gpsVelPrecision
 	 */
-	public double[] getGpsVelPrecision() {
+	/*public double[] getGpsVelPrecision() {
 		return gpsVelPrecision;
-	}
+	}*/
 
 	/**
 	 * @return the sattelites
@@ -86,8 +87,18 @@ public class GPSData implements ConnectionData {
 	}
 	
 	@Override
-	public void receive(DataInputStream in) {
-		throw new UnsupportedOperationException("Not implemented yet.");
+	public void receive(DataInputStream in) throws IOException {
+		in.readUnsignedShort();
+		gpsPosition[0] = in.readInt() * 1e-7;
+		gpsPosition[1] = in.readInt() * 1e-7;
+		gpsPosition[2] = in.readInt() * 1e-3;
+		gpsPosPrecision[0] = in.readInt() * 1e-3;
+		gpsPosPrecision[1] = in.readInt() * 1e-3;
+		gpsVelocity[0] = in.readInt() * 1e-2;
+		gpsVelocity[1] = in.readInt() * 1e-2;
+		gpsVelocity[2] = in.readInt() * 1e-2;
+		gpsHeading = in.readInt() * 1e-5;
+		sattelites = in.readUnsignedByte();
 	}
 
 }

@@ -10,7 +10,7 @@
 #include "makros.h"
 #include "control_thread.h"
 
-static uint64_t micros() {
+uint64_t ControlThread::micros() {
     struct timeval tv;
     if(gettimeofday(&tv, NULL) < 0)
         throw std::runtime_error("get time of day: " + std::string(strerror(errno)));
@@ -139,14 +139,16 @@ void ControlThread::measureBmp() {
 #define BMP_MEASUREMENT_RATE (500 * 1000)
 #define QMC_MEASUREMENT_RATE (500 * 1000)
 #define HCSR_MEASUREMENT_RATE (500 * 1000)
+#define GPS_SEND_RATE (1000 * 1000) //corresponds to the default measurement rate
+
+uint64_t ControlThread::lastAdsMeas = 0;
+uint64_t ControlThread::lastMpuMeas = 0;
+uint64_t ControlThread::lastBmpMeas = 0;
+uint64_t ControlThread::lastQmcMeas = 0;
+uint64_t ControlThread::lastHcsrMeas = 0;
+uint64_t ControlThread::lastGPSSend = 0;
 
 void ControlThread::measureData() {
-    static uint64_t lastAdsMeas = 0;
-    static uint64_t lastMpuMeas = 0;
-    static uint64_t lastBmpMeas = 0;
-    static uint64_t lastQmcMeas = 0;
-    static uint64_t lastHcsrMeas = 0;
-
     uint64_t now = micros();
 
     if(now - lastAdsMeas > ADS_MEASUREMENT_RATE) {
@@ -169,6 +171,45 @@ void ControlThread::measureData() {
         lastHcsrMeas = now;
         measureHcsr();
     }
+    if(now - lastGPSSend > GPS_SEND_RATE) {
+        lastGPSSend = now;
+        sendGPS();
+    }
+}
+
+void ControlThread::sendGPS() {
+    if(position != NULL && velocity != NULL && status.time != 0 && status.fixValid) {
+        struct Paket paket;
+        paket.device = Measurement::SENSOR;
+        paket.param = Measurement::GPS;
+
+        //           lat, long alt         haccur, vaccur         vel: north, east, down    heading           satellites
+        uint8_t data[sizeof(int32_t) * 3 + sizeof(uint32_t) * 2 + sizeof(int32_t) * 3 +     sizeof(int32_t) + sizeof(uint8_t)];
+
+        int32_t *dataInt32 = (int32_t *) &data[0];
+        dataInt32[0] = bswap_32(position.lat);
+        dataInt32[1] = bswap_32(position.lon);
+        dataInt32[2] = bswap_32(position.has);
+        dataInt32[3] = bswap_32(position.haccuracy);
+        dataInt32[4] = bswap_32(position.vaccuracy);
+        dataInt32[5] = bswap_32(velocity.north);
+        dataInt32[6] = bswap_32(velocity.east);
+        dataInt32[7] = bswap_32(velocity.down);
+        dataInt32[8] = bswap_32(velocity.heading);
+
+        data[sizeof(data)-1] = status.satellites;
+
+        paket.len = sizeof(data); 
+        paket.data = &data[0];
+        connection.sendPaket(paket);
+        
+        delete position;
+        delete velocity;
+
+        position = NULL;
+        velocity = NULL;
+        status.time = 0;
+    }
 }
 
 void ControlThread::onNMEAMessage(std::string *nmea, bool valid) {
@@ -176,24 +217,54 @@ void ControlThread::onNMEAMessage(std::string *nmea, bool valid) {
         struct Paket paket;
         paket.device = Measurement::RPI;
         paket.param = Measurement::INFO;
-        paket.len = nmea->length() + 1;
+        paket.len = nmea->length() - 1; //+1 for \0, -2 to remove \r\n -> -1
         paket.data = (uint8_t *) nmea->c_str();
         connection.sendPaket(paket);
     }
     delete nmea;
 }
 
+void ControlThread::handleNavMessage(struct UBXMsg *msg) {
+    switch(msg->id) {
+        case NEO6M_NAV_POSLLH:
+            position = msg->playload;
+            break;
+        case NEO6M_NAV_VELNED: 
+            velocity = msg->playload;
+            break;
+        case NEO6M_NAV_STATUS:
+            status.time = ((uint32_t *) msg->playload)[0];
+            status.gpsFix = msg->playload[4];
+            status.dgps = msg->playload[5] & 0x02;
+            status.fixValid = msg->playload[5] & 0x01;
+            status.timeValid = msg->playload[5] & 0x04 && msg->playload[5] & 0x08;
+            delete msg->playload;
+            break;
+        case NEO6M_NAV_SVINFO:
+            status.satellites = msg.playload[4];
+            delete msg->playload;
+            break;
+        default:
+            NOT_IMPLEMENTED;
+    }
+}
+
 void ControlThread::onUBXMessage(struct UBXMsg *msg, bool valid) {
     if(valid) {
-        /*struct Paket paket;
-        paket.device = Measurement::SENSOR;
-        paket.param = Measurement::GPS;
-        paket.len = nmea->length() + 1;
-        paket.data = nmea.c_str();
-        connection.sendPaket(paket);*/
+        switch(msg->cls) {
+            case NEO6M_CLS_NAV:
+                handleNavMessage(msg); //do not delete msg->playload
+                delete msg;
+                break;
+            default: 
+                NOT_IMPLEMENTED;
+                delete msg->playload;
+                delete msg;
+        }
+    } else {
+        delete msg->playload;
+        delete msg;
     }
-    delete msg->playload;
-    delete msg;
 }
 
 void ControlThread::onACKMessage(struct UBXMsg *ack, bool valid) {

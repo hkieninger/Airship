@@ -4,6 +4,10 @@
 #include "neo6m.h"
 #include "../../thread/thread.h"
 
+/*
+ * there is still a lot of improvement, which can be done for the class
+ */
+
 class Neo6MThreadListener {
 public:
     /*
@@ -36,7 +40,8 @@ class Neo6MThread: private Neo6M, public Thread {
 public:
     /*
      * see constructor of Neo6M
-     * but NMEA is enabled
+     * but NMEA is enabled, however nmea messages are switched off
+     * furthermore sbas is enabled by default
      * @listener: the listener implementing the callbacks
      */
     Neo6MThread(Neo6MThreadListener &listener, const std::string &serialport = DEFAULT_SERIALPORT, int baudrate = DEFAULT_BAUDRATE);
@@ -70,6 +75,14 @@ public:
      * see Neo6M::sendNMEAMessage()
      */
     void sendNMEAMsg(const std::string &nmea);
+
+    /*
+     * makes that a UBX message is sent in a regular rate
+     * @cls: the class of the message (MON, NAV or RXM)
+     * @id: the id of the message
+     * @rate: the rate of the message per cycle (per default a cycle is 1 second could be configured with CFG-RATE)
+     */
+    void setMessageRate(uint8_t cls, uint8_t id, uint8_t rate)
 
 };
 

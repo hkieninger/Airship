@@ -5,6 +5,15 @@
 Neo6MThread::Neo6MThread(Neo6MThreadListener &listener, const std::string &serialport, int baudrate) : 
     Neo6M(serialport, baudrate), listener(listener), running(true) {
         setProtocol(UBX_AND_NMEA);
+        setSBAS(true);
+        disableNMEAMessage("GSV");
+        disableNMEAMessage("GSA");
+        disableNMEAMessage("GLL");
+        disableNMEAMessage("VTG");
+        disableNMEAMessage("GGA");
+        disableNMEAMessage("RMC");
+        usleep(250 * 1000); //sleep 250ms, it's necessary
+        flush();
 }
 
 Neo6MThread::~Neo6MThread() {
@@ -26,11 +35,11 @@ static int8_t ascii2hex(char ascii) {
 void Neo6MThread::run() {
     while(running) {
         //check if data is available, to avoid blocking a long time, which would make the thread unresponsive to stopRunning()
-        if(available() >= 2) {
+        if(available() > 2) {
             //go to the next synchronization mark in the stream
             uint8_t lastByte = getChar();
             uint8_t byte = getChar();
-            while(((lastByte | byte << 8) != UBX_SYNC) || (lastByte == '$' && byte == 'P')) {
+            while(((lastByte | byte << 8) != UBX_SYNC) && (lastByte != '$' || byte != 'G')) {
                 lastByte = byte;
                 byte = getChar();
             }
@@ -97,4 +106,15 @@ void Neo6MThread::sendUBXMsg(const struct UBXMsg &msg) {
 
 void Neo6MThread::sendNMEAMsg(const std::string &nmea) {
     sendNMEAMessage(nmea);
+}
+
+//copied from Neo6M class
+void Neo6MThread::setMessageRate(uint8_t cls, uint8_t id, uint8_t rate) {
+    uint8_t playload[] = {cls, id, rate};
+    struct UBXMsg msg;
+    msg.cls = NEO6M_CLS_CFG;
+    msg.id = NEO6M_CFG_MSG;
+    msg.length = sizeof(playload);
+    msg.playload = playload;
+    sendUBXMsg(msg);
 }
