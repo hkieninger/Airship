@@ -46,8 +46,8 @@ class ControlThread: public Neo6MThreadListener, public Thread {
     //GPS
     Neo6MThread *neo6m;
 
-    struct GPSGeodeticPos *position;
-    struct GPSGeodeticVel *velocity;
+    struct GPSGeodeticPos position;
+    struct GPSGeodeticVel velocity;
     struct GPSFixStatus status;
 
     void configureRpi(Paket &paket);

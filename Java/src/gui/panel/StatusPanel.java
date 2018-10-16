@@ -153,7 +153,7 @@ public class StatusPanel extends JPanel implements Pool.Listener<MeasDevice>, Co
 
 	@Override
 	public void onConnectionRestored() {
-		setInformation("The connection has been restored.", 0x00FF00);
+		setInformation("The connection has been (re)established.", 0x00FF00);
 	}
 
 }

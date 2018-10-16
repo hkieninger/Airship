@@ -45,38 +45,39 @@ void Neo6MThread::run() {
             }
             //determine if the next message is UBX or NMEA
             if(lastByte == '$') { //NMEA
-                std::string *str = new std::string("$G");
+                std::string str("$G");
                 char c;
                 //read the message
                 do {
                     c = getChar();
-                    str->push_back(c);
+                    str.push_back(c);
                 } while(c != '*');
                 //read and compare the checksum
-                str->push_back(getChar());
-                str->push_back(getChar());
-                int len = str->length();
+                str.push_back(getChar());
+                str.push_back(getChar());
+                int len = str.length();
                 uint8_t checksum = ascii2hex((*str)[len - 2]) << 4 | ascii2hex((*str)[len - 1]);
-                bool valid = (checksum == calcNMEAChecksum(str->substr(1, len - 4)));
+                bool valid = (checksum == calcNMEAChecksum(str.substr(1, len - 4)));
                 //read the ending
-                str->push_back(getChar()); // \r
-                str->push_back(getChar()); // \n
+                str.push_back(getChar()); // \r
+                str.push_back(getChar()); // \n
                 //call the callback
                 listener.onNMEAMessage(str, valid);
             } else { //UBX
                 //read the message
-                struct UBXMsg *msg = new struct UBXMsg;
+                struct UBXMsg msg;
                 uint16_t checksum; //because of little endian the order will be swapped
-                readAll(&msg->cls, 1);
-                readAll(&msg->id, 1);
-                readAll(&msg->length, 2);
-                msg->playload = new uint8_t[msg->length];
-                readAll(msg->playload, msg->length);
+                readAll(&msg.cls, 1);
+                readAll(&msg.id, 1);
+                readAll(&msg.length, 2);
+                uint8_t playload[msg.length];
+                msg.playload = &playload[0];
+                readAll(msg.playload, msg.length);
                 readAll(&checksum, 2);
                 //compare the checksum
-                bool valid = (checksum == calcUBXChecksum(*msg));
+                bool valid = (checksum == calcUBXChecksum(msg));
                 //check the class and call the callback
-                if(msg->cls == NEO6M_CLS_ACK)
+                if(msg.cls == NEO6M_CLS_ACK)
                     listener.onACKMessage(msg, valid);
                 else
                     listener.onUBXMessage(msg, valid);

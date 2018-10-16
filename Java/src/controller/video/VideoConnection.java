@@ -14,9 +14,12 @@ public abstract class VideoConnection extends Thread {
 	
 	private ArrayList<Listener> listeners;
 	
-	public VideoConnection(InetAddress address, int port) throws IOException {
+	public VideoConnection() {
 		running = true;
 		listeners = new ArrayList<>();
+	}
+	
+	public void connect(InetAddress address, int port) throws IOException {
 		sock = new Socket(address, port);
 	}
 	
@@ -40,6 +43,10 @@ public abstract class VideoConnection extends Thread {
 	
 	@Override
 	public void run() {
+		if(sock == null) {
+			System.err.println("VideoConnection not connected, but started.");
+			return;
+		}
 		try {
 			begin();
 			while(running) {

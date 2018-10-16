@@ -12,25 +12,22 @@ class Neo6MThreadListener {
 public:
     /*
      * Callback for NMEA Messages
-     * it's up to you to delete @nmea if you are done
      * @valid: false if the checksum mismatches, else true
      */
-    virtual void onNMEAMessage(std::string *nmea, bool valid) = 0;
+    virtual void onNMEAMessage(std::string &nmea, bool valid) = 0;
 
     /*
      * Callback for UBX Messages
-     * it's up to you to delete @msg and @msg->playload if you are done
      * @valid: false if the checksum mismatches, else true
      */
-    virtual void onUBXMessage(struct UBXMsg *msg, bool valid) = 0;
+    virtual void onUBXMessage(struct UBXMsg &msg, bool valid) = 0;
 
     /*
      * Callback for ack and nak messages following when a CFG message was sent
      * when requesting a CFG message the neo6m will first send the answer and then the ack or only a nak
-     * it's up to you to delete @msg and @msg->playload if you are done
      * @valid: false if the checksum mismatches, else true
      */
-    virtual void onACKMessage(struct UBXMsg *ack, bool valid) = 0;
+    virtual void onACKMessage(struct UBXMsg &ack, bool valid) = 0;
 
 };
 

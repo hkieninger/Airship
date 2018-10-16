@@ -178,41 +178,35 @@ void ControlThread::measureData() {
 }
 
 void ControlThread::sendGPS() {
-    if(position != NULL && velocity != NULL && status.time != 0 && status.fixValid) {
-        struct Paket paket;
-        paket.device = Measurement::SENSOR;
-        paket.param = Measurement::GPS;
+    struct Paket paket;
+    paket.device = Measurement::SENSOR;
+    paket.param = Measurement::GPS;
 
-        //           lat, long alt         haccur, vaccur         vel: north, east, down    heading           satellites
-        uint8_t data[sizeof(int32_t) * 3 + sizeof(uint32_t) * 2 + sizeof(int32_t) * 3 +     sizeof(int32_t) + sizeof(uint8_t)];
+    //           lat, long alt         haccur, vaccur         vel: north, east, down    heading           satellites
+    uint8_t data[sizeof(int32_t) * 3 + sizeof(uint32_t) * 2 + sizeof(int32_t) * 3 +     sizeof(int32_t) + sizeof(uint8_t)];
 
-        int32_t *dataInt32 = (int32_t *) &data[0];
-        dataInt32[0] = bswap_32(position.lat);
-        dataInt32[1] = bswap_32(position.lon);
-        dataInt32[2] = bswap_32(position.has);
-        dataInt32[3] = bswap_32(position.haccuracy);
-        dataInt32[4] = bswap_32(position.vaccuracy);
-        dataInt32[5] = bswap_32(velocity.north);
-        dataInt32[6] = bswap_32(velocity.east);
-        dataInt32[7] = bswap_32(velocity.down);
-        dataInt32[8] = bswap_32(velocity.heading);
+    int32_t *dataInt32 = (int32_t *) &data[0];
+    dataInt32[0] = bswap_32(position.lat);
+    dataInt32[1] = bswap_32(position.lon);
+    dataInt32[2] = bswap_32(position.has);
+    dataInt32[3] = bswap_32(position.haccuracy);
+    dataInt32[4] = bswap_32(position.vaccuracy);
+    dataInt32[5] = bswap_32(velocity.north);
+    dataInt32[6] = bswap_32(velocity.east);
+    dataInt32[7] = bswap_32(velocity.down);
+    dataInt32[8] = bswap_32(velocity.heading);
 
-        data[sizeof(data)-1] = status.satellites;
+    data[sizeof(data)-1] = status.satellites;
 
-        paket.len = sizeof(data); 
-        paket.data = &data[0];
-        connection.sendPaket(paket);
-        
-        delete position;
-        delete velocity;
+    paket.len = sizeof(data); 
+    paket.data = &data[0];
+    connection.sendPaket(paket);
 
-        position = NULL;
-        velocity = NULL;
-        status.time = 0;
-    }
+    position = NULL;
+    velocity = NULL;
 }
 
-void ControlThread::onNMEAMessage(std::string *nmea, bool valid) {
+void ControlThread::onNMEAMessage(std::string &nmea, bool valid) {
     if(valid) {
         struct Paket paket;
         paket.device = Measurement::RPI;
@@ -221,16 +215,15 @@ void ControlThread::onNMEAMessage(std::string *nmea, bool valid) {
         paket.data = (uint8_t *) nmea->c_str();
         connection.sendPaket(paket);
     }
-    delete nmea;
 }
 
-void ControlThread::handleNavMessage(struct UBXMsg *msg) {
+void ControlThread::handleNavMessage(struct UBXMsg &msg) {
     switch(msg->id) {
         case NEO6M_NAV_POSLLH:
-            position = msg->playload;
+            memcpy(&position, &msg.playload, sizeof(position));
             break;
         case NEO6M_NAV_VELNED: 
-            velocity = msg->playload;
+            memcpy(&velocity, &msg.playload, sizeof(velocity));
             break;
         case NEO6M_NAV_STATUS:
             status.time = ((uint32_t *) msg->playload)[0];
@@ -238,39 +231,29 @@ void ControlThread::handleNavMessage(struct UBXMsg *msg) {
             status.dgps = msg->playload[5] & 0x02;
             status.fixValid = msg->playload[5] & 0x01;
             status.timeValid = msg->playload[5] & 0x04 && msg->playload[5] & 0x08;
-            delete msg->playload;
             break;
         case NEO6M_NAV_SVINFO:
             status.satellites = msg.playload[4];
-            delete msg->playload;
             break;
         default:
             NOT_IMPLEMENTED;
     }
 }
 
-void ControlThread::onUBXMessage(struct UBXMsg *msg, bool valid) {
+void ControlThread::onUBXMessage(struct UBXMsg &msg, bool valid) {
     if(valid) {
         switch(msg->cls) {
             case NEO6M_CLS_NAV:
-                handleNavMessage(msg); //do not delete msg->playload
-                delete msg;
+                handleNavMessage(msg);
                 break;
             default: 
                 NOT_IMPLEMENTED;
-                delete msg->playload;
-                delete msg;
         }
-    } else {
-        delete msg->playload;
-        delete msg;
     }
 }
 
-void ControlThread::onACKMessage(struct UBXMsg *ack, bool valid) {
+void ControlThread::onACKMessage(struct UBXMsg &ack, bool valid) {
     if(valid && ack->id == NEO6M_ACK_NAK) {
         fprintf(stderr, "Neo6M: following configuration failed: class %d, id %d\n", ack->playload[0], ack->playload[1]);
     }
-    delete ack->playload;
-    delete ack;
 }

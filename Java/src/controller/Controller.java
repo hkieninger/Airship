@@ -23,13 +23,11 @@ public class Controller implements Connection.Listener {
 	private Pool<ConfDevice> confPool;
 	private Pool<MeasDevice> measPool;
 	
-	public Controller(InetAddress host) throws IOException {
+	public Controller() {
 		stopping = false;
 		this.listeners = new ArrayList<>();
-		this.host = host;
 		this.confPool = new Pool<>(ConfDevice.class);
 		this.measPool = new Pool<>(MeasDevice.class);
-		restore();
 	}
 	
 	public Pool<ConfDevice> getConfPool() {
@@ -48,7 +46,9 @@ public class Controller implements Connection.Listener {
 		listeners.remove(l);
 	}
 	
-	public void restore() throws IOException {
+	
+	public void connect(InetAddress host) throws IOException {
+		this.host = host;
 		connection = new Connection(host, PORT, measPool, confPool);
 		connection.addListener(this);
 		connection.start();
@@ -56,7 +56,13 @@ public class Controller implements Connection.Listener {
 			l.onConnectionRestored();
 	}
 	
+	public boolean isConnected() {
+		return host != null;
+	}
+	
 	public void close() throws Exception {
+		if(connection == null)
+			return;
 		synchronized(host) {
 			stopping = true;
 			connection.stop();
@@ -87,7 +93,7 @@ public class Controller implements Connection.Listener {
 			for(ControllerListener l : listeners)
 				l.onConnectionLost();
 			try {
-				restore();
+				connect(host);
 			} catch (IOException ioe) {
 				for(ControllerListener l : listeners)
 					l.onError(ioe);
@@ -99,10 +105,6 @@ public class Controller implements Connection.Listener {
 			for(ControllerListener l : listeners)
 				l.onError(e);
 		}
-	}
-	
-	public InetAddress getHost() {
-		return host;
 	}
 
 }
