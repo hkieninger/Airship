@@ -21,19 +21,16 @@ import gui.quarter.StatusQuarter;
 import gui.quarter.VideoQuarter;
 
 public class Frame extends JFrame implements WindowListener, ControllerListener {
-	
+
 	/**
-	 * 
+	 *
 	 */
 	private static final long serialVersionUID = 1L;
 	
 	public static final String DEFAULT_IP = "172.17.72.204";//"192.168.0.27", "172.17.72.204", "192.168.4.1";
-<<<<<<< HEAD
-=======
 	public static final int FRONT_CAM_PORT = 0xCCCE;
 	public static final int BOTTOM_CAM_PORT = 0xCCCD;
->>>>>>> b7d7832f4270efe15ec0900a51c59627acf0d3f1
-	
+
 	private Controller controller;
 	private H264Connection bottomCamera;
 	private JPGConnection frontCamera;
@@ -47,7 +44,7 @@ public class Frame extends JFrame implements WindowListener, ControllerListener 
 			}
 		});
 	}
-	
+
 	public Frame() {
 		super("Control Tower");
 		//window settings
@@ -56,7 +53,7 @@ public class Frame extends JFrame implements WindowListener, ControllerListener 
 		setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
 		addWindowListener(this);
 		setLayout(new GridLayout(2, 2));
-		
+
 		String ip = JOptionPane.showInputDialog("IP of the airship: ", DEFAULT_IP);
 		try {
 			controller = new Controller(InetAddress.getByName(ip));
@@ -65,7 +62,7 @@ public class Frame extends JFrame implements WindowListener, ControllerListener 
 			JOptionPane.showMessageDialog(this, "Connection couldn't be established: " + e.getMessage(), e.getClass().getSimpleName(), JOptionPane.ERROR_MESSAGE);
 			System.exit(1);
 		}
-		
+
 		try {
 			frontCamera = new JPGConnection(controller.getHost(), FRONT_CAM_PORT);
 			bottomCamera = new H264Connection(controller.getHost(), BOTTOM_CAM_PORT);
@@ -74,7 +71,7 @@ public class Frame extends JFrame implements WindowListener, ControllerListener 
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		
+
 		//controll panels
 		add(new ControllQuarter(controller, frontCamera));
 		//Status panels
@@ -83,7 +80,7 @@ public class Frame extends JFrame implements WindowListener, ControllerListener 
 		add(new VideoQuarter(controller, frontCamera, bottomCamera));
 		//Sensor panels
 		add(new SensorQuarter(controller));
-		
+
 		controller.addListener(this);
 	}
 
@@ -106,13 +103,13 @@ public class Frame extends JFrame implements WindowListener, ControllerListener 
 	@Override
 	public void windowClosing(WindowEvent arg0) {
 		Object[] options = { "OK", "CANCEL" };
-		int option = JOptionPane.showOptionDialog(this, "Do you really want to exit?", "bye bye", 
+		int option = JOptionPane.showOptionDialog(this, "Do you really want to exit?", "bye bye",
 				JOptionPane.DEFAULT_OPTION, JOptionPane.WARNING_MESSAGE, null, options, options[0]);
 		if(option == 0) {
 			dispose();
 		}
 	}
-	
+
 	@Override
 	public void windowActivated(WindowEvent arg0) {}
 	@Override
@@ -142,10 +139,10 @@ public class Frame extends JFrame implements WindowListener, ControllerListener 
 	public void onConnectionRestored() {
 		JOptionPane.showMessageDialog(this, "The connection is restored.", "Connection", JOptionPane.INFORMATION_MESSAGE);
 	}
-	
+
 	private void restoreOptionDialog(String message) {
 		Object[] options = { "Restore connection.", "Exit Programm" };
-		int option = JOptionPane.showOptionDialog(this, message +" Which action do you want to perform?", 
+		int option = JOptionPane.showOptionDialog(this, message +" Which action do you want to perform?",
 				"Restart", JOptionPane.DEFAULT_OPTION, JOptionPane.QUESTION_MESSAGE, null, options, options[0]);
 		if(option == 0) {
 			try {
