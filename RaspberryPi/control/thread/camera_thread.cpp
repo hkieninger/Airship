@@ -8,10 +8,12 @@
 #include "camera_thread.h"
 
 #define ACCEPT_TIMEOUT (1 * 1000)
+#define PAUSING_TIME (1000 * 1000)
 
 CameraThread::CameraThread(const std::string &device, uint32_t format, uint32_t width, uint32_t height, uint16_t port) : 
     server(port),
     running(true),
+    pausing(true),
     device(device),
     format(format),
     width(width),
@@ -20,7 +22,12 @@ CameraThread::CameraThread(const std::string &device, uint32_t format, uint32_t 
 CameraThread::~CameraThread() {}
 
 void CameraThread::stopRunning() {
+    pausing = false;
     running = false;
+}
+
+void setPausing(bool on) {
+    pausing = on;
 }
 
 void CameraThread::run() {
@@ -34,9 +41,13 @@ void CameraThread::run() {
                 try {
                     //loop for handling connections
                     while(true) { //exited when socket (closed) exception is thrown
-                        video_buffer *buf = cam.dequeueBuffer();
-                        sendFrame(sock, buf, cam.getWidth(), cam.getHeight());
-                        cam.queueBuffer(buf);
+                        if(pausing) {
+                            usleep(PAUSING_TIME);
+                        } else {
+                            video_buffer *buf = cam.dequeueBuffer();
+                            sendFrame(sock, buf, cam.getWidth(), cam.getHeight());
+                            cam.queueBuffer(buf);
+                        }
                     }
                 } catch(const SocketClosedException &e) {
                     printf("Camera stream (port %x): connection has been closed by client.\n", server.getPort());

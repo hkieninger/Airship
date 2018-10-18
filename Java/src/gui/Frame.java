@@ -6,6 +6,7 @@ import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.io.IOException;
 import java.net.InetAddress;
+import java.net.UnknownHostException;
 
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
@@ -13,8 +14,12 @@ import javax.swing.SwingUtilities;
 
 import controller.Controller;
 import controller.ControllerListener;
+import controller.data.ConfDevice;
+import controller.data.object.ConnectionData.UByte;
+import controller.data.parameter.ConfSensor;
 import controller.video.H264Connection;
 import controller.video.JPGConnection;
+import gui.Menu.MenuListener;
 import gui.quarter.ControllQuarter;
 import gui.quarter.SensorQuarter;
 import gui.quarter.StatusQuarter;
@@ -26,10 +31,12 @@ public class Frame extends JFrame implements WindowListener, ControllerListener 
 	 *
 	 */
 	private static final long serialVersionUID = 1L;
-	
+
 	public static final String DEFAULT_IP = "172.17.72.204";//"192.168.0.27", "172.17.72.204", "192.168.4.1";
 	public static final int FRONT_CAM_PORT = 0xCCCE;
 	public static final int BOTTOM_CAM_PORT = 0xCCCD;
+
+	private InetAddress ip;
 
 	private Controller controller;
 	private H264Connection bottomCamera;
@@ -54,23 +61,17 @@ public class Frame extends JFrame implements WindowListener, ControllerListener 
 		addWindowListener(this);
 		setLayout(new GridLayout(2, 2));
 
-		String ip = JOptionPane.showInputDialog("IP of the airship: ", DEFAULT_IP);
 		try {
-			controller = new Controller(InetAddress.getByName(ip));
-		} catch (IOException e) {
+			ip = InetAddress.getByName(DEFAULT_IP);
+		} catch (UnknownHostException e) {
 			e.printStackTrace();
-			JOptionPane.showMessageDialog(this, "Connection couldn't be established: " + e.getMessage(), e.getClass().getSimpleName(), JOptionPane.ERROR_MESSAGE);
-			System.exit(1);
 		}
 
-		try {
-			frontCamera = new JPGConnection(controller.getHost(), FRONT_CAM_PORT);
-			bottomCamera = new H264Connection(controller.getHost(), BOTTOM_CAM_PORT);
-			frontCamera.start();
-			bottomCamera.start();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+		controller = new Controller();
+
+		frontCamera = new JPGConnection();
+		bottomCamera = new H264Connection();
+
 
 		//controll panels
 		add(new ControllQuarter(controller, frontCamera));
@@ -82,6 +83,67 @@ public class Frame extends JFrame implements WindowListener, ControllerListener 
 		add(new SensorQuarter(controller));
 
 		controller.addListener(this);
+
+		setJMenuBar(new Menu(new MenuListener() {
+
+			@Override
+			public void onConnect() {
+				if(!controller.isConnected()) {
+					try {
+						String input = JOptionPane.showInputDialog("Enter the IP of the Airship: ", ip.getHostAddress());
+						if(input != null) {
+							ip = InetAddress.getByName(input);
+							Thread thread = new Thread(() -> {
+								try {
+									controller.connect(ip);
+									frontCamera.connect(ip, FRONT_CAM_PORT);
+									bottomCamera.connect(ip, BOTTOM_CAM_PORT);
+									frontCamera.start();
+									bottomCamera.start();
+								} catch (IOException e) {
+									e.printStackTrace();
+									JOptionPane.showMessageDialog(null, "connect failed: " + e.getMessage(), e.getClass().getSimpleName(), JOptionPane.ERROR_MESSAGE);
+									System.exit(1);
+								}
+							});
+							thread.start();
+						}
+					} catch (UnknownHostException e) {
+						JOptionPane.showMessageDialog(null, "invalid IP: " + e.getMessage(), e.getClass().getSimpleName(), JOptionPane.ERROR_MESSAGE);
+					}
+				} else {
+					JOptionPane.showMessageDialog(null, "Already connected.", "Info", JOptionPane.INFORMATION_MESSAGE);
+				}
+			}
+
+			@Override
+			public void onFront(boolean enabled) {
+				if(enabled) {
+					UByte enable = new UByte();
+					enable.val = ConfSensor.ENABLE;
+					controller.getConfPool().setValue(ConfDevice.SENSOR, ConfSensor.CAM_FRONT, enable);
+				} else {
+					UByte disable = new UByte();
+					disable.val = ConfSensor.DISABLE;
+					controller.getConfPool().setValue(ConfDevice.SENSOR, ConfSensor.CAM_FRONT, disable);
+				}
+			}
+
+			@Override
+			public void onBottom(boolean enabled) {
+				if(enabled) {
+					UByte enable = new UByte();
+					enable.val = ConfSensor.ENABLE;
+					controller.getConfPool().setValue(ConfDevice.SENSOR, ConfSensor.CAM_BOTTOM, enable);
+				} else {
+					UByte disable = new UByte();
+					disable.val = ConfSensor.DISABLE;
+					controller.getConfPool().setValue(ConfDevice.SENSOR, ConfSensor.CAM_BOTTOM, disable);
+				}
+			}
+
+		}));
+
 	}
 
 	@Override
@@ -137,7 +199,7 @@ public class Frame extends JFrame implements WindowListener, ControllerListener 
 
 	@Override
 	public void onConnectionRestored() {
-		JOptionPane.showMessageDialog(this, "The connection is restored.", "Connection", JOptionPane.INFORMATION_MESSAGE);
+		//JOptionPane.showMessageDialog(this, "The connection is restored.", "Connection", JOptionPane.INFORMATION_MESSAGE);
 	}
 
 	private void restoreOptionDialog(String message) {
@@ -146,7 +208,7 @@ public class Frame extends JFrame implements WindowListener, ControllerListener 
 				"Restart", JOptionPane.DEFAULT_OPTION, JOptionPane.QUESTION_MESSAGE, null, options, options[0]);
 		if(option == 0) {
 			try {
-				controller.restore();
+				controller.connect(ip);
 			} catch (IOException e) {
 				e.printStackTrace();
 				JOptionPane.showMessageDialog(this, "Restore failed with following error: " + e.getMessage(), e.getClass().getSimpleName(), JOptionPane.ERROR_MESSAGE);

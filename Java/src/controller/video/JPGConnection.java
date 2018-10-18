@@ -13,9 +13,13 @@ public class JPGConnection extends VideoConnection {
 	private byte[] buffer;
 	private DataInputStream input;
 	
-	public JPGConnection(InetAddress address, int port) throws IOException {
-		super(address, port);
+	public JPGConnection() {
 		buffer = new byte[0];
+	}
+	
+	@Override
+	public void connect(InetAddress address, int port) throws IOException {
+		super.connect(address, port);
 		input = new DataInputStream(sock.getInputStream());
 	}
 

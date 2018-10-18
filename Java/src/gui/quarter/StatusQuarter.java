@@ -11,7 +11,7 @@ public class StatusQuarter extends StatusPanel {
 		super();
 		controller.addListener(this);
 		controller.getMeasPool().addListener(this);
-		setInformation("Connection established.", 0x00FF00);
+		setInformation("Not connected. Connect via the menu.", 0xFFFFFF);
 	}
 
 }

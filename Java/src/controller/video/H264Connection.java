@@ -14,9 +14,13 @@ public class H264Connection extends VideoConnection {
 	private FFmpegFrameGrabber grabber;
 	private Java2DFrameConverter converter;
 
-	public H264Connection(InetAddress address, int port) throws IOException {
-		super(address, port);
+	public H264Connection() {
 		converter = new Java2DFrameConverter();
+	}
+	
+	@Override
+	public void connect(InetAddress address, int port) throws IOException {
+		super.connect(address, port);
 		grabber = new FFmpegFrameGrabber(sock.getInputStream());
 		grabber.setFormat("h264");
 	}

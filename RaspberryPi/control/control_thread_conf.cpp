@@ -11,9 +11,10 @@ inline void invalidParam(const char *deviceName, int paramNr) {
     fprintf(stderr, "invalid %s configuration paket with param: %d\n", deviceName, paramNr);
 }
 
-ControlThread::ControlThread() : connection(*this), running(true)
-    position(NULL), velocity(NULL) {
-    status.time = 0;
+ControlThread::ControlThread() : connection(*this), running(true) {
+    memset(&position, 0, sizeof(position));
+    memset(&velocity, 0, sizeof(velocity));
+    memset(&status, 0, sizeof(status));
     pthread_mutex_init(&dequeMutex, NULL);
 }
 
@@ -74,7 +75,13 @@ void ControlThread::configureAutopilot(Paket &paket) {
 }
 
 void ControlThread::configureSensor(Paket &paket) {
-    NOT_IMPLEMENTED;
+    if(paket.param == Configuration::CAM_FRONT) {
+        camFront->setPausing(!paket.data[0]);
+    } else if(paket.param == Configuration::CAM_BOTTOM) {
+        camBottom->setPausing(!paket.data[0]);
+    } else {
+        NOT_IMPLEMENTED;
+    }
 }
 
 void ControlThread::handlePaket(Paket &paket) {
@@ -94,7 +101,7 @@ void ControlThread::run() {
 
     leftMotor = new Motor(LEFT_MOTOR_ESC, LEFT_MOTOR_RELAIS);
     rightMotor = new Motor(RIGHT_MOTOR_ESC, RIGHT_MOTOR_RELAIS);
-    leftRudder = new Servo(LEFT_RUDDER_SERVO); 
+    leftRudder = new Servo(LEFT_RUDDER_SERVO);
     rightRudder = new Servo(RIGHT_RUDDER_SERVO);
     topRudder = new Servo(TOP_RUDDER_SERVO);
     steering = new Steering(*leftMotor, *rightMotor, *leftRudder, *rightRudder, *topRudder);
