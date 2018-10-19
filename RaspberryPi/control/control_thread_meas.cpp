@@ -198,7 +198,7 @@ void ControlThread::measureData() {
     }
     if(now - lastAdsSend > ADS_SEND_RATE) {
         lastAdsSend = now;
-        sendAds();
+        sendAds(messurments.voltagePercentage);
     }
     if(now - lastMpuMeas > MPU_MEASUREMENT_RATE) {
         lastMpuMeas = now;
@@ -206,7 +206,7 @@ void ControlThread::measureData() {
     }
     if(now - lastMpuSend > MPU_Send_RATE) {
         lastMpuSend = now;
-        sendMpu();
+        sendMpu(messurments.accel, messurments.gyro);
     }
     if(now - lastBmpMeas > BMP_MEASUREMENT_RATE) {
         lastBmpMeas = now;
@@ -214,7 +214,7 @@ void ControlThread::measureData() {
     }
     if(now - lastBmpSend > BMP_SEND_RATE) {
         lastBmpSend = now;
-        sendBmp();
+        sendBmp(messurments.pres);
     }
     if(now - lastQmcMeas > QMC_MEASUREMENT_RATE) {
         lastQmcMeas = now;
@@ -222,7 +222,7 @@ void ControlThread::measureData() {
     }
     if(now - lastQmcSend > QMC_SEND_RATE) {
         lastQmcSend = now;
-        sendQmc();
+        sendQmc(messurments.mag);
     }
     if(now - lastHcsrMeas > HCSR_MEASUREMENT_RATE) {
         lastHcsrMeas = now;
@@ -230,7 +230,7 @@ void ControlThread::measureData() {
     }
     if(now - lastHcsrSend > HCSR_SEND_RATE) {
         lastHcsrSend = now;
-        sendHcsr();
+        sendHcsr(messurments.distFront, messurments.distBotton);
     }
     if(now - lastGPSSend > GPS_SEND_RATE) {
         lastGPSSend = now;
