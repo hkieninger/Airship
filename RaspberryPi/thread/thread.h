@@ -11,11 +11,13 @@ class Thread {
     pthread_t thread;
     static void *helperFunc(void *threadInstance);
     bool detached, alive;
+    char name[16];
 public:
     /*
      * make sure to call join or detach if you don't want a zombie thread
+     * max length of @name is 16 chars inklusive \0
      */
-    Thread();
+    Thread(const char *name = NULL);
 
     virtual ~Thread();
 

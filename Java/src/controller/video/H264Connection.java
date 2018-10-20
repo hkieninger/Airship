@@ -15,7 +15,9 @@ public class H264Connection extends VideoConnection {
 	private Java2DFrameConverter converter;
 
 	public H264Connection() {
+		super();
 		converter = new Java2DFrameConverter();
+		setName("H264 Connection");
 	}
 	
 	@Override

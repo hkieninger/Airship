@@ -14,7 +14,9 @@ public class JPGConnection extends VideoConnection {
 	private DataInputStream input;
 	
 	public JPGConnection() {
+		super();
 		buffer = new byte[0];
+		setName("JPG Connection");
 	}
 	
 	@Override

@@ -37,7 +37,7 @@ public class Menu extends JMenuBar implements ItemListener, ActionListener {
 		bottom = new JCheckBoxMenuItem("bottom camera");
 		bottom.addItemListener(this);
 		menuV.add(bottom);
-		front = new JCheckBoxMenuItem("bottom camera");
+		front = new JCheckBoxMenuItem("front camera");
 		front.addItemListener(this);
 		menuV.add(front);
 		

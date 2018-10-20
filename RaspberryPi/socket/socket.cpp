@@ -47,6 +47,8 @@ void Socket::sendAll(const void *buf, int len) {
                 throw InterruptedException("signal occured: " + std::string(strerror(errno)));
             else if(errno == ECONNRESET)
                 throw SocketClosedException("socket has been reset by peer");
+            else if(errno == EPIPE)
+                throw SocketClosedException("socket has been closed");
             else
                 throw SocketException("send on socket: " + std::string(strerror(errno)));
         }
@@ -61,6 +63,8 @@ void *Socket::recvAll(void *buf, int len) {
         if(ret < 0) {
             if(errno == EINTR)
                 throw InterruptedException("signal occured: " + std::string(strerror(errno)));
+            else if(errno == EAGAIN || errno == EWOULDBLOCK)
+                throw TimeoutException("receive on socket timed out: " + std::string(strerror(errno)));
             else
                 throw SocketException("receive on socket: " + std::string(strerror(errno)));
         }
@@ -69,6 +73,13 @@ void *Socket::recvAll(void *buf, int len) {
         received += ret;
     }
     return buf;
+}
+
+void Socket::setRecvTimeout(uint32_t millis) {
+    struct timeval tv;
+    tv.tv_sec = millis / 1000;
+    tv.tv_usec = millis % 1000 * 1000;
+    setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, (const char*) &tv, sizeof(tv));
 }
 
 std::string Socket::getRemoteIPString() {

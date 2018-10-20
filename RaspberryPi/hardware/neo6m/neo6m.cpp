@@ -50,6 +50,7 @@ struct UBXMsg &Neo6M::receiveUBXMessage(struct UBXMsg &msg) {
     readAll(&msg.cls, 1);
     readAll(&msg.id, 1);
     readAll(&msg.length, 2);
+    printf("id: %d, cls: %d, message length: %d\n", msg.id, msg.cls, msg.length); //DEBUG
     readAll(msg.playload, msg.length);
     readAll(&checksum, 2);
     if(checksum != calcUBXChecksum(msg))

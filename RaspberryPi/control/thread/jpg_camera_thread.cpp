@@ -66,8 +66,9 @@ static unsigned long yuyv2jpg(uint32_t width, uint32_t height, unsigned char *yu
 	return size;
 }
 
-JpgCameraThread::JpgCameraThread(const std::string &device, uint32_t width, uint32_t height, uint16_t port) : 
-    CameraThread(device, V4L2_PIX_FMT_YUYV, width, height, port), jpeg_buffer(NULL), jpeg_buffer_size(0) {}
+JpgCameraThread::JpgCameraThread(const std::string &device, uint32_t width, uint32_t height, uint16_t port, Connection &connection) : 
+    CameraThread(device, V4L2_PIX_FMT_YUYV, width, height, port, connection), jpeg_buffer(NULL), jpeg_buffer_size(0) {
+}
 
 JpgCameraThread::~JpgCameraThread() {}
 

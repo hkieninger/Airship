@@ -36,6 +36,7 @@ public:
 
     /*
      * sends len bytes from the buffer
+     * if the socket has been closed by the peer a SocketClosedException is thrown
      */
     void sendAll(const void *buf, int len);
 
@@ -45,6 +46,12 @@ public:
      * @return: buf
      */
     void *recvAll(void *buf, int len);
+
+    /*
+     * sets a timeout for receive operations
+     * @millis: the timeout in milliseconds
+     */
+    void setRecvTimeout(uint32_t millis);
 
     /*
      * returns the remote IP address as string

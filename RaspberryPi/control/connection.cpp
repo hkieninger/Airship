@@ -7,11 +7,13 @@
 #include <stdexcept>
 
 #include "../socket/socket_exception.h"
+#include "../thread/interrupted_exception.h"
 #include "control_thread.h"
 
 #include "connection.h"
 
-#define CONNECTION_LOST_TIME (5 * 1000 * 1000)
+#define CONNECTION_LOST_TIME (10 * 1000 * 1000)
+#define RECEIVE_TIMEOUT (CONNECTION_LOST_TIME / 1000)
 
 static uint64_t micros() {
     struct timeval tv;
@@ -53,16 +55,24 @@ void Connection::sendEchoReply() {
 bool Connection::sendPaket(Paket &paket) {
     if(!isConnected())
         return false;
-    pthread_mutex_lock(&sendMutex);
-    uint16_t sync = htons(SYNC);
-    sock->sendAll(&sync, 2);
-    sock->sendAll(&paket.device, 1);
-    sock->sendAll(&paket.param, 1);
-    uint16_t bigendian = htons(paket.len);
-    sock->sendAll(&bigendian, 2);
-    sock->sendAll(paket.data, paket.len);
-    pthread_mutex_unlock(&sendMutex);
-    return true;
+    try {
+        pthread_mutex_lock(&sendMutex);
+        uint16_t sync = htons(SYNC);
+        sock->sendAll(&sync, 2);
+        sock->sendAll(&paket.device, 1);
+        sock->sendAll(&paket.param, 1);
+        uint16_t bigendian = htons(paket.len);
+        sock->sendAll(&bigendian, 2);
+        sock->sendAll(paket.data, paket.len);
+        pthread_mutex_unlock(&sendMutex);
+        return true;
+    } catch(const SocketException &e) {
+        pthread_mutex_unlock(&sendMutex);
+        return false;
+    } catch(const InterruptedException &e) {
+        pthread_mutex_unlock(&sendMutex);
+        return false;
+    }
 }
 
 bool Connection::isConnected() {
@@ -78,6 +88,7 @@ void Connection::loop() {
     while(true) { //exited when interrupted exception is thrown
         Socket connectedSocket = server.acceptConnection();
         sock = &connectedSocket;
+        sock->setRecvTimeout(RECEIVE_TIMEOUT);
         printf("client %s has connected\n", sock->getRemoteIPString().c_str());
         try {
             //loop for handling connections
@@ -98,8 +109,10 @@ void Connection::loop() {
                     control.pushPaket(paket);
                 }
             }
+        } catch(const TimeoutException &e) {
+            fprintf(stderr, "Connection to client has been lost: %s\n", e.what());
         } catch(const SocketClosedException &e) {
-            printf("Connection has been closed by client.\n");
+            printf("Connection has been closed by client: %s\n", e.what());
         } catch(const SocketException &e) {
             fprintf(stderr, "The following socket exception has occured: %s\n", e.what());
         }

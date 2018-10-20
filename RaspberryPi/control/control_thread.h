@@ -50,6 +50,13 @@ class ControlThread: public Neo6MThreadListener, public Thread {
     struct GPSGeodeticVel velocity;
     struct GPSFixStatus status;
 
+    uint64_t lastAdsMeas = 0;
+    uint64_t lastMpuMeas = 0;
+    uint64_t lastBmpMeas = 0;
+    uint64_t lastQmcMeas = 0;
+    uint64_t lastHcsrMeas = 0;
+    uint64_t lastGPSSend = 0;
+
     void configureRpi(Paket &paket);
     void configureActuator(Paket &paket);
     void configureSteering(Paket &paket);
@@ -66,7 +73,7 @@ class ControlThread: public Neo6MThreadListener, public Thread {
     void measureData();
 
     void sendGPS();
-    void handleNavMessage();
+    void handleNavMessage(struct UBXMsg &msg);
 public:
     ControlThread();
     virtual ~ControlThread();
@@ -74,9 +81,9 @@ public:
     void pushPaket(Paket *paket);
     virtual void run();
 
-    virtual void onNMEAMessage(std::string *nmea, bool valid);
-    virtual void onUBXMessage(struct UBXMsg *msg, bool valid);
-    virtual void onACKMessage(struct UBXMsg *ack, bool valid);
+    virtual void onNMEAMessage(std::string &nmea, bool valid);
+    virtual void onUBXMessage(struct UBXMsg &msg, bool valid);
+    virtual void onACKMessage(struct UBXMsg &ack, bool valid);
 
     Connection &getConnection() {
         return connection;

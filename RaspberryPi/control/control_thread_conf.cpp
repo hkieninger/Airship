@@ -11,7 +11,7 @@ inline void invalidParam(const char *deviceName, int paramNr) {
     fprintf(stderr, "invalid %s configuration paket with param: %d\n", deviceName, paramNr);
 }
 
-ControlThread::ControlThread() : connection(*this), running(true) {
+ControlThread::ControlThread() : Thread("control thread"), connection(*this), running(true) {
     memset(&position, 0, sizeof(position));
     memset(&velocity, 0, sizeof(velocity));
     memset(&status, 0, sizeof(status));
@@ -95,6 +95,8 @@ void ControlThread::handlePaket(Paket &paket) {
     }
 }
 
+#include "../hardware/neo6m/neo6m_exception.h" //DEBUG
+
 void ControlThread::run() {
     ads = new Ads1115();
     ads->setInputPin(ADS_INPUT_PIN);
@@ -112,14 +114,18 @@ void ControlThread::run() {
     hcFront = new Hcsr04(FRONT_HCSR04_TRIG, FRONT_HCSR04_ECHO);
     hcBottom = new Hcsr04(BOTTOM_HCSR04_TRIG, BOTTOM_HCSR04_ECHO);
 
-    camBottom = new CameraThread(CSI_CAMERA, V4L2_PIX_FMT_H264, CSI_WIDTH, CSI_HEIGHT, CSI_PORT); //constants defined in pin.h
-    camFront = new JpgCameraThread(USB_CAMERA, USB_WIDTH, USB_HEIGHT, USB_PORT); //constants defined in pin.h
+    camBottom = new CameraThread(CSI_CAMERA, V4L2_PIX_FMT_H264, CSI_WIDTH, CSI_HEIGHT, CSI_PORT, connection); //constants defined in pin.h
+    camFront = new JpgCameraThread(USB_CAMERA, USB_WIDTH, USB_HEIGHT, USB_PORT, connection); //constants defined in pin.h
 
-    neo6m = new Neo6MThread(*this); //implementation of callbacks in control_thread_meas.cpp
-    neo6m->setMessageRate(NEO6M_CLS_NAV, NEO6M_NAV_POSLLH, 1);
-    neo6m->setMessageRate(NEO6M_CLS_NAV, NEO6M_NAV_VELNED, 1);
-    neo6m->setMessageRate(NEO6M_CLS_NAV, NEO6M_NAV_STATUS, 1);
-    neo6m->setMessageRate(NEO6M_CLS_NAV, NEO6M_NAV_SVINFO, 1);
+    try {
+        neo6m = new Neo6MThread(*this); //implementation of callbacks in control_thread_meas.cpp
+        neo6m->setMessageRate(NEO6M_CLS_NAV, NEO6M_NAV_POSLLH, 1);
+        neo6m->setMessageRate(NEO6M_CLS_NAV, NEO6M_NAV_VELNED, 1);
+        neo6m->setMessageRate(NEO6M_CLS_NAV, NEO6M_NAV_STATUS, 1);
+        neo6m->setMessageRate(NEO6M_CLS_NAV, NEO6M_NAV_SVINFO, 1);
+    } catch(const Neo6MException &e) {
+        fprintf(stderr, "A neo6m exception was thrown: %s\n", e.what());
+    }
 
     //start the sub threads
     camBottom->start();

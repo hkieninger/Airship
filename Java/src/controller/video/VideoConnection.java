@@ -5,6 +5,7 @@ import java.io.EOFException;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.Socket;
+import java.net.SocketException;
 import java.util.ArrayList;
 
 public abstract class VideoConnection extends Thread {
@@ -17,6 +18,7 @@ public abstract class VideoConnection extends Thread {
 	public VideoConnection() {
 		running = true;
 		listeners = new ArrayList<>();
+		setName("Video Connection");
 	}
 	
 	public void connect(InetAddress address, int port) throws IOException {
@@ -37,8 +39,10 @@ public abstract class VideoConnection extends Thread {
 		}
 	}
 	
-	public void stopRunning() {
+	public void stopRunning() throws IOException {
 		running = false;
+		if(sock != null)
+			sock.close();
 	}
 	
 	@Override
@@ -52,8 +56,9 @@ public abstract class VideoConnection extends Thread {
 			while(running) {
 				distributeFrame(loop());
 			}
-		} catch(EOFException e) {
-			//normal
+		} catch(EOFException | SocketException e) {
+			//normal if eoef or socket close
+			System.out.println("video connection terminating: " + e.getCause());
 		} catch(IOException e) {
 			e.printStackTrace();
 		} finally {
@@ -71,6 +76,7 @@ public abstract class VideoConnection extends Thread {
 	
 	protected void end() throws IOException {
 		sock.close();
+		System.out.println("socket has been closed");
 	}
 	
 	public static interface Listener {

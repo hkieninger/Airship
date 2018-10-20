@@ -78,8 +78,6 @@ enum MeasSensor {
     COMPASS,
     GPS,
     BARO,
-    CAM_FRONT,
-    CAM_BOTTOM,
     DIST_FRONT,
     DIST_BOTTOM,
     KALMAN

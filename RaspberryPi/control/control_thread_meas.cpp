@@ -10,7 +10,7 @@
 #include "makros.h"
 #include "control_thread.h"
 
-uint64_t ControlThread::micros() {
+static uint64_t micros() {
     struct timeval tv;
     if(gettimeofday(&tv, NULL) < 0)
         throw std::runtime_error("get time of day: " + std::string(strerror(errno)));
@@ -141,13 +141,6 @@ void ControlThread::measureBmp() {
 #define HCSR_MEASUREMENT_RATE (500 * 1000)
 #define GPS_SEND_RATE (1000 * 1000) //corresponds to the default measurement rate
 
-uint64_t ControlThread::lastAdsMeas = 0;
-uint64_t ControlThread::lastMpuMeas = 0;
-uint64_t ControlThread::lastBmpMeas = 0;
-uint64_t ControlThread::lastQmcMeas = 0;
-uint64_t ControlThread::lastHcsrMeas = 0;
-uint64_t ControlThread::lastGPSSend = 0;
-
 void ControlThread::measureData() {
     uint64_t now = micros();
 
@@ -201,9 +194,6 @@ void ControlThread::sendGPS() {
     paket.len = sizeof(data); 
     paket.data = &data[0];
     connection.sendPaket(paket);
-
-    position = NULL;
-    velocity = NULL;
 }
 
 void ControlThread::onNMEAMessage(std::string &nmea, bool valid) {
@@ -211,14 +201,14 @@ void ControlThread::onNMEAMessage(std::string &nmea, bool valid) {
         struct Paket paket;
         paket.device = Measurement::RPI;
         paket.param = Measurement::INFO;
-        paket.len = nmea->length() - 1; //+1 for \0, -2 to remove \r\n -> -1
-        paket.data = (uint8_t *) nmea->c_str();
+        paket.len = nmea.length() - 1; //+1 for \0, -2 to remove \r\n -> -1
+        paket.data = (uint8_t *) nmea.c_str();
         connection.sendPaket(paket);
     }
 }
 
 void ControlThread::handleNavMessage(struct UBXMsg &msg) {
-    switch(msg->id) {
+    switch(msg.id) {
         case NEO6M_NAV_POSLLH:
             memcpy(&position, &msg.playload, sizeof(position));
             break;
@@ -226,11 +216,11 @@ void ControlThread::handleNavMessage(struct UBXMsg &msg) {
             memcpy(&velocity, &msg.playload, sizeof(velocity));
             break;
         case NEO6M_NAV_STATUS:
-            status.time = ((uint32_t *) msg->playload)[0];
-            status.gpsFix = msg->playload[4];
-            status.dgps = msg->playload[5] & 0x02;
-            status.fixValid = msg->playload[5] & 0x01;
-            status.timeValid = msg->playload[5] & 0x04 && msg->playload[5] & 0x08;
+            status.time = ((uint32_t *) msg.playload)[0];
+            status.gpsFix = msg.playload[4];
+            status.dgps = msg.playload[5] & 0x02;
+            status.fixValid = msg.playload[5] & 0x01;
+            status.timeValid = msg.playload[5] & 0x04 && msg.playload[5] & 0x08;
             break;
         case NEO6M_NAV_SVINFO:
             status.satellites = msg.playload[4];
@@ -242,7 +232,7 @@ void ControlThread::handleNavMessage(struct UBXMsg &msg) {
 
 void ControlThread::onUBXMessage(struct UBXMsg &msg, bool valid) {
     if(valid) {
-        switch(msg->cls) {
+        switch(msg.cls) {
             case NEO6M_CLS_NAV:
                 handleNavMessage(msg);
                 break;
@@ -253,7 +243,7 @@ void ControlThread::onUBXMessage(struct UBXMsg &msg, bool valid) {
 }
 
 void ControlThread::onACKMessage(struct UBXMsg &ack, bool valid) {
-    if(valid && ack->id == NEO6M_ACK_NAK) {
-        fprintf(stderr, "Neo6M: following configuration failed: class %d, id %d\n", ack->playload[0], ack->playload[1]);
+    if(valid && ack.id == NEO6M_ACK_NAK) {
+        fprintf(stderr, "Neo6M: following configuration failed: class %d, id %d\n", ack.playload[0], ack.playload[1]);
     }
 }

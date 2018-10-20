@@ -34,7 +34,7 @@ control_thread_conf.o: control_thread_conf.cpp control_thread.h pin.h ../thread/
 control_thread_meas.o: control_thread_meas.cpp control_thread.h pin.h ../thread/thread.h connection.h makros.h $(THREAD) $(ALGORITHM) $(HARDWARE)
 	$(CC) -c $(CFLAGS) $<
 
-connection.o: connection.cpp connection.h control_thread.h $(SOCKET)
+connection.o: connection.cpp connection.h control_thread.h ../thread/interrupted_exception.h $(SOCKET)
 	$(CC) -c $(CFLAGS) $<
 
 clean:
