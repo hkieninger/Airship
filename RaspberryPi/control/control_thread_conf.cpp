@@ -103,7 +103,7 @@ void ControlThread::run() {
 
     leftMotor = new Motor(LEFT_MOTOR_ESC, LEFT_MOTOR_RELAIS);
     rightMotor = new Motor(RIGHT_MOTOR_ESC, RIGHT_MOTOR_RELAIS);
-    leftRudder = new Servo(LEFT_RUDDER_SERVO); 
+    leftRudder = new Servo(LEFT_RUDDER_SERVO);
     rightRudder = new Servo(RIGHT_RUDDER_SERVO);
     topRudder = new Servo(TOP_RUDDER_SERVO);
     steering = new Steering(*leftMotor, *rightMotor, *leftRudder, *rightRudder, *topRudder);

@@ -27,7 +27,7 @@ class ControlThread: public Neo6MThreadListener, public Thread {
     pthread_mutex_t dequeMutex;
 
     bool running;
-    
+
     //the hardware
     //actuators
     Motor *leftMotor, *rightMotor;
