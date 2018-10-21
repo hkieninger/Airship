@@ -171,29 +171,33 @@ void ControlThread::measureData() {
 }
 
 void ControlThread::sendGPS() {
-    struct Paket paket;
-    paket.device = Measurement::SENSOR;
-    paket.param = Measurement::GPS;
+    if(status.fixValid && status.timeValid) {
+        struct Paket paket;
+        paket.device = Measurement::SENSOR;
+        paket.param = Measurement::GPS;
 
-    //           lat, long alt         haccur, vaccur         vel: north, east, down    heading           satellites
-    uint8_t data[sizeof(int32_t) * 3 + sizeof(uint32_t) * 2 + sizeof(int32_t) * 3 +     sizeof(int32_t) + sizeof(uint8_t)];
+        printf("lat: %d, long: %d\n", position.lat, position.lon);
 
-    int32_t *dataInt32 = (int32_t *) &data[0];
-    dataInt32[0] = bswap_32(position.lat);
-    dataInt32[1] = bswap_32(position.lon);
-    dataInt32[2] = bswap_32(position.has);
-    dataInt32[3] = bswap_32(position.haccuracy);
-    dataInt32[4] = bswap_32(position.vaccuracy);
-    dataInt32[5] = bswap_32(velocity.north);
-    dataInt32[6] = bswap_32(velocity.east);
-    dataInt32[7] = bswap_32(velocity.down);
-    dataInt32[8] = bswap_32(velocity.heading);
+        //           lat, long alt         haccur, vaccur         vel: north, east, down    heading           satellites
+        uint8_t data[sizeof(int32_t) * 3 + sizeof(uint32_t) * 2 + sizeof(int32_t) * 3 +     sizeof(int32_t) + sizeof(uint8_t)];
 
-    data[sizeof(data)-1] = status.satellites;
+        int32_t *dataInt32 = (int32_t *) &data[0];
+        dataInt32[0] = bswap_32(position.lat);
+        dataInt32[1] = bswap_32(position.lon);
+        dataInt32[2] = bswap_32(position.has);
+        dataInt32[3] = bswap_32(position.haccuracy);
+        dataInt32[4] = bswap_32(position.vaccuracy);
+        dataInt32[5] = bswap_32(velocity.north);
+        dataInt32[6] = bswap_32(velocity.east);
+        dataInt32[7] = bswap_32(velocity.down);
+        dataInt32[8] = bswap_32(velocity.heading);
 
-    paket.len = sizeof(data); 
-    paket.data = &data[0];
-    connection.sendPaket(paket);
+        data[sizeof(data)-1] = status.satellites;
+
+        paket.len = sizeof(data); 
+        paket.data = &data[0];
+        connection.sendPaket(paket);
+    }
 }
 
 void ControlThread::onNMEAMessage(std::string &nmea, bool valid) {
@@ -210,10 +214,10 @@ void ControlThread::onNMEAMessage(std::string &nmea, bool valid) {
 void ControlThread::handleNavMessage(struct UBXMsg &msg) {
     switch(msg.id) {
         case NEO6M_NAV_POSLLH:
-            memcpy(&position, &msg.playload, sizeof(position));
+            memcpy(&position, msg.playload, sizeof(position));
             break;
         case NEO6M_NAV_VELNED: 
-            memcpy(&velocity, &msg.playload, sizeof(velocity));
+            memcpy(&velocity, msg.playload, sizeof(velocity));
             break;
         case NEO6M_NAV_STATUS:
             status.time = ((uint32_t *) msg.playload)[0];

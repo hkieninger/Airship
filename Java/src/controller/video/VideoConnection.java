@@ -58,7 +58,6 @@ public abstract class VideoConnection extends Thread {
 			}
 		} catch(EOFException | SocketException e) {
 			//normal if eoef or socket close
-			System.out.println("video connection terminating: " + e.getCause());
 		} catch(IOException e) {
 			e.printStackTrace();
 		} finally {
@@ -76,7 +75,6 @@ public abstract class VideoConnection extends Thread {
 	
 	protected void end() throws IOException {
 		sock.close();
-		System.out.println("socket has been closed");
 	}
 	
 	public static interface Listener {

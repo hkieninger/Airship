@@ -8,6 +8,8 @@
 #include "gpio_exception.h"
 #include "uart_dev.h"
 
+//#define DEBUG 1
+
 /*
  * wrapper functions of wiringPi
  */
@@ -37,6 +39,11 @@ unsigned char UARTDev::getChar() {
     int c = serialGetchar(fd);
     if(c < 0)
          throw UARTException("reading from UART: " + std::string(strerror(errno)));
+
+    #ifdef DEBUG
+    printf("read character: %c, %X\n", c, c);
+    #endif
+
     return c;
 }
 
@@ -52,6 +59,15 @@ void *UARTDev::readAll(void *buf, size_t count) {
             throw UARTException("reading from UART: " + std::string(strerror(errno)));
         readed += ret;
     }
+
+    #ifdef DEBUG
+    printf("read characters:");
+    for(size_t i = 0; i < count; i++) {
+        printf(" %c, %X |", ((char *) buf)[i], ((char *) buf)[i]);
+    }
+    printf("\n");
+    #endif
+
     return buf;
 }
 

@@ -59,6 +59,7 @@ void CameraThread::run() {
                 } catch(const SocketException &e) {
                     fprintf(stderr, "Camera stream (port %X): the following socket exception has occured: %s\n", server.getPort(), e.what());
                 }
+                pausing = true;
             } catch(const TimeoutException &t) {}
         }
     } catch(const InterruptedException &e) {

@@ -117,20 +117,17 @@ void ControlThread::run() {
     camBottom = new CameraThread(CSI_CAMERA, V4L2_PIX_FMT_H264, CSI_WIDTH, CSI_HEIGHT, CSI_PORT, connection); //constants defined in pin.h
     camFront = new JpgCameraThread(USB_CAMERA, USB_WIDTH, USB_HEIGHT, USB_PORT, connection); //constants defined in pin.h
 
-    try {
-        neo6m = new Neo6MThread(*this); //implementation of callbacks in control_thread_meas.cpp
-        neo6m->setMessageRate(NEO6M_CLS_NAV, NEO6M_NAV_POSLLH, 1);
-        neo6m->setMessageRate(NEO6M_CLS_NAV, NEO6M_NAV_VELNED, 1);
-        neo6m->setMessageRate(NEO6M_CLS_NAV, NEO6M_NAV_STATUS, 1);
-        neo6m->setMessageRate(NEO6M_CLS_NAV, NEO6M_NAV_SVINFO, 1);
-    } catch(const Neo6MException &e) {
-        fprintf(stderr, "A neo6m exception was thrown: %s\n", e.what());
-    }
+    neo6m = new Neo6MThread(*this); //implementation of callbacks in control_thread_meas.cpp
+    neo6m->enableNMEAMessage("RMC");
+    neo6m->setMessageRate(NEO6M_CLS_NAV, NEO6M_NAV_POSLLH, 1);
+    neo6m->setMessageRate(NEO6M_CLS_NAV, NEO6M_NAV_VELNED, 1);
+    neo6m->setMessageRate(NEO6M_CLS_NAV, NEO6M_NAV_STATUS, 1);
+    neo6m->setMessageRate(NEO6M_CLS_NAV, NEO6M_NAV_SVINFO, 1);
 
     //start the sub threads
     camBottom->start();
     camFront->start();
-    neo6m->start();
+    //neo6m starts itself in the constructor
 
     printf("Hardware has been initialised successfully.\n");
     //the control loop of the zeppelin
@@ -155,11 +152,11 @@ void ControlThread::run() {
     //stop the sub threads and wait for them to terminate
     camBottom->stopRunning();
     camFront->stopRunning();
-    neo6m->stopRunning();
+    //neo6m stops itself in the destructor
 
     camBottom->join();
     camFront->join();
-    neo6m->join();
+    //neo6m joins itself in the destructor
 
     delete neo6m;
 
