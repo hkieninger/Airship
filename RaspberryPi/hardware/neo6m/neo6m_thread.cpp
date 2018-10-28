@@ -25,7 +25,7 @@ Neo6MThread::Neo6MThread(Neo6MThreadListener &listener, const std::string &seria
 
     start(); //start the thread
 
-    clearConfiguration();
+    //clearConfiguration();
     //loadConfiguration();
     setSBAS(true);
     //setProtocol(UBX_AND_NMEA); default
@@ -56,11 +56,11 @@ Neo6MThread::Neo6MThread(Neo6MThreadListener &listener, const std::string &seria
 }
 
 Neo6MThread::~Neo6MThread() {
-    /* //reset the configuration to default
-    clearConfiguration();
-    loadConfiguration();
+    //reset the configuration to default
+    //clearConfiguration();
+    //loadConfiguration();
     //poweroff the device for saving power
-    powerOff(0); */
+    //powerOff(0);
 
     running = false;
     join();
@@ -89,7 +89,6 @@ void Neo6MThread::run() {
             uint8_t lastByte = getChar();
             uint8_t byte = getChar();
             while(((lastByte | byte << 8) != UBX_SYNC) && (lastByte != '$' || byte != 'G')) {
-                //printf("skipping byte %X, lastByte %X\n", byte, lastByte); //DEBUG
                 lastByte = byte;
                 byte = getChar();
             }
@@ -111,10 +110,6 @@ void Neo6MThread::run() {
                 //read the ending
                 str.push_back(getChar()); // \r
                 str.push_back(getChar()); // \n
-                
-                //DEBUG
-                if(str[str.length() - 1] != '\n')
-                    printf("NMEA error\n");
 
                 //call the callback
                 listener.onNMEAMessage(str, valid);
@@ -132,12 +127,6 @@ void Neo6MThread::run() {
                 bool valid = (checksum == calcUBXChecksum(msg));
 
                 //other thread is waiting for the message?
-
-                //DEBUG
-                if(msg.cls == NEO6M_CLS_ACK) {
-                    printf("received ack: for cls: %X, id: %X\n", msg.playload[0], msg.playload[1]);
-                }
-
                 pthread_mutex_lock(&queueMutex);
                 if(!waitQueue.empty()) {
                     struct CondWaitUBX *wait = waitQueue.front();
@@ -204,7 +193,6 @@ void Neo6MThread::sendUBXMsg(const struct UBXMsg &msg) {
     writeAll(msg.playload, msg.length);
     writeAll(&checksum, 2);
     pthread_mutex_unlock(&sendMutex);
-    printf("send cls: %X, id: %X\n", msg.cls, msg.id); //DEBUG
 }
 
 #define WAIT_TIMEOUT_FACTOR 5
@@ -396,7 +384,9 @@ void Neo6MThread::sendNMEAMessage(const std::string &msg) {
     uint8_t checksum = calcNMEAChecksum(msg);
     if(snprintf(buffer, sizeof(buffer), "$%s*%.2X\r\n", msg.c_str(), checksum) != (int) (sizeof(buffer) - 1))
         throw std::runtime_error("creating NMEA message: " + std::string(strerror(errno)));
+    pthread_mutex_lock(&sendMutex);
     writeAll(buffer, sizeof(buffer)-1);
+    pthread_mutex_unlock(&sendMutex);
 }
 
 uint8_t Neo6MThread::calcNMEAChecksum(const std::string &msg) {

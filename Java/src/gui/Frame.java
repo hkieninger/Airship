@@ -96,10 +96,8 @@ public class Frame extends JFrame implements WindowListener, ControllerListener 
 							Thread thread = new Thread(() -> {
 								try {
 									controller.connect(ip);
-									frontCamera.connect(ip, FRONT_CAM_PORT);
-									bottomCamera.connect(ip, BOTTOM_CAM_PORT);
-									frontCamera.start();
-									bottomCamera.start();
+									frontCamera.start(ip, FRONT_CAM_PORT);
+									bottomCamera.start(ip, BOTTOM_CAM_PORT);
 								} catch (IOException e) {
 									e.printStackTrace();
 									JOptionPane.showMessageDialog(null, "connect failed: " + e.getMessage(), e.getClass().getSimpleName(), JOptionPane.ERROR_MESSAGE);

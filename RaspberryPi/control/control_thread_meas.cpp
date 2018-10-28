@@ -9,9 +9,6 @@
 
 #include "makros.h"
 #include "control_thread.h"
-#include "messurments.h"
-
-Messurments messurments;
 
 static uint64_t micros() {
     struct timeval tv;
@@ -35,7 +32,7 @@ static float bswap_float(float f) {
 static int8_t voltage2percentage(float voltage) {
     //calculate the voltage of the battery
     voltage = voltage * (67.3f + 224) / 67.3f; //firt resistor has 224 kOhm, second resistor has 67.3 kOhm
-
+    
     /*
     //calculate the voltage for one cell
     voltage /= 2;
@@ -54,18 +51,13 @@ static int8_t voltage2percentage(float voltage) {
     function += 7696.5308f * voltage;
     return roundf(function);
     */
-
+    
     return roundf((100 * voltage - 620) / 2.2f); //3.1 V per cell considered as 0%, 4.2V per cell considered as 100%
 }
 
 void ControlThread::measureAds() {
     float voltage = ads->getSingleShot();
     int8_t percent = voltage2percentage(voltage);
-    messurments.voltagePercentage = percent;
-
-}
-
-void ControlThread::sendAds(float percent) {
     struct Paket paket;
     paket.device = Measurement::SENSOR;
     paket.param = Measurement::BATTERY;
@@ -74,19 +66,11 @@ void ControlThread::sendAds(float percent) {
     connection.sendPaket(paket);
 }
 
-
 void ControlThread::measureMpu() {
     mpu->getTemperature(); //TODO: send temperature
     float accel[3], gyro[3];
-  	mpu->getAccel(accel);
-  	mpu->getGyro(gyro);
-    //change endianess to network order
-    memcpy(messurments.gyro, gyro, sizeof(gyro));
-    memcpy(messurments.accel, accel, sizeof(accel));
-    }
-}
-
-void ControlThread::sendMpu(float accel[3], float gyro[3]) {
+	mpu->getAccel(accel);
+	mpu->getGyro(gyro);
     //change endianess to network order
     for(int i = 0; i < 3; i++) {
         accel[i] = bswap_float(accel[i]);
@@ -107,11 +91,7 @@ void ControlThread::sendMpu(float accel[3], float gyro[3]) {
 
 void ControlThread::measureQmc() {
     float mag[3];
-	  qmc->getMag(mag);
-    memcpy(messurments.mag, mag, sizeof(mag));
-}
-
-void ControlThread::sendQmc(float mag[3]) {
+	qmc->getMag(mag);
     //change endianess to network order
     for(int i = 0; i < 3; i++) {
         mag[i] = bswap_float(mag[i]);
@@ -125,32 +105,26 @@ void ControlThread::sendQmc(float mag[3]) {
 }
 
 void ControlThread::measureHcsr() {
-    messurments.distFront = hcFront->getMedian();
-    messurments.distBotton = hcBottom->getMedian();
-}
-
-void ControlThread::sendHcsr(int16_t distFront, int16_t distBotton) {
     int16_t dist;
     struct Paket paket;
     paket.device = Measurement::SENSOR;
     paket.len = sizeof(int16_t);
     paket.data = (uint8_t *) &dist;
     //send front distance
-    dist = bswap_16(distFront);
+    dist = hcFront->getMedian();
+    dist = bswap_16(dist);
     paket.param = Measurement::DIST_FRONT;
     connection.sendPaket(paket);
     //send bottom distance;
-    dist = bswap_16(distBotton);
+    dist = hcBottom->getMedian();
+    dist = bswap_16(dist);
     paket.param = Measurement::DIST_BOTTOM;
     connection.sendPaket(paket);
 }
 
 void ControlThread::measureBmp() {
     bmp->getTemperature(); //temperature should be read for callibration, TODO: send temperature
-    messurments.pres = bmp->getPressure();
-}
-
-void ControlThread::measureBmp(double pres) {
+    double pres = bmp->getPressure();
     pres = bswap_double(pres);
     struct Paket paket;
     paket.device = Measurement::SENSOR;
@@ -159,7 +133,6 @@ void ControlThread::measureBmp(double pres) {
     paket.data = (uint8_t *) &pres;
     connection.sendPaket(paket);
 }
-//send rates
 
 #define ADS_MEASUREMENT_RATE (500 * 1000)
 #define MPU_MEASUREMENT_RATE (500 * 1000)
@@ -168,27 +141,6 @@ void ControlThread::measureBmp(double pres) {
 #define HCSR_MEASUREMENT_RATE (500 * 1000)
 #define GPS_SEND_RATE (1000 * 1000) //corresponds to the default measurement rate
 
-//mesure rates
-#define ADS_SEND_RATE (500 * 1000)
-#define MPU_SEND_RATE (500 * 1000)
-#define BMP_SEND_RATE (500 * 1000)
-#define QMC_SEND_RATE (500 * 1000)
-#define HCSR_SEND_RATE (500 * 1000)
-
-//Measurement times
-uint64_t ControlThread::lastAdsMeas = 0;
-uint64_t ControlThread::lastMpuMeas = 0;
-uint64_t ControlThread::lastBmpMeas = 0;
-uint64_t ControlThread::lastQmcMeas = 0;
-uint64_t ControlThread::lastHcsrMeas = 0;
-uint64_t ControlThread::lastGPSSend = 0;
-//Send Times
-uint64_t ControlThread::lastAdsSend = 0;
-uint64_t ControlThread::lastMpuSend = 0;
-uint64_t ControlThread::lastBmpSend = 0;
-uint64_t ControlThread::lastQmcSend = 0;
-uint64_t ControlThread::lastHcsrSend = 0;
-
 void ControlThread::measureData() {
     uint64_t now = micros();
 
@@ -196,41 +148,21 @@ void ControlThread::measureData() {
         lastAdsMeas = now;
         measureAds();
     }
-    if(now - lastAdsSend > ADS_SEND_RATE) {
-        lastAdsSend = now;
-        sendAds(messurments.voltagePercentage);
-    }
     if(now - lastMpuMeas > MPU_MEASUREMENT_RATE) {
         lastMpuMeas = now;
         measureMpu();
-    }
-    if(now - lastMpuSend > MPU_Send_RATE) {
-        lastMpuSend = now;
-        sendMpu(messurments.accel, messurments.gyro);
     }
     if(now - lastBmpMeas > BMP_MEASUREMENT_RATE) {
         lastBmpMeas = now;
         measureBmp();
     }
-    if(now - lastBmpSend > BMP_SEND_RATE) {
-        lastBmpSend = now;
-        sendBmp(messurments.pres);
-    }
     if(now - lastQmcMeas > QMC_MEASUREMENT_RATE) {
         lastQmcMeas = now;
         measureQmc();
     }
-    if(now - lastQmcSend > QMC_SEND_RATE) {
-        lastQmcSend = now;
-        sendQmc(messurments.mag);
-    }
     if(now - lastHcsrMeas > HCSR_MEASUREMENT_RATE) {
         lastHcsrMeas = now;
         measureHcsr();
-    }
-    if(now - lastHcsrSend > HCSR_SEND_RATE) {
-        lastHcsrSend = now;
-        sendHcsr(messurments.distFront, messurments.distBotton);
     }
     if(now - lastGPSSend > GPS_SEND_RATE) {
         lastGPSSend = now;
@@ -308,7 +240,7 @@ void ControlThread::onUBXMessage(struct UBXMsg &msg, bool valid) {
             case NEO6M_CLS_NAV:
                 handleNavMessage(msg);
                 break;
-            default:
+            default: 
                 NOT_IMPLEMENTED;
         }
     }

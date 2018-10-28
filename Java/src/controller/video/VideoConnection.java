@@ -21,6 +21,11 @@ public abstract class VideoConnection extends Thread {
 		setName("Video Connection");
 	}
 	
+	public void start(InetAddress address, int port) throws IOException {
+		connect(address, port);
+		super.start();
+	}
+	
 	public void connect(InetAddress address, int port) throws IOException {
 		sock = new Socket(address, port);
 	}
@@ -54,10 +59,18 @@ public abstract class VideoConnection extends Thread {
 		try {
 			begin();
 			while(running) {
-				distributeFrame(loop());
+				try {
+					distributeFrame(loop());
+				} catch(EOFException | SocketException e) {
+					if(running) {
+						end();
+						connect(sock.getInetAddress(), sock.getPort());
+						begin();
+					}
+				}
 			}
 		} catch(EOFException | SocketException e) {
-			//normal if eoef or socket close
+			//normal if EOF or socket close
 		} catch(IOException e) {
 			e.printStackTrace();
 		} finally {
