@@ -39,7 +39,7 @@ void CameraThread::run() {
         while(running) { //exited when interrupted exception is thrown
             try {
                 Socket sock = server.acceptConnection(ACCEPT_TIMEOUT);
-                Camera cam(device.c_str(), format, width, height); //create every time a new instance that the header is send again for the case format is h264
+                Camera *cam(device.c_str(), format, width, height); //create every time a new instance that the header is send again for the case format is h264
                 printf("Camera stream (port %X): client %s has connected\n", server.getPort(), sock.getRemoteIPString().c_str());
                 try {
                     //loop for handling connections
