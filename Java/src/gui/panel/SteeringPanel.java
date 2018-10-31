@@ -5,7 +5,11 @@ import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
+import java.awt.event.WindowEvent;
+import java.awt.event.WindowListener;
 import java.util.Hashtable;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import javax.swing.AbstractAction;
 import javax.swing.Box;
@@ -16,6 +20,7 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSlider;
 import javax.swing.KeyStroke;
+import javax.swing.SwingUtilities;
 
 import controller.Pool;
 import controller.data.ConfDevice;
@@ -25,7 +30,7 @@ import controller.data.parameter.ConfSteering;
 import controller.video.VideoConnection;
 import gui.component.Slider2D;
 
-public class SteeringPanel extends JPanel {
+public class SteeringPanel extends JPanel implements WindowListener {
 
 	/**
 	 * 
@@ -39,9 +44,14 @@ public class SteeringPanel extends JPanel {
 	private static final int VELOCITY_MAX = ConfSteering.MAX + ConfSteering.MAX * SLIDER_ZERO_MARGIN_VELOCITY / 200;
 	private static final int VELOCITY_ZERO = ConfSteering.MAX * SLIDER_ZERO_MARGIN_VELOCITY / 200;
 	
+	private static final long TIMER_PERIOD = 300; //ms
+	private static final int TIMER_STEP = (int) (TIMER_PERIOD * ConfSteering.MAX / 1000 / 10);
+	
 	private JSlider sliderVelocity;
 	private Slider2D sliderDirection;
 	private JButton zeroButton, callibrateButton;
+	
+	private Timer timer;
 
 	public SteeringPanel(Pool<ConfDevice> pool, VideoConnection videoBackground) {
 		//create the components
@@ -49,16 +59,6 @@ public class SteeringPanel extends JPanel {
 		sliderVelocity = new JSlider(JSlider.HORIZONTAL, -VELOCITY_MAX, VELOCITY_MAX, 0);
 		setSliderLabels(sliderVelocity, VELOCITY_MAX, VELOCITY_ZERO, "foward", "backward", "off");
 		sliderVelocity.setFocusable(false);
-		/* BufferedImage knob, background;
-		try {
-			knob = ImageIO.read(new File("res/zeppelin_knob.png"));
-			background = ImageIO.read(new File("res/himmel_background.jpg"));
-		} catch (IOException e) {
-			//e.printStackTrace();
-			knob = null;
-			background = null;
-		}
-		sliderDirection = new Slider2D(ConfSteering.MAX, ConfSteering.MAX, knob, background); */
 		sliderDirection = new Slider2D(ConfSteering.MAX, ConfSteering.MAX, videoBackground);
 		sliderDirection.setFocusable(false);
 		zeroButton = new JButton("zero");
@@ -161,6 +161,46 @@ public class SteeringPanel extends JPanel {
 		panel.add(zeroButton);
 		panel.add(callibrateButton);
 		add(panel);
+		
+		//add a timer that the value is reduced slowly
+		timer = new Timer(true);
+		timer.scheduleAtFixedRate(new TimerTask() {
+			
+			@Override
+			public void run() {
+				SwingUtilities.invokeLater(new Runnable() {
+					
+					@Override
+					public void run() {
+						//velocity
+						int value = sliderVelocity.getValue();
+						if(value != 0) {
+							int newVal = (int) (value - Math.signum(value) * TIMER_STEP);
+							if(Math.signum(newVal) != Math.signum(value))
+								newVal = 0;
+							sliderVelocity.setValue(newVal);
+						}
+						//x direction
+						value = sliderDirection.getXSlider();
+						if(value != 0) {
+							int newVal = (int) (value - Math.signum(value) * TIMER_STEP);
+							if(Math.signum(newVal) != Math.signum(value))
+								newVal = 0;
+							sliderDirection.setXSlider(newVal);
+						}
+						//y direction
+						value = sliderDirection.getYSlider();
+						if(value != 0) {
+							int newVal = (int) (value - Math.signum(value) * TIMER_STEP);
+							if(Math.signum(newVal) != Math.signum(value))
+								newVal = 0;
+							sliderDirection.setYSlider(newVal);
+						}
+					}
+				});
+			}
+			
+		}, 0, TIMER_PERIOD); //run 
 	}
 	
 	private void setSliderLabels(JSlider slider, int max, int zero, String maxLabel, String minLabel, String zeroLabel) {
@@ -220,6 +260,61 @@ public class SteeringPanel extends JPanel {
 
 	public int getPitch() {
 		return sliderDirection.getYSlider();
+	}
+
+
+
+	@Override
+	public void windowOpened(WindowEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
+
+
+
+	@Override
+	public void windowClosing(WindowEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
+
+
+
+	@Override
+	public void windowClosed(WindowEvent e) {
+		timer.cancel();
+	}
+
+
+
+	@Override
+	public void windowIconified(WindowEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
+
+
+
+	@Override
+	public void windowDeiconified(WindowEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
+
+
+
+	@Override
+	public void windowActivated(WindowEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
+
+
+
+	@Override
+	public void windowDeactivated(WindowEvent e) {
+		// TODO Auto-generated method stub
+		
 	}
 	
 }

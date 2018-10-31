@@ -74,7 +74,7 @@ public class Frame extends JFrame implements WindowListener, ControllerListener 
 
 
 		//controll panels
-		add(new ControllQuarter(controller, frontCamera));
+		add(new ControllQuarter(controller, frontCamera, this));
 		//Status panels
 		add(new StatusQuarter(controller));
 		//Video panels
