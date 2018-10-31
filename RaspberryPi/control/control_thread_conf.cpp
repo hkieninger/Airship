@@ -109,18 +109,21 @@ void ControlThread::run() {
     mpu = new Mpu6050();
     qmc = new Qmc5883l();
     bmp = new Bmp280();
-    hcFront = new Hcsr04(FRONT_HCSR04_TRIG, FRONT_HCSR04_ECHO);
-    hcBottom = new Hcsr04(BOTTOM_HCSR04_TRIG, BOTTOM_HCSR04_ECHO);
+
+    //Distance sensors were removed
+    //hcFront = new Hcsr04(FRONT_HCSR04_TRIG, FRONT_HCSR04_ECHO);
+    //hcBottom = new Hcsr04(BOTTOM_HCSR04_TRIG, BOTTOM_HCSR04_ECHO);
 
     camBottom = new CameraThread(CSI_CAMERA, V4L2_PIX_FMT_H264, CSI_WIDTH, CSI_HEIGHT, CSI_PORT, connection); //constants defined in pin.h
     camFront = new JpgCameraThread(USB_CAMERA, USB_WIDTH, USB_HEIGHT, USB_PORT, connection); //constants defined in pin.h
 
-    neo6m = new Neo6MThread(*this); //implementation of callbacks in control_thread_meas.cpp
+    //Gps was removed
+    /*neo6m = new Neo6MThread(*this); //implementation of callbacks in control_thread_meas.cpp
     neo6m->enableNMEAMessage("RMC");
     neo6m->setMessageRate(NEO6M_CLS_NAV, NEO6M_NAV_POSLLH, 1);
     neo6m->setMessageRate(NEO6M_CLS_NAV, NEO6M_NAV_VELNED, 1);
     neo6m->setMessageRate(NEO6M_CLS_NAV, NEO6M_NAV_STATUS, 1);
-    neo6m->setMessageRate(NEO6M_CLS_NAV, NEO6M_NAV_SVINFO, 1);
+    neo6m->setMessageRate(NEO6M_CLS_NAV, NEO6M_NAV_SVINFO, 1);*/
 
     //start the sub threads
     camBottom->start();
@@ -165,7 +168,7 @@ void ControlThread::run() {
     camFront->join();
     //neo6m joins itself in the destructor
 
-    delete neo6m;
+    //delete neo6m;
 
     delete camFront;
     delete camBottom;
@@ -173,8 +176,8 @@ void ControlThread::run() {
     delete mpu;
     delete qmc;
     delete bmp;
-    delete hcBottom;
-    delete hcFront;
+    //delete hcBottom;
+    //delete hcFront;
 
     delete steering;
     delete leftMotor;

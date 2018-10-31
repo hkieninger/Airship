@@ -162,7 +162,7 @@ void ControlThread::measureData() {
     }
     if(now - lastHcsrMeas > HCSR_MEASUREMENT_RATE) {
         lastHcsrMeas = now;
-        measureHcsr();
+        //measureHcsr();
     }
     if(now - lastGPSSend > GPS_SEND_RATE) {
         lastGPSSend = now;

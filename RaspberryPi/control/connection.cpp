@@ -12,7 +12,7 @@
 
 #include "connection.h"
 
-#define CONNECTION_LOST_TIME (10 * 1000 * 1000)
+#define CONNECTION_LOST_TIME (5 * 1000 * 1000)
 #define RECEIVE_TIMEOUT (CONNECTION_LOST_TIME / 1000)
 
 static uint64_t micros() {

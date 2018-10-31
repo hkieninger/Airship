@@ -13,7 +13,7 @@ import controller.data.parameter.Parameter;
 public class SendThread extends Thread implements Pool.Listener<ConfDevice> {
 	
 	static final int SEND_ECHO_DELAY = 1000; //in ms
-	public static final long CONNECTION_LOST_TIME = SEND_ECHO_DELAY * 10;
+	public static final long CONNECTION_LOST_TIME = 5000;
 	
 	private boolean isRunning;
 	private Connection connection;

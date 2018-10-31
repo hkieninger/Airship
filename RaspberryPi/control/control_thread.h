@@ -38,13 +38,17 @@ class ControlThread: public Neo6MThreadListener, public Thread {
     Mpu6050 *mpu;
     Bmp280 *bmp;
     Qmc5883l *qmc;
-    Hcsr04 *hcFront;
-    Hcsr04 *hcBottom;
+    
+    //removed
+    //Hcsr04 *hcFront;
+    //Hcsr04 *hcBottom;
+    
     //cameras
     CameraThread *camBottom;
     JpgCameraThread *camFront;
     //GPS
-    Neo6MThread *neo6m;
+    //removed
+    //Neo6MThread *neo6m;
 
     struct GPSGeodeticPos position;
     struct GPSGeodeticVel velocity;
