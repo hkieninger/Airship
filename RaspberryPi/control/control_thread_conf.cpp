@@ -95,8 +95,6 @@ void ControlThread::handlePaket(Paket &paket) {
     }
 }
 
-#include "../hardware/neo6m/neo6m_exception.h" //DEBUG
-
 void ControlThread::run() {
     ads = new Ads1115();
     ads->setInputPin(ADS_INPUT_PIN);
@@ -144,6 +142,15 @@ void ControlThread::run() {
             pthread_mutex_lock(&dequeMutex);
         }
         pthread_mutex_unlock(&dequeMutex);
+
+        //turn off motors if connection is closed or lost
+        if(!connection.isConnected() || connection.isLost()) {
+            leftMotor->setThrust(0);
+            rightMotor->setThrust(0);
+            leftRudder->setAngle(0);
+            rightRudder->setAngle(0);
+            topRudder->setAngle(0);
+        }
 
         //read out sensors and send measured data
         measureData(); //impementation is in control_thread_meas.cpp

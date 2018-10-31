@@ -39,18 +39,25 @@ void CameraThread::run() {
         while(running) { //exited when interrupted exception is thrown
             try {
                 Socket sock = server.acceptConnection(ACCEPT_TIMEOUT);
-                Camera *cam(device.c_str(), format, width, height); //create every time a new instance that the header is send again for the case format is h264
+                //Camera *cam = new Camera(device.c_str(), format, width, height); //create every time a new instance that the header is send again for the case format is h264
+                Camera *cam = NULL;
                 printf("Camera stream (port %X): client %s has connected\n", server.getPort(), sock.getRemoteIPString().c_str());
                 try {
                     //loop for handling connections
                     while(connection.isConnected()) { //exited when socket (closed) exception is thrown
                         if(pausing) {
-                            //TODO: destroy camera or turn of streaming to reduce powerconsumption
+                            //destroy camera or turn of streaming to reduce powerconsumption
+                            if(cam) {
+                                delete cam;
+                                cam = NULL;
+                            }
                             usleep(PAUSING_TIME);
                         } else {
-                            video_buffer *buf = cam.dequeueBuffer();
-                            sendFrame(sock, buf, cam.getWidth(), cam.getHeight());
-                            cam.queueBuffer(buf);
+                            if(!cam)
+                                cam = new Camera(device.c_str(), format, width, height);
+                            video_buffer *buf = cam->dequeueBuffer();
+                            sendFrame(sock, buf, cam->getWidth(), cam->getHeight());
+                            cam->queueBuffer(buf);
                         }
                     }
                     printf("Camera stream (port %X): connection has been closed.\n", server.getPort());
@@ -59,6 +66,8 @@ void CameraThread::run() {
                 } catch(const SocketException &e) {
                     fprintf(stderr, "Camera stream (port %X): the following socket exception has occured: %s\n", server.getPort(), e.what());
                 }
+                delete cam;
+                cam = NULL;
                 pausing = true;
             } catch(const TimeoutException &t) {}
         }

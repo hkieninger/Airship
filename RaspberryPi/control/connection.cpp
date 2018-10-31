@@ -24,10 +24,12 @@ static uint64_t micros() {
 
 Connection::Connection(ControlThread &control) : server(PORT), sock(NULL), control(control), lastEchoRequest(0) {
     pthread_mutex_init(&sendMutex, NULL);
+    pthread_mutex_init(&echoMutex, NULL);
 }
 
 Connection::~Connection() {
     pthread_mutex_destroy(&sendMutex);
+    pthread_mutex_destroy(&echoMutex);
 }
 
 void Connection::syncSocket() {
@@ -80,7 +82,10 @@ bool Connection::isConnected() {
 }
 
 bool Connection::isLost() {
-    return  micros() - lastEchoRequest > CONNECTION_LOST_TIME;
+    pthread_mutex_lock(&echoMutex);
+    bool lost = micros() - lastEchoRequest > CONNECTION_LOST_TIME;
+    pthread_mutex_unlock(&echoMutex);
+    return lost;
 }
 
 void Connection::loop() {
@@ -98,7 +103,9 @@ void Connection::loop() {
                 sock->recvAll(header, 4);
                 if(header[0] == Configuration::RPI && header[1] == Configuration::ECHO_REQUEST) {
                     sendEchoReply();
+                    pthread_mutex_lock(&echoMutex);
                     lastEchoRequest = micros();
+                    pthread_mutex_unlock(&echoMutex);
                 } else {
                     Paket *paket = new Paket(); //don't forget to delete
                     paket->device = header[0];

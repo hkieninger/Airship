@@ -105,6 +105,7 @@ class Connection {
     pthread_mutex_t sendMutex;
 
     uint64_t lastEchoRequest;
+    pthread_mutex_t echoMutex;
 
     void syncSocket();
     void sendEchoReply();

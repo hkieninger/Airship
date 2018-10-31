@@ -85,7 +85,7 @@ public class StatusPanel extends JPanel implements Pool.Listener<MeasDevice>, Co
 				red = 255;
 				green = 255 * percentage / 50;
 			}
-			//illSystem.out.println("green: " + green + " / red: " + red); //DEBUG
+			//System.out.println("green: " + green + " / red: " + red); //DEBUG
 			batteryLabel.setBackground(new Color(red, green, 0));
 			batteryLabel.setText("Battery percentage is: " + percentage + " %.");
 		});

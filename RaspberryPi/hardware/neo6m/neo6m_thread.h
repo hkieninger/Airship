@@ -204,7 +204,6 @@ public:
      * calculates the checksum of the passed nmea message, msg shouldn't contain the leading $
      */
     uint8_t calcNMEAChecksum(const std::string &msg);
-
 };
 
 #endif /* NEO6M_THREAD_H */

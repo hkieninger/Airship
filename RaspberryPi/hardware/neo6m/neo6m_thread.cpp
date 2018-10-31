@@ -27,15 +27,15 @@ Neo6MThread::Neo6MThread(Neo6MThreadListener &listener, const std::string &seria
     powerOn();
 
     start(); //start the thread
-
-    clearConfiguration();
+    
+    /*clearConfiguration();
     printf("cleared configuration\n"); //DEBUG
     loadConfiguration();
-    printf("load configuration\n"); //DEBUG
+    printf("load configuration\n"); //DEBUG */
     setSBAS(true);
     printf("set SBAS\n"); //DEBUG
-    setProtocol(UBX_AND_NMEA); //default
-    printf("set protocol\n"); //DEBUG
+    /*setProtocol(UBX_AND_NMEA); //default
+    printf("set protocol\n"); //DEBUG */
 
     //set dynamic platform model to pedestrian
     struct UBXMsg msg;
@@ -143,7 +143,7 @@ void Neo6MThread::run() {
                 if(pthread_mutex_lock(&queueMutex) != 0)
                     fprintf(stderr, "neo6m: failed lock queue mutex: %s\n", strerror(errno));
 
-                printf("wait queue empty: %d\n", waitQueue.empty());
+                //printf("wait queue empty: %d\n", waitQueue.empty()); //DEBUG
                 if(!waitQueue.empty()) {
                     struct CondWaitUBX *wait = waitQueue.front();
                     if((wait->msg->cls == msg.cls && wait->msg->id == msg.id) || 
