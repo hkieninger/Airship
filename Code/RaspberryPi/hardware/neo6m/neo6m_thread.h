@@ -53,7 +53,30 @@ class Neo6MThread: protected UARTDev, public Thread {
 
     pthread_mutex_t sendMutex;
 
-    uint16_t measurementRate; //millis
+    /*
+     * goes to and skips the next synchronisation mark
+     * @return: true if the mark stood for a NMEA message, false if the mark stood for a UBX message
+     */
+    bool nextSync();
+
+    /*
+     * reads a char into @str
+     * @str: must at least have the size of 1
+     * @return: true if the read char forms with the last char a ubx sync, else false
+     */
+    bool readNMEAChar(std::string &str);
+
+    /*
+     * reads the next nmea message and calls the apropriate callback
+     * @return: true if while reading a ubx sync occured, else false
+     */
+    bool readNMEA();
+
+    /*
+     * reads the next ubx message and calls the apropriate callback or signals a waiting thread (see sendAndWaitUBXMsg)
+     * @return: true if while reading a ubx sync occured, else false
+     */
+    bool readUBX();
 
 public:
     /*

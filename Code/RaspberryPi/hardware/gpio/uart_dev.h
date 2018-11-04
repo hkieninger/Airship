@@ -4,14 +4,11 @@
 #include <stddef.h>
 #include <string>
 
-#include <stdio.h> //DEBUG
-
 /*
  * represents a device which communicates over the asynchronous serial interface (uses the UART)
  * functions throw UARTException on errors
  */
 class UARTDev {
-    FILE *logUart = NULL; //DEBUG
 protected:
 	/*
 	 * file descriptor to the device file
