@@ -104,24 +104,6 @@ void ControlThread::measureQmc() {
     connection.sendPaket(paket);
 }
 
-void ControlThread::measureHcsr() {
-    int16_t dist;
-    struct Paket paket;
-    paket.device = Measurement::SENSOR;
-    paket.len = sizeof(int16_t);
-    paket.data = (uint8_t *) &dist;
-    //send front distance
-    dist = hcFront->getMedian();
-    dist = bswap_16(dist);
-    paket.param = Measurement::DIST_FRONT;
-    connection.sendPaket(paket);
-    //send bottom distance;
-    dist = hcBottom->getMedian();
-    dist = bswap_16(dist);
-    paket.param = Measurement::DIST_BOTTOM;
-    connection.sendPaket(paket);
-}
-
 void ControlThread::measureBmp() {
     bmp->getTemperature(); //temperature should be read for callibration, TODO: send temperature
     double pres = bmp->getPressure();
@@ -138,7 +120,6 @@ void ControlThread::measureBmp() {
 #define MPU_MEASUREMENT_RATE (500 * 1000)
 #define BMP_MEASUREMENT_RATE (500 * 1000)
 #define QMC_MEASUREMENT_RATE (500 * 1000)
-#define HCSR_MEASUREMENT_RATE (500 * 1000)
 #define GPS_SEND_RATE (1000 * 1000) //corresponds to the default measurement rate
 
 void ControlThread::measureData() {
@@ -159,10 +140,6 @@ void ControlThread::measureData() {
     if(now - lastQmcMeas > QMC_MEASUREMENT_RATE) {
         lastQmcMeas = now;
         measureQmc();
-    }
-    if(now - lastHcsrMeas > HCSR_MEASUREMENT_RATE) {
-        lastHcsrMeas = now;
-        //measureHcsr();
     }
     if(now - lastGPSSend > GPS_SEND_RATE) {
         lastGPSSend = now;

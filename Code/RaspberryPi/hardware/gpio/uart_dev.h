@@ -4,15 +4,18 @@
 #include <stddef.h>
 #include <string>
 
+#include <stdio.h> //DEBUG
+
 /*
  * represents a device which communicates over the asynchronous serial interface (uses the UART)
  * functions throw UARTException on errors
  */
 class UARTDev {
+    FILE *logUart = NULL; //DEBUG
 protected:
 	/*
 	 * file descriptor to the device file
-     * if the class doesn't fullfill your needa you can manipulate it with termios 
+     * if the class doesn't fullfill your need you can manipulate it with termios 
      * and use write() and read()
 	 */
 	int fd;

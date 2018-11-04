@@ -31,11 +31,11 @@ Neo6MThread::Neo6MThread(Neo6MThreadListener &listener, const std::string &seria
     /*clearConfiguration();
     printf("cleared configuration\n"); //DEBUG
     loadConfiguration();
-    printf("load configuration\n"); //DEBUG */
+    printf("load configuration\n"); //DEBUG
     setSBAS(true);
     printf("set SBAS\n"); //DEBUG
-    /*setProtocol(UBX_AND_NMEA); //default
-    printf("set protocol\n"); //DEBUG */
+    setProtocol(UBX_AND_NMEA); //default
+    printf("set protocol\n"); //DEBUG
 
     //set dynamic platform model to pedestrian
     struct UBXMsg msg;
@@ -49,6 +49,8 @@ Neo6MThread::Neo6MThread(Neo6MThreadListener &listener, const std::string &seria
     msg.playload = playload;
     sendAndWaitUBXMsg(msg);
 
+    printf("set platform model\n"); //DEBUG */
+
     //message rates of UBX are 0 by default
 
     //set message rate of NMEA to 0
@@ -58,8 +60,6 @@ Neo6MThread::Neo6MThread(Neo6MThreadListener &listener, const std::string &seria
     disableNMEAMessage("VTG");
     disableNMEAMessage("GGA");
     disableNMEAMessage("RMC");
-
-    usleep(250 * 1000); //sleep 250ms, it's necessary
 }
 
 Neo6MThread::~Neo6MThread() {
@@ -94,12 +94,14 @@ void Neo6MThread::run() {
     while(running) {
         //check if data is available, to avoid blocking a long time, which would make the thread unresponsive to stopRunning()
         if(available() > 2) {
+            //printf("receiving message\n"); //DEBUG
             //go to the next synchronization mark in the stream
             uint8_t lastByte = getChar();
             uint8_t byte = getChar();
             while(((lastByte | byte << 8) != UBX_SYNC) && (lastByte != '$' || byte != 'G')) {
                 lastByte = byte;
                 byte = getChar();
+                printf("skipping bytes\n");
             }
             //determine if the next message is UBX or NMEA
             if(lastByte == '$') { //NMEA
@@ -136,8 +138,8 @@ void Neo6MThread::run() {
                 //compare the checksum
                 bool valid = (checksum == calcUBXChecksum(msg));
 
-                if(msg.cls == 5)
-                    printf("received UBX message: cls: %d, id: %d, cause: cls: %d, id: %d / %X\n", msg.cls, msg.id, msg.playload[0], msg.playload[1], msg.playload[1]); //DEBUG
+                //if(msg.cls == 5)
+                    //printf("received UBX message: cls: %d, id: %d, cause: cls: %d, id: %d / %X\n", msg.cls, msg.id, msg.playload[0], msg.playload[1], msg.playload[1]); //DEBUG
 
                 //other thread is waiting for the message?
                 if(pthread_mutex_lock(&queueMutex) != 0)
@@ -168,7 +170,7 @@ void Neo6MThread::run() {
                     }
                 }
                 if(pthread_mutex_unlock(&queueMutex) != 0)
-                    fprintf(stderr, "neo6m: failed to destroy queue mutex: %s\n", strerror(errno));
+                    fprintf(stderr, "neo6m: failed to unlock queue mutex: %s\n", strerror(errno));
                 
                 //call the appropriate callback
                 if(msg.cls == NEO6M_CLS_ACK)
@@ -214,11 +216,12 @@ void Neo6MThread::sendUBXMsg(const struct UBXMsg &msg) {
     writeAll(&msg.length, 2);
     writeAll(msg.playload, msg.length);
     writeAll(&checksum, 2);
+    usleep(100 * 1000); //DEBUG
     if(pthread_mutex_unlock(&sendMutex) != 0)
         throw ThreadException("neo6m: failed to unlock send mutex: " + std::string(strerror(errno)));
 }
 
-#define WAIT_TIMEOUT_FACTOR 5
+#define WAIT_TIMEOUT_FACTOR 10
 
 struct UBXMsg *Neo6MThread::sendAndWaitUBXMsg(struct UBXMsg &msg) {
     bool request = (msg.length == 0);
@@ -234,12 +237,22 @@ struct UBXMsg *Neo6MThread::sendAndWaitUBXMsg(struct UBXMsg &msg) {
         sendUBXMsg(msg);
         waitQueue.push_back(&wait);
 
+        //DEBUG
+        struct timespec start;
+        clock_gettime(CLOCK_REALTIME, &start);
+
         struct timespec ts;
         clock_gettime(CLOCK_REALTIME, &ts);
         ts.tv_sec += (int64_t) measurementRate * WAIT_TIMEOUT_FACTOR / 1000;
         ts.tv_nsec += (int64_t) measurementRate * WAIT_TIMEOUT_FACTOR % 1000 * 1000 * 1000;
         int ret = pthread_cond_timedwait(&wait.cond, &queueMutex, &ts);
         if(ret) {
+
+            //DEBUG
+            struct timespec stop;
+            clock_gettime(CLOCK_REALTIME, &stop);
+            printf("waited %ld ms\n", (stop.tv_sec - start.tv_sec) * 1000 + (stop.tv_nsec - start.tv_nsec) / 1000 / 1000);
+
             if(ret == ETIMEDOUT) {
                 for(std::deque<struct CondWaitUBX *>::iterator it = waitQueue.begin(); it != waitQueue.end(); it++) {
                     if(*it == &wait) {
@@ -256,6 +269,11 @@ struct UBXMsg *Neo6MThread::sendAndWaitUBXMsg(struct UBXMsg &msg) {
                 throw ThreadException("neo6m: failed to wait cond: " + std::string(strerror(errno)));
             }
         }
+
+        //DEBUG
+        struct timespec stop;
+        clock_gettime(CLOCK_REALTIME, &stop);
+        printf("waited %ld ms\n", (stop.tv_sec - start.tv_sec) * 1000 + (stop.tv_nsec - start.tv_nsec) / 1000 / 1000);
 
         if(pthread_mutex_unlock(&queueMutex) != 0)
             throw ThreadException("neo6m: failed to unlock queue mutex: " + std::string(strerror(errno)));
@@ -326,9 +344,9 @@ void Neo6MThread::powerOn() {
     if(pthread_mutex_lock(&sendMutex) != 0)
         throw ThreadException("neo6m: failed to lock send mutex");
     writeAll(&sequence, 1);
+    usleep(500 * 1000);
     if(pthread_mutex_unlock(&sendMutex) != 0)
         throw ThreadException("neo6m: failed to unlock send mutex");
-    usleep(500 * 1000);
 }
 
 void Neo6MThread::setMessageRate(uint8_t cls, uint8_t id, uint8_t rate) {
@@ -422,6 +440,7 @@ void Neo6MThread::sendNMEAMessage(const std::string &msg) {
     if(pthread_mutex_lock(&sendMutex) != 0)
         throw ThreadException("neo6m: failed to lock send mutex: " + std::string(strerror(errno)));
     writeAll(buffer, sizeof(buffer)-1);
+    usleep(100 * 1000); //DEBUG
     if(pthread_mutex_unlock(&sendMutex) != 0)
         throw ThreadException("neo6m: failed to unlock send mutex: " + std::string(strerror(errno)));
 }

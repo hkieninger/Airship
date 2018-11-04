@@ -9,7 +9,6 @@
 #include "algorithm/steering.h"
 #include "thread/camera_thread.h"
 #include "thread/jpg_camera_thread.h"
-#include "../hardware/hcsr04/hcsr04.h"
 #include "../hardware/ads1115/ads1115.h"
 #include "../hardware/mpu6050/mpu6050.h"
 #include "../hardware/bmp280/bmp280.h"
@@ -39,16 +38,11 @@ class ControlThread: public Neo6MThreadListener, public Thread {
     Bmp280 *bmp;
     Qmc5883l *qmc;
     
-    //removed
-    //Hcsr04 *hcFront;
-    //Hcsr04 *hcBottom;
-    
     //cameras
     CameraThread *camBottom;
     JpgCameraThread *camFront;
     //GPS
-    //removed
-    //Neo6MThread *neo6m;
+    Neo6MThread *neo6m;
 
     struct GPSGeodeticPos position;
     struct GPSGeodeticVel velocity;
@@ -58,7 +52,6 @@ class ControlThread: public Neo6MThreadListener, public Thread {
     uint64_t lastMpuMeas = 0;
     uint64_t lastBmpMeas = 0;
     uint64_t lastQmcMeas = 0;
-    uint64_t lastHcsrMeas = 0;
     uint64_t lastGPSSend = 0;
 
     void configureRpi(Paket &paket);
