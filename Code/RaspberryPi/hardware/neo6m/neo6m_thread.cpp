@@ -30,10 +30,10 @@ Neo6MThread::Neo6MThread(Neo6MThreadListener &listener, const std::string &seria
 
     start(); //start the thread
     
-    clearConfiguration();
-    loadConfiguration();
+    /*clearConfiguration();
+    loadConfiguration();*/
     setSBAS(true);
-    setProtocol(UBX_AND_NMEA); //default
+    //setProtocol(UBX_AND_NMEA); //default
 
     //set dynamic platform model to pedestrian
     struct UBXMsg msg;
@@ -59,11 +59,11 @@ Neo6MThread::Neo6MThread(Neo6MThreadListener &listener, const std::string &seria
 }
 
 Neo6MThread::~Neo6MThread() {
-    //reset the configuration to default
+    /*//reset the configuration to default
     clearConfiguration();
     loadConfiguration();
     //poweroff the device for saving power
-    powerOff(0);
+    powerOff(0);*/
 
     running = false;
     join();

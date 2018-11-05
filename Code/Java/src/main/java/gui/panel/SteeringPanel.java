@@ -1,6 +1,5 @@
 package gui.panel;
 
-import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.GridLayout;
@@ -29,6 +28,12 @@ import controller.data.object.ConnectionData;
 import controller.data.parameter.ConfSteering;
 import controller.video.VideoConnection;
 import gui.component.Slider2D;
+import net.java.games.input.Component;
+import net.java.games.input.Component.Identifier;
+import net.java.games.input.Controller;
+import net.java.games.input.ControllerEnvironment;
+import net.java.games.input.ControllerEvent;
+import net.java.games.input.ControllerListener;
 
 public class SteeringPanel extends JPanel implements WindowListener {
 
@@ -44,13 +49,16 @@ public class SteeringPanel extends JPanel implements WindowListener {
 	private static final int VELOCITY_MAX = ConfSteering.MAX + ConfSteering.MAX * SLIDER_ZERO_MARGIN_VELOCITY / 200;
 	private static final int VELOCITY_ZERO = ConfSteering.MAX * SLIDER_ZERO_MARGIN_VELOCITY / 200;
 	
-	private static final long TIMER_PERIOD = 300; //ms
-	private static final int TIMER_STEP = (int) (TIMER_PERIOD * ConfSteering.MAX / 1000 / 10);
+	private static final long TIMER_PERIOD_REDUCE = 300; //ms
+	private static final int TIMER_STEP = (int) (TIMER_PERIOD_REDUCE * ConfSteering.MAX / 1000 / 10);
+	
+	private static final long TIMER_PERIOD_GAMEPAD = 100; //ms
 	
 	private JSlider sliderVelocity;
 	private Slider2D sliderDirection;
 	private JButton zeroButton, callibrateButton;
 	
+	private Controller gamepad;
 	private Timer timer;
 
 	public SteeringPanel(Pool<ConfDevice> pool, VideoConnection videoBackground) {
@@ -147,12 +155,12 @@ public class SteeringPanel extends JPanel implements WindowListener {
 		//add the components to the layout
 		setLayout(new BoxLayout(this, BoxLayout.PAGE_AXIS));
 		JLabel label = new JLabel("velocity (+, -)");
-		label.setAlignmentX(Component.CENTER_ALIGNMENT);
+		label.setAlignmentX(JLabel.CENTER_ALIGNMENT);
 		add(label);
 		add(sliderVelocity);
 		add(Box.createRigidArea(new Dimension(0, 20)));
 		label = new JLabel("direction (arrows)");
-		label.setAlignmentX(Component.CENTER_ALIGNMENT);
+		label.setAlignmentX(JLabel.CENTER_ALIGNMENT);
 		add(label);
 		add(sliderDirection);
 		JPanel panel = new JPanel();
@@ -164,43 +172,83 @@ public class SteeringPanel extends JPanel implements WindowListener {
 		
 		//add a timer that the value is reduced slowly
 		timer = new Timer(true);
-		timer.scheduleAtFixedRate(new TimerTask() {
-			
-			@Override
-			public void run() {
-				SwingUtilities.invokeLater(new Runnable() {
-					
-					@Override
-					public void run() {
-						//velocity
-						int value = sliderVelocity.getValue();
-						if(value != 0) {
-							int newVal = (int) (value - Math.signum(value) * TIMER_STEP);
-							if(Math.signum(newVal) != Math.signum(value))
-								newVal = 0;
-							sliderVelocity.setValue(newVal);
+		//check if a ps controller is available
+		gamepad = getGamepad();
+		System.out.println("Gamepad found: " + gamepad);
+		if(gamepad == null) {
+			timer.scheduleAtFixedRate(new TimerTask() {
+				
+				@Override
+				public void run() {
+					SwingUtilities.invokeLater(new Runnable() {
+						
+						@Override
+						public void run() {
+							//velocity
+							int value = sliderVelocity.getValue();
+							if(value != 0) {
+								int newVal = (int) (value - Math.signum(value) * TIMER_STEP);
+								if(Math.signum(newVal) != Math.signum(value))
+									newVal = 0;
+								sliderVelocity.setValue(newVal);
+							}
+							//x direction
+							value = sliderDirection.getXSlider();
+							if(value != 0) {
+								int newVal = (int) (value - Math.signum(value) * TIMER_STEP);
+								if(Math.signum(newVal) != Math.signum(value))
+									newVal = 0;
+								sliderDirection.setXSlider(newVal);
+							}
+							//y direction
+							value = sliderDirection.getYSlider();
+							if(value != 0) {
+								int newVal = (int) (value - Math.signum(value) * TIMER_STEP);
+								if(Math.signum(newVal) != Math.signum(value))
+									newVal = 0;
+								sliderDirection.setYSlider(newVal);
+							}
 						}
-						//x direction
-						value = sliderDirection.getXSlider();
-						if(value != 0) {
-							int newVal = (int) (value - Math.signum(value) * TIMER_STEP);
-							if(Math.signum(newVal) != Math.signum(value))
-								newVal = 0;
-							sliderDirection.setXSlider(newVal);
-						}
-						//y direction
-						value = sliderDirection.getYSlider();
-						if(value != 0) {
-							int newVal = (int) (value - Math.signum(value) * TIMER_STEP);
-							if(Math.signum(newVal) != Math.signum(value))
-								newVal = 0;
-							sliderDirection.setYSlider(newVal);
-						}
+					});
+				}
+				
+			}, 0, TIMER_PERIOD_REDUCE); //run
+		} else {
+			timer.scheduleAtFixedRate(new TimerTask() {
+				
+				@Override
+				public void run() {
+					System.out.println("gamepad poll");
+					gamepad = getGamepad();
+					if(gamepad.poll()) {
+						System.out.println("true");
+						Component x = gamepad.getComponent(Identifier.Axis.RX);
+						Component y = gamepad.getComponent(Identifier.Axis.RY);
+						Component vel = gamepad.getComponent(Identifier.Axis.Y);
+						float v = vel.getPollData();
+						setVelocity((int) (v * -ConfSteering.MAX - Math.signum(v) * VELOCITY_ZERO));
+						setYaw((int) (x.getPollData() * ConfSteering.MAX));
+						setPitch((int) (y.getPollData() * -ConfSteering.MAX));
 					}
-				});
+					
+					
+				}
+			}, 0, TIMER_PERIOD_GAMEPAD);
+		}
+		
+		
+	}
+	
+	private Controller getGamepad() {
+		Controller[] ca = ControllerEnvironment.getDefaultEnvironment().getControllers();
+		for(Controller c : ca) {
+			if(c.getComponent(Identifier.Axis.RX) != null && 
+				c.getComponent(Identifier.Axis.RY) != null &&
+				c.getComponent(Identifier.Axis.Y) != null) {
+				return c;
 			}
-			
-		}, 0, TIMER_PERIOD); //run 
+		}
+		return null;
 	}
 	
 	private void setSliderLabels(JSlider slider, int max, int zero, String maxLabel, String minLabel, String zeroLabel) {
