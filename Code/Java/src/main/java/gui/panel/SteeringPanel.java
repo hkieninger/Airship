@@ -172,56 +172,13 @@ public class SteeringPanel extends JPanel implements WindowListener {
 		
 		//add a timer that the value is reduced slowly
 		timer = new Timer(true);
-		//check if a ps controller is available
-		gamepad = getGamepad();
-		System.out.println("Gamepad found: " + gamepad);
-		if(gamepad == null) {
-			timer.scheduleAtFixedRate(new TimerTask() {
+		timer.scheduleAtFixedRate(new TimerTask() {
 				
-				@Override
-				public void run() {
-					SwingUtilities.invokeLater(new Runnable() {
-						
-						@Override
-						public void run() {
-							//velocity
-							int value = sliderVelocity.getValue();
-							if(value != 0) {
-								int newVal = (int) (value - Math.signum(value) * TIMER_STEP);
-								if(Math.signum(newVal) != Math.signum(value))
-									newVal = 0;
-								sliderVelocity.setValue(newVal);
-							}
-							//x direction
-							value = sliderDirection.getXSlider();
-							if(value != 0) {
-								int newVal = (int) (value - Math.signum(value) * TIMER_STEP);
-								if(Math.signum(newVal) != Math.signum(value))
-									newVal = 0;
-								sliderDirection.setXSlider(newVal);
-							}
-							//y direction
-							value = sliderDirection.getYSlider();
-							if(value != 0) {
-								int newVal = (int) (value - Math.signum(value) * TIMER_STEP);
-								if(Math.signum(newVal) != Math.signum(value))
-									newVal = 0;
-								sliderDirection.setYSlider(newVal);
-							}
-						}
-					});
-				}
-				
-			}, 0, TIMER_PERIOD_REDUCE); //run
-		} else {
-			timer.scheduleAtFixedRate(new TimerTask() {
-				
-				@Override
-				public void run() {
-					System.out.println("gamepad poll");
-					gamepad = getGamepad();
+			@Override
+			public void run() {
+				gamepad = getGamepad(); //idk else it doesn't work
+				if(gamepad != null) {
 					if(gamepad.poll()) {
-						System.out.println("true");
 						Component x = gamepad.getComponent(Identifier.Axis.RX);
 						Component y = gamepad.getComponent(Identifier.Axis.RY);
 						Component vel = gamepad.getComponent(Identifier.Axis.Y);
@@ -230,13 +187,11 @@ public class SteeringPanel extends JPanel implements WindowListener {
 						setYaw((int) (x.getPollData() * ConfSteering.MAX));
 						setPitch((int) (y.getPollData() * -ConfSteering.MAX));
 					}
-					
-					
 				}
-			}, 0, TIMER_PERIOD_GAMEPAD);
-		}
-		
-		
+			}
+			
+		}, 0, TIMER_PERIOD_GAMEPAD);
+	
 	}
 	
 	private Controller getGamepad() {

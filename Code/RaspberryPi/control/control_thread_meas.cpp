@@ -153,8 +153,6 @@ void ControlThread::sendGPS() {
         paket.device = Measurement::SENSOR;
         paket.param = Measurement::GPS;
 
-        printf("lat: %d, long: %d\n", position.lat, position.lon);
-
         //           lat, long alt         haccur, vaccur         vel: north, east, down    heading           satellites
         uint8_t data[sizeof(int32_t) * 3 + sizeof(uint32_t) * 2 + sizeof(int32_t) * 3 +     sizeof(int32_t) + sizeof(uint8_t)];
 
