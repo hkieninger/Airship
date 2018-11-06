@@ -19,7 +19,6 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSlider;
 import javax.swing.KeyStroke;
-import javax.swing.SwingUtilities;
 
 import controller.Pool;
 import controller.data.ConfDevice;
@@ -32,8 +31,6 @@ import net.java.games.input.Component;
 import net.java.games.input.Component.Identifier;
 import net.java.games.input.Controller;
 import net.java.games.input.ControllerEnvironment;
-import net.java.games.input.ControllerEvent;
-import net.java.games.input.ControllerListener;
 
 public class SteeringPanel extends JPanel implements WindowListener {
 
@@ -185,7 +182,7 @@ public class SteeringPanel extends JPanel implements WindowListener {
 						float v = vel.getPollData();
 						setVelocity((int) (v * -ConfSteering.MAX - Math.signum(v) * VELOCITY_ZERO));
 						setYaw((int) (x.getPollData() * ConfSteering.MAX));
-						setPitch((int) (y.getPollData() * -ConfSteering.MAX));
+						setPitch((int) (y.getPollData() * ConfSteering.MAX));
 					}
 				}
 			}
