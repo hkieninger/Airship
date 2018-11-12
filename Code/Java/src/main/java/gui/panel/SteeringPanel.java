@@ -19,6 +19,7 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSlider;
 import javax.swing.KeyStroke;
+import javax.swing.SwingUtilities;
 
 import controller.Pool;
 import controller.data.ConfDevice;
@@ -46,10 +47,8 @@ public class SteeringPanel extends JPanel implements WindowListener {
 	private static final int VELOCITY_MAX = ConfSteering.MAX + ConfSteering.MAX * SLIDER_ZERO_MARGIN_VELOCITY / 200;
 	private static final int VELOCITY_ZERO = ConfSteering.MAX * SLIDER_ZERO_MARGIN_VELOCITY / 200;
 	
-	private static final long TIMER_PERIOD_REDUCE = 300; //ms
-	private static final int TIMER_STEP = (int) (TIMER_PERIOD_REDUCE * ConfSteering.MAX / 1000 / 10);
-	
-	private static final long TIMER_PERIOD_GAMEPAD = 100; //ms
+	private static final long TIMER_PERIOD = 100; //ms
+	private static final int TIMER_STEP = (int) (TIMER_PERIOD * ConfSteering.MAX / 1000 / 5);
 	
 	private JSlider sliderVelocity;
 	private Slider2D sliderDirection;
@@ -180,14 +179,47 @@ public class SteeringPanel extends JPanel implements WindowListener {
 						Component y = gamepad.getComponent(Identifier.Axis.RY);
 						Component vel = gamepad.getComponent(Identifier.Axis.Y);
 						float v = vel.getPollData();
-						setVelocity((int) (v * -ConfSteering.MAX - Math.signum(v) * VELOCITY_ZERO));
-						setYaw((int) (x.getPollData() * ConfSteering.MAX));
-						setPitch((int) (y.getPollData() * ConfSteering.MAX));
+						SwingUtilities.invokeLater(() -> {
+							setVelocity((int) (v * -ConfSteering.MAX - Math.signum(v) * VELOCITY_ZERO));
+							setYaw((int) (x.getPollData() * ConfSteering.MAX));
+							setPitch((int) (y.getPollData() * ConfSteering.MAX));
+						});
 					}
+				} else {
+					SwingUtilities.invokeLater(new Runnable() {
+						
+						@Override
+						public void run() {
+							//velocity
+							int value = sliderVelocity.getValue();
+							if(value != 0) {
+								int newVal = (int) (value - Math.signum(value) * TIMER_STEP);
+								if(Math.signum(newVal) != Math.signum(value))
+									newVal = 0;
+								sliderVelocity.setValue(newVal);
+							}
+							//x direction
+							value = sliderDirection.getXSlider();
+							if(value != 0) {
+								int newVal = (int) (value - Math.signum(value) * TIMER_STEP);
+								if(Math.signum(newVal) != Math.signum(value))
+									newVal = 0;
+								sliderDirection.setXSlider(newVal);
+							}
+							//y direction
+							value = sliderDirection.getYSlider();
+							if(value != 0) {
+								int newVal = (int) (value - Math.signum(value) * TIMER_STEP);
+								if(Math.signum(newVal) != Math.signum(value))
+									newVal = 0;
+								sliderDirection.setYSlider(newVal);
+							}
+						}
+					});
 				}
 			}
 			
-		}, 0, TIMER_PERIOD_GAMEPAD);
+		}, 0, TIMER_PERIOD);
 	
 	}
 	
